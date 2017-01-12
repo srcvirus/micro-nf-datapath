@@ -177,7 +177,7 @@ init_shm_rings(void)
 {
 	unsigned i;
 	unsigned socket_id;
-	const char * q_name;
+	const char *q_name;
 	const unsigned ringsize = USERV_QUEUE_RINGSIZE;
 
 	uservs = rte_malloc("userv details",
@@ -188,7 +188,7 @@ init_shm_rings(void)
 	for (i = 0; i < num_uservs; i++) {
 		/* Create an RX queue for each userv */
 		socket_id = rte_socket_id();
-		q_name = get_rx_queue_name(i);
+		q_name = get_ring_queue_name(i);
 		uservs[i].rx_q = rte_ring_create(q_name,
 				ringsize, socket_id,
 				RING_F_SP_ENQ | RING_F_SC_DEQ ); /* single prod, single cons */

@@ -38,8 +38,24 @@ RTE_TARGET ?= x86_64-native-linuxapp-gcc
 
 include $(RTE_SDK)/mk/rte.vars.mk
 
-DIRS-$(CONFIG_RTE_EXEC_ENV_LINUXAPP) += dpdk_daemon
-DIRS-$(CONFIG_RTE_EXEC_ENV_LINUXAPP) += userv1
-DIRS-$(CONFIG_RTE_EXEC_ENV_LINUXAPP) += userv2
+ifneq ($(CONFIG_RTE_EXEC_ENV),"linuxapp")
+$(error This application can only operate in a linuxapp environment, \
+please change the definition of the RTE_TARGET environment variable)
+endif
 
-include $(RTE_SDK)/mk/rte.extsubdir.mk
+# binary name
+APP = userv2
+
+# all source are stored in SRCS-y
+SRCS-y := main.c 
+
+INC := $(wildcard *.h)
+
+CFLAGS += $(WERROR_FLAGS) -O3
+CFLAGS += -I$(SRCDIR)/../shared
+
+# for newer gcc, e.g. 4.4, no-strict-aliasing may not be necessary
+# and so the next line can be removed in those cases.
+EXTRA_CFLAGS += -fno-strict-aliasing
+
+include $(RTE_SDK)/mk/rte.extapp.mk

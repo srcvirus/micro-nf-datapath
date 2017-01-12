@@ -1,0 +1,7 @@
+userv1/build/*
+userv2/build/*
+userv1/userv1/*
+userv2/userv2/*
+dpdk_daemon/build/*
+dpdk_daemon/dpdk_daemon/*
+
