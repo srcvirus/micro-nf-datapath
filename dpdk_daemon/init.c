@@ -74,14 +74,17 @@
 
 #define RTE_MP_RX_DESC_DEFAULT 512
 #define RTE_MP_TX_DESC_DEFAULT 512
-#define CLIENT_QUEUE_RINGSIZE 128
+#define USERV_QUEUE_RINGSIZE 128
+
+#define NUM_TX_QUEUE_PERPORT 1
 
 #define NO_FLAGS 0
+
 
 /* The mbuf pool for packet rx */
 struct rte_mempool *pktmbuf_pool;
 
-/* array of info/queues for clients */
+/* array of info/queues for uservs */
 struct userv *uservs = NULL;
 
 /* the port details */
@@ -94,7 +97,7 @@ struct port_info *ports;
 static int
 init_mbuf_pools(void)
 {
-	const unsigned num_mbufs = (num_clients * MBUFS_PER_USERV) \
+	const unsigned num_mbufs = (num_uservs * MBUFS_PER_USERV) \
 			+ (ports->num_ports * MBUFS_PER_PORT);
 
 	/* don't pass single-producer/single-consumer flags to mbuf create as it
@@ -123,7 +126,8 @@ init_port(uint8_t port_num)
 			.mq_mode = ETH_MQ_RX_RSS
 		}
 	};
-	const uint16_t rx_rings = 1, tx_rings = num_clients;
+
+	const uint16_t rx_rings = 1, tx_rings = NUM_TX_QUEUE_PERPORT;
 	const uint16_t rx_ring_size = RTE_MP_RX_DESC_DEFAULT;
 	const uint16_t tx_ring_size = RTE_MP_TX_DESC_DEFAULT;
 
@@ -165,8 +169,8 @@ init_port(uint8_t port_num)
 
 /**
  * Set up the DPDK rings which will be used to pass packets, via
- * pointers, between the multi-process server and client processes.
- * Each client needs one RX queue.
+ * pointers, between the multi-process server and userv processes.
+ * Each userv needs one RX queue.
  */
 static int
 init_shm_rings(void)
@@ -174,22 +178,22 @@ init_shm_rings(void)
 	unsigned i;
 	unsigned socket_id;
 	const char * q_name;
-	const unsigned ringsize = CLIENT_QUEUE_RINGSIZE;
+	const unsigned ringsize = USERV_QUEUE_RINGSIZE;
 
-	clients = rte_malloc("client details",
-		sizeof(*clients) * num_clients, 0);
-	if (clients == NULL)
-		rte_exit(EXIT_FAILURE, "Cannot allocate memory for client program details\n");
+	uservs = rte_malloc("userv details",
+		sizeof(*uservs) * num_uservs, 0);
+	if (uservs == NULL)
+		rte_exit(EXIT_FAILURE, "Cannot allocate memory for userv program details\n");
 
-	for (i = 0; i < num_clients; i++) {
-		/* Create an RX queue for each client */
+	for (i = 0; i < num_uservs; i++) {
+		/* Create an RX queue for each userv */
 		socket_id = rte_socket_id();
 		q_name = get_rx_queue_name(i);
-		clients[i].rx_q = rte_ring_create(q_name,
+		uservs[i].rx_q = rte_ring_create(q_name,
 				ringsize, socket_id,
 				RING_F_SP_ENQ | RING_F_SC_DEQ ); /* single prod, single cons */
-		if (clients[i].rx_q == NULL)
-			rte_exit(EXIT_FAILURE, "Cannot create rx ring queue for client %u\n", i);
+		if (uservs[i].rx_q == NULL)
+			rte_exit(EXIT_FAILURE, "Cannot create rx ring queue for userv %u\n", i);
 	}
 	return 0;
 }
@@ -298,7 +302,7 @@ init(int argc, char *argv[])
 
 	check_all_ports_link_status(ports->num_ports, (~0x0));
 
-	/* initialise the client queues/rings for inter-eu comms */
+	/* initialise the userv queues/rings for inter-eu comms */
 	init_shm_rings();
 
 	return 0;
