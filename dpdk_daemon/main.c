@@ -82,7 +82,11 @@ sleep_lcore(__attribute__((unused)) void *dummy)
 static void 
 do_listen(void)
 {
-	//TODO listen to an API to create more ring
+	RTE_LOG(INFO, APP, "App is waiting for API call.\n");
+	for(;;){
+		//TODO listen to an API to create more ring
+		sleep(1);
+	}
 }
 
 int
