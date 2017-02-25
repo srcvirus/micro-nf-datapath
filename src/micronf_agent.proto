@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package micronf_agent;
+
+message CreateRingRequest{
+	string name = 1;
+}
+
+message Errno{
+	int32 err = 1;
+}
+
+
+service MicronfAgent {
+	rpc rpc_create_ring(CreateRingRequest) returns (Errno);
+
+}
