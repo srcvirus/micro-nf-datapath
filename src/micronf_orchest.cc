@@ -16,7 +16,7 @@ class RpcAgent{
 		RpcAgent(std::shared_ptr<Channel> channel)
 			: stub_(RPC::NewStub(channel)) {}
 
-		int rpc_create_ring(string ring_name){
+		int RPCCreateRing(string ring_name){
 			ClientContext context;
 			CreateRingRequest req;
 			Errno result;
@@ -48,6 +48,6 @@ int main(int argc, char* argv[]){
 												"0.0.0.0:50051", grpc::InsecureChannelCredentials()));
 	
 	//TODO test rpc_create_ring
-	rpcAgent->rpc_create_ring("ring_u1_u2");
+	rpcAgent->RPCCreateRing("ring_u1_u2");
 
 }

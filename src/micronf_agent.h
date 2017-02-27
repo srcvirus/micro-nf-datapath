@@ -8,9 +8,9 @@ class MicronfAgent {
     int Init(int argc, char* argv[]);
     int CreateRing(); 
     int DeployMicroServices();
-    int startMicroService();
-    int stopMicroService();
-    int destroyMicroService();
+    int StartMicroService();
+    int StopMicroService();
+    int DestroyMicroService();
 
   private:
     int DeployOneMicroService();

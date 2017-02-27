@@ -11,15 +11,15 @@ int MicronfAgent::DeployMicroServices(){
 
 }
 
-int  MicronfAgent::startMicroService(){
+int  MicronfAgent::StartMicroService(){
 
 } 
 
-int  MicronfAgent::stopMicroService(){
+int  MicronfAgent::StopMicroService(){
 
 }
 
-int  MicronfAgent::destroyMicroService(){
+int  MicronfAgent::DestroyMicroService(){
 
 }
 
