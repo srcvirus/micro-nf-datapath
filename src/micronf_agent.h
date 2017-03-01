@@ -11,10 +11,18 @@ class MicronfAgent {
     int StartMicroService();
     int StopMicroService();
     int DestroyMicroService();
+		
 
   private:
-    int DeployOneMicroService();
+    //int DeployOneMicroService();
+		int InitMbufPool();
+	
+		/* The mbuf pool for packet rx */
+		struct rte_mempool *pktmbuf_pool;
+
+	
     int num_microservices_;
     int num_shared_rings_;
+		int num_ports_;
 };
 #endif
