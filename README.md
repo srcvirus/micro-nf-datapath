@@ -3,7 +3,7 @@ DPDK-based datapath for stitching microservices to create network services
  
 ### BUILD & RUN     
 make    
-./main     
+sudo ./micronf_agent_daemon -c 0x01 -n 4     
 ./micronf_orchest    
 
 ### DONE:     
