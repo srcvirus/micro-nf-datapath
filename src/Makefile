@@ -1,9 +1,20 @@
+ifeq ($(RTE_SDK),)
+$(error "Please define RTE_SDK environment variable")
+endif
+
+# Default target, can be overriden by command line or environment
+RTE_TARGET ?= x86_64-native-linuxapp-gcc
+
+INCS = -I$(RTE_SDK)/$(RTE_TARGET)/include
+LDFLAGS = -L$(RTE_SDK)/$(RTE_TARGET)/lib -L/usr/local/lib
+
 CXX = g++
-CPPFLAGS += -I/usr/local/include -g -pthread
-CXXFLAGS += -std=c++11
-LDFLAGS += -L/usr/local/lib `pkg-config --libs grpc++ grpc`       \
+#CPPFLAGS += -I/usr/local/include -g -pthread 
+CXXFLAGS += -std=c++11 -mssse3 -g -O3 $(INCS) $(LIBDIR)
+LDLIBS +=  `pkg-config --libs grpc++ grpc`\
            -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed \
-           -lprotobuf -lpthread -ldl
+           -lprotobuf  -Wl,--whole-archive -ldpdk -Wl,--no-whole-archive -libverbs -lpthread -ldl
+           #-lprotobuf -lpthread -ldpdk -ldl   
 PROTOC = protoc
 GRPC_CPP_PLUGIN = grpc_cpp_plugin
 GRPC_CPP_PLUGIN_PATH ?= `which $(GRPC_CPP_PLUGIN)`
@@ -16,16 +27,16 @@ STUBDIR = ./
 
 vpath %.proto $(PROTOS_PATH)
 
-all: micronf_orchest main
+all: micronf_orchest micronf_agent_daemon
 
 micronf_agent: 
-	$(CXX) $^ $(LDFLAGS) -o $@
+	$(CXX) -c $^ $(INCS) -o $@
 
 micronf_orchest: micronf_agent.pb.o micronf_agent.grpc.pb.o micronf_orchest.o
-	$(CXX) $^ $(LDFLAGS) -o $@
+	$(CXX) $^ $(INCS) $(LDLIBS) $(LDFLAGS) -o $@
 
-main: micronf_agent.pb.o micronf_agent.grpc.pb.o micronf_agent.o main.o
-	$(CXX) $^ $(LDFLAGS) -o $@
+micronf_agent_daemon: micronf_agent.pb.o micronf_agent.grpc.pb.o micronf_agent.o micronf_agent_daemon.o
+	$(CXX) $^ $(INCS) $(LDLIBS) $(LDFLAGS) -o $@
 
 
 .PRECIOUS: %.grpc.pb.cc

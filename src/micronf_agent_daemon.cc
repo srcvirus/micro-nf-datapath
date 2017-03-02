@@ -14,20 +14,29 @@ using grpc::Status;
 using namespace std;
 using namespace rpc_agent;
 
-class AgentServiceImpl final : public RPC::Service {
-	Status rpc_create_ring(ServerContext* context, const CreateRingRequest* s, 
-													Errno* reply) override {
-		//TODO create dpdk ring
-		cout<<"rpc_create_ring is called"<<endl;
-
-		return Status::OK;
-	}
+class GrpcServiceImpl final : public RPC::Service {
+	private:
+		MicronfAgent *mAgent;
+		Status rpc_create_ring(ServerContext* context, const CreateRingRequest* s, 
+															Errno* reply) override {
+			cout<<"RPCCreateRing is called"<<endl;
+			string ring_name = s->name();
+			int ret = mAgent->CreateRing(ring_name);	
+			
+			return Status::OK;
+		}
+	
+	public:
+		int set_mAgent(MicronfAgent* agent){
+			mAgent = agent;
+		}
 };
 
-void RunAgent(){
+void RunAgent(MicronfAgent* agent){
 	//FIXME specify non-dpdk interface
 	std::string server_address("0.0.0.0:50051");
-  AgentServiceImpl service;
+  GrpcServiceImpl service;
+	service.set_mAgent(agent);
 
   ServerBuilder builder;
 
@@ -44,6 +53,9 @@ void RunAgent(){
 
 int main(int argc, char* argv[]){
 	cout<<"Agent is running"<<endl;
-	RunAgent();	
+	MicronfAgent micronfAgent;
+	micronfAgent.Init(argc, argv);
 
+	RunAgent(&micronfAgent);	
+	cout<<"Agent finished blocking"<<endl;
 }
