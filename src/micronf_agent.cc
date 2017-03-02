@@ -40,39 +40,38 @@ MicronfAgent::MicronfAgent(){
 	num_microservices_ = 0;
 	num_shared_rings_ = 0;
 	num_ports_ = 0;
-
 }
 
 MicronfAgent::~MicronfAgent(){}
 
 int MicronfAgent::Init(int argc, char* argv[]){
-
 	int retval = rte_eal_init(argc, argv);
 	if(retval < 0){
 		cerr<<"rte_eal_init() fails "<<strerror(errno)<<endl;
 		return -1;
 	}
+	
 	argc -= retval;
 	argv += retval;
 
-	num_ports_ = rte_eth_dev_count();	
+	num_ports_ = rte_eth_dev_count();
+	if(num_ports_ == 0)
+    rte_exit(EXIT_FAILURE, "No Ethernet ports - bye\n");	
 
 	//FIXME do we need to store & share port info
-
 	retval = InitMbufPool();
 	if (retval != 0)
 		rte_exit(EXIT_FAILURE, "Cannot create needed mbuf pools\n");
 
 	//FIXME hardcoded number of port to 1
 	// no portmask parsing 
-	uint8_t port_id = 0;
+	int port_id = 0;
 	retval = InitPort(port_id);
 	if(retval < 0){
 			rte_exit(EXIT_FAILURE, "Cannot initialise port %u\n",
 					(unsigned)port_id);
 	}	
-	
-};
+}
 
 int MicronfAgent::CreateRing(string ring_name){
 	unsigned socket_id = rte_socket_id();
@@ -83,7 +82,8 @@ int MicronfAgent::CreateRing(string ring_name){
 		rte_exit(EXIT_FAILURE, "Cannot create rx ring queue for userv %s\n", ring_name.c_str());
 	
 	return 0;
-};
+}
+
 /*
 int MicronfAgent::DeployMicroServices(){
 
@@ -119,30 +119,30 @@ int MicronfAgent::InitMbufPool(){
 	return (pktmbuf_pool == NULL); /* 0  on success */
 }
 
-int MicronfAgent::InitPort(uint8_t port_id){
+int MicronfAgent::InitPort(int port_id)
+{
 	/* for port configuration all features are off by default
 		 The rte_eth_conf structure includes:
 			the hardware offload features such as IP checksum or VLAN tag stripping.
 			the Receive Side Scaling (RSS) configuration when using multiple RX queues per port.
 	 */
-/*	const struct rte_eth_conf port_conf = {
-		.rxmode = {
-			.mq_mode = ETH_MQ_RX_RSS
-		}
-	};
-*/
-	struct rte_eth_conf port_conf = {0};
-	struct rte_eth_rxmode rxmode = {};
-	rxmode.mq_mode = ETH_MQ_RX_RSS;
-	port_conf.rxmode = rxmode;
+	printf("InitPort %d\n", port_id);
+	struct rte_eth_conf *port_conf;
+	struct rte_eth_rxmode *t_rxmode;
+	t_rxmode = (struct rte_eth_rxmode*) calloc(1, sizeof(*t_rxmode));
+	t_rxmode->mq_mode = ETH_MQ_RX_RSS;
+	//t_rxmode->mq_mode = ETH_MQ_RX_NONE;
+	port_conf = (struct rte_eth_conf*) calloc(1, sizeof(*port_conf));
+	port_conf->rxmode = *t_rxmode;
+	
 
 	const uint16_t rx_rings = NUM_RX_QUEUE_PERPORT, tx_rings = NUM_TX_QUEUE_PERPORT;
 	const uint16_t rx_ring_size = RTE_MP_RX_DESC_DEFAULT;
 	const uint16_t tx_ring_size = RTE_MP_TX_DESC_DEFAULT;
 	
   int retval;
-	if((retval = rte_eth_dev_configure(port_id, rx_rings, tx_rings,
-				&port_conf)) != 0)
+	if((retval = rte_eth_dev_configure((uint8_t)port_id, rx_rings, tx_rings,
+				port_conf)) != 0)
 		return retval;
 		
 	for(int q=0; q < rx_rings; q++){
@@ -160,8 +160,7 @@ int MicronfAgent::InitPort(uint8_t port_id){
 	//rte_eth_promiscuous_enable(port_id);
 
 	retval = rte_eth_dev_start(port_id);
-	if(retval < 0)
-		return retval;
+	if(retval < 0) return retval;
 
 	return 0;
 }
