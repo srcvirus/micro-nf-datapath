@@ -51,4 +51,6 @@ clean:
 	rm -f ./*.o
 	rm -f ./*.pb.cc
 	rm -f ./*.pb.h
+	rm -f micronf_agent_daemon
+	rm -f micronf_orchest
 

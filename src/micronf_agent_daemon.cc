@@ -1,7 +1,7 @@
 #include<iostream>
+
 #include "micronf_agent.h"
-
-
+#include "grpc_service_impl.h"
 #include <grpc++/grpc++.h>
 #include "micronf_agent.grpc.pb.h"
 
@@ -13,7 +13,7 @@ using grpc::Status;
 
 using namespace std;
 using namespace rpc_agent;
-
+/*
 class GrpcServiceImpl final : public RPC::Service {
 	private:
 		MicronfAgent *mAgent;
@@ -31,6 +31,7 @@ class GrpcServiceImpl final : public RPC::Service {
 			mAgent = agent;
 		}
 };
+*/
 
 void RunAgent(MicronfAgent* agent){
 	//FIXME specify non-dpdk interface
