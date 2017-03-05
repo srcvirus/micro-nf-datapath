@@ -21,7 +21,8 @@ class MicronfAgent final : public RPC::Service {
     MicronfAgent();
     ~MicronfAgent();
     int Init(int argc, char* argv[]);
-    int CreateRing(std::string ring_name); 
+    int CreateRing(std::string ring_name);
+		int DeleteRing(std::string ring_name); 
     int DeployMicroServices();
     int StartMicroService();
     int StopMicroService();

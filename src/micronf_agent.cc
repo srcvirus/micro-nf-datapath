@@ -84,6 +84,14 @@ int MicronfAgent::CreateRing(string ring_name){
 	return 0;
 }
 
+int MicronfAgent::DeleteRing(string ring_name){
+	struct rte_ring* rx_q = rte_ring_lookup(ring_name.c_str()); /* single prod, single cons */
+	if (rx_q == NULL)
+		rte_exit(EXIT_FAILURE, "Cannot lookup rx ring %s\n", ring_name.c_str());
+	rte_ring_free(rx_q);
+	return 0;
+}
+
 /*
 int MicronfAgent::DeployMicroServices(){
 
