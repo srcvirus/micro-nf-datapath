@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package micronf_config;
+
+message Microservice {
+	enum MicroServiceType {
+		CLASSIFIER = 0;
+		COUNTER = 1;
+		MODIFIER = 2;
+
+	}
+	
+	enum PortType {
+		NORMAL_EGRESS = 0;
+		BRANCH_EGRESS = 1;
+		MARK_FORWARD_EGRESS = 2;
+		SET_BITMAP_EGRESS = 3;
+		COPY_EGRESS = 4;
+		NIC_EGRESS = 5;
+	
+		NORMAL_INGRESS = 10;
+		SYNC_INGRESS = 11;
+		NIC_INGRESS = 12;
+
+	}	
+
+	string id = 1;
+	MicroServiceType type = 2;
+	repeated PortType in_port_types = 3;
+	repeated PortType eg_port_types = 4;
+	repeated string in_port_names = 5;
+	repeated string eg_port_names = 6;
+}
+
+message MicronfConfig {
+	repeated Microservice listOfMicroservices; 
+}
+
+

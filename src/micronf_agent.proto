@@ -2,16 +2,19 @@ syntax = "proto3";
 
 package rpc_agent;
 
-message CreateRingRequest{
+message CreateRingRequest {
 	string name = 1;
 }
 
-message Errno{
+message Errno {
 	int32 err = 1;
 }
 
+message DeployConfig {
+	string config = 1;
+}
 
 service RPC {
 	rpc rpc_create_ring(CreateRingRequest) returns (Errno);
-
+	rpc rpc_deploy_micro_services(DeployConfig) returns (Errno);
 }
