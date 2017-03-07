@@ -10,13 +10,29 @@ class GrpcServiceImpl final : public RPC::Service {
 
     Status rpc_create_ring(ServerContext* context, const CreateRingRequest* s,  
                               Errno* reply) override {
-      std::cout<<"RPCCreateRing is called"<<std::endl;
+      std::cout<<"rpc_create_ring is called"<<std::endl;
       std::string ring_name = s->name();
       int ret = mAgent->CreateRing(ring_name);  
+			if(ret != 0){
+					std::cerr<<"CreateRing fails"<<std::endl;
+      		return Status::CANCELLED;
+			} 	
     
       return Status::OK;
     }   
-
+		
+		Status rpc_deploy_microservices(ServerContext* context, const DeployConfig* dc,
+															Errno* reply) override {
+      std::cout<<"rpc_deploy_microservices is called"<<std::endl;
+		 	std::string str_config = dc->config();
+			int ret = mAgent->DeployMicroservices(str_config);
+			if(ret != 0){
+					std::cerr<<"DeployMicroservices fails"<<std::endl;
+      		return Status::CANCELLED;
+			} 	
+      
+			return Status::OK;
+		}
   
   public:
     int set_mAgent(MicronfAgent* agent){

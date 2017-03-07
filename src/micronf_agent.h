@@ -7,6 +7,7 @@
 
 #include <grpc++/grpc++.h>
 #include "micronf_agent.grpc.pb.h"
+#include "micronf_config.pb.h"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -23,21 +24,23 @@ class MicronfAgent final : public RPC::Service {
     int Init(int argc, char* argv[]);
     int CreateRing(std::string ring_name);
 		int DeleteRing(std::string ring_name); 
-    int DeployMicroServices();
+    int DeployMicroservices(std::string config_str);
     int StartMicroService();
     int StopMicroService();
     int DestroyMicroService();
 
   private:
-    //int DeployOneMicroService();
+    int DeployOneMicroService(const micronf_config::Microservice& mserv);
 		int InitMbufPool();
 		int InitPort(int);	
-		/* The mbuf pool for packet rx */
 		struct rte_mempool *pktmbuf_pool;
 
-	
     int num_microservices_;
     int num_shared_rings_;
 		int num_ports_;
+	
+		//TODO create Microservice_info class
+		// create a vector of deployed microservices (keep track for deletion)
+
 };
 #endif

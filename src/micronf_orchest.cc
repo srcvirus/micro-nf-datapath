@@ -44,7 +44,7 @@ class RpcAgent{
 			ClientContext context;
 			Errno result;
 
-			Status status = stub_->rpc_deploy_micro_services(&context, *dc, &result);
+			Status status = stub_->rpc_deploy_microservices(&context, *dc, &result);
 			if(result.err() != 0){
          cout << "errno: " << result.err() <<endl;
          return -result.err();

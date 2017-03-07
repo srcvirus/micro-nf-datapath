@@ -1,4 +1,5 @@
 #include "micronf_agent.h"
+#include "micronf_config.pb.h"
 
 #include <rte_eal.h>
 #include <rte_common.h>
@@ -19,6 +20,7 @@
 #include <inttypes.h>
 #include <sys/types.h>
 #include <string>
+#include <vector>
 
 using namespace std;
 
@@ -75,8 +77,8 @@ int MicronfAgent::Init(int argc, char* argv[]){
 
 int MicronfAgent::CreateRing(string ring_name){
 	unsigned socket_id = rte_socket_id();
-	const unsigned ringsize = USERV_QUEUE_RINGSIZE;
-	struct rte_ring* rx_q = rte_ring_create(ring_name.c_str(), ringsize, socket_id,
+	const unsigned ring_size = USERV_QUEUE_RINGSIZE;
+	struct rte_ring* rx_q = rte_ring_create(ring_name.c_str(), ring_size, socket_id,
 														RING_F_SP_ENQ | RING_F_SC_DEQ ); /* single prod, single cons */
 	if (rx_q == NULL)
 		rte_exit(EXIT_FAILURE, "Cannot create rx ring queue for userv %s\n", ring_name.c_str());
@@ -92,11 +94,66 @@ int MicronfAgent::DeleteRing(string ring_name){
 	return 0;
 }
 
-/*
-int MicronfAgent::DeployMicroServices(){
+
+int MicronfAgent::DeployMicroservices(string config_str){
+	micronf_config::MicronfConfig micronfConfig;
+
+	if(!micronfConfig.ParseFromString(config_str)){
+		cerr<<"Failed to parse the config"<<endl;
+		return -1;
+	}	
+
+	for(int i=0; i<micronfConfig.list_size(); i++){
+		const micronf_config::Microservice& mserv = micronfConfig.list(i);
+		//TODO deploy accordingly(factory may be) 
+		DeployOneMicroService(mserv);
+	}
 
 }
 
+int  MicronfAgent::DeployOneMicroService(const micronf_config::Microservice& mserv){
+	string mserv_id = mserv.id();
+	vector<int> in_port_types; 
+	vector<int> eg_port_types; 
+	vector<string> in_port_names; 
+	vector<string> eg_port_names;
+ 
+	for(int j=0; j < mserv.in_port_types_size(); j++){
+		//in_port_types.push_back(mserv.in_port_types(j));
+		//in_port_names.push_back(mserv.in_port_names(j));
+		CreateRing(mserv.in_port_names(j));
+		switch(mserv.in_port_types(j)){
+			case micronf_config::Microservice_PortType::Microservice_PortType_NORMAL_EGRESS:
+				
+				break;
+			
+			case micronf_config::Microservice_PortType::Microservice_PortType_SYNC_INGRESS:
+				break;
+			case micronf_config::Microservice_PortType::Microservice_PortType_NIC_INGRESS:
+				break;
+			
+		}
+	}
+
+	for(int j=0; j < mserv.eg_port_types_size(); j++){
+		//eg_port_types.push_back(mserv.eg_port_types(j));
+		//eg_port_names.push_back(mserv.eg_port_names(j));
+		CreateRing(mserv.eg_port_names(j));
+		switch(mserv.eg_port_types(j)){
+			case micronf_config::Microservice_PortType::Microservice_PortType_NORMAL_EGRESS:
+				//TODO instantiate the micronf !
+			 
+			break;
+
+			case micronf_config::Microservice_PortType::Microservice_PortType_BRANCH_EGRESS:
+			break;
+		}
+
+	}
+	
+}
+
+/*
 int  MicronfAgent::StartMicroService(){
 
 } 
@@ -108,11 +165,8 @@ int  MicronfAgent::StopMicroService(){
 int  MicronfAgent::DestroyMicroService(){
 
 }
-
-int  MicronfAgent::DeployOneMicroService(){
-
-}
 */
+
 
 int MicronfAgent::InitMbufPool(){
 	const unsigned num_mbufs = (MAX_NUM_USERV * MBUFS_PER_USERV) \

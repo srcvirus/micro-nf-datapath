@@ -13,6 +13,8 @@ using grpc::Status;
 
 using namespace std;
 using namespace rpc_agent;
+using namespace micronf_config;
+
 /*
 class GrpcServiceImpl final : public RPC::Service {
 	private:
