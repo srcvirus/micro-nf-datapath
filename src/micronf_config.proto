@@ -33,7 +33,7 @@ message Microservice {
 }
 
 message MicronfConfig {
-	repeated Microservice listOfMicroservices; 
+	repeated Microservice listOfMicroservices = 1; 
 }
 
 
