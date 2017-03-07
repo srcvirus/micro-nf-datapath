@@ -11,7 +11,7 @@ LDFLAGS = -L$(RTE_SDK)/$(RTE_TARGET)/lib -L/usr/local/lib
 CXX = g++
 #CPPFLAGS += -I/usr/local/include -g -pthread 
 CXXFLAGS += -std=c++11 -mssse3 -g -O3 $(INCS) $(LIBDIR)
-LDLIBS +=  `pkg-config --libs grpc++ grpc`\
+LDLIBS +=  `pkg-config --libs grpc++ grpc --libs protobuf`\
            -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed \
            -lprotobuf  -Wl,--whole-archive -ldpdk -Wl,--no-whole-archive -libverbs -lpthread -ldl
            #-lprotobuf -lpthread -ldpdk -ldl   
@@ -27,7 +27,7 @@ STUBDIR = ./
 
 vpath %.proto $(PROTOS_PATH)
 
-all: micronf_orchest micronf_agent_daemon
+all: micronf_orchest micronf_agent_daemon micronf_config
 
 micronf_agent: 
 	$(CXX) -c $^ $(INCS) -o $@
@@ -35,9 +35,12 @@ micronf_agent:
 micronf_orchest: micronf_agent.pb.o micronf_agent.grpc.pb.o micronf_orchest.o
 	$(CXX) $^ $(INCS) $(LDLIBS) $(LDFLAGS) -o $@
 
-micronf_agent_daemon: micronf_agent.pb.o micronf_agent.grpc.pb.o micronf_agent.o micronf_agent_daemon.o
+micronf_agent_daemon: micronf_agent.pb.o micronf_agent.grpc.pb.o micronf_agent.o micronf_agent_daemon.o  
 	$(CXX) $^ $(INCS) $(LDLIBS) $(LDFLAGS) -o $@
 
+
+micronf_config: micronf_config.proto micronf_config.pb.cc
+	protoc --cpp_out=. micronf_config.proto
 
 .PRECIOUS: %.grpc.pb.cc
 %.grpc.pb.cc: %.proto
