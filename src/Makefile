@@ -27,12 +27,12 @@ STUBDIR = ./
 
 vpath %.proto $(PROTOS_PATH)
 
-all: micronf_orchest micronf_agent_daemon micronf_config
+all: micronf_agent_daemon micronf_config micronf_orchest 
 
 micronf_agent: 
 	$(CXX) -c $^ $(INCS) -o $@
 
-micronf_orchest: micronf_agent.pb.o micronf_agent.grpc.pb.o micronf_orchest.o
+micronf_orchest: micronf_agent.pb.o micronf_agent.grpc.pb.o micronf_orchest.o micronf_config.pb.o
 	$(CXX) $^ $(INCS) $(LDLIBS) $(LDFLAGS) -o $@
 
 micronf_agent_daemon: micronf_agent.pb.o micronf_agent.grpc.pb.o micronf_agent.o micronf_agent_daemon.o  
