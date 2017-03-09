@@ -16,5 +16,5 @@ message DeployConfig {
 
 service RPC {
 	rpc rpc_create_ring(CreateRingRequest) returns (Errno);
-	rpc rpc_deploy_micro_services(DeployConfig) returns (Errno);
+	rpc rpc_deploy_microservices(DeployConfig) returns (Errno);
 }

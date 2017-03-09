@@ -13,7 +13,8 @@ sudo ./micronf_agent_daemon -c 0x01 -n 4
 - skeleton class for agent    
 - rpc channel created and tested    
 - implementing ring creation  
+- configuration files handling (orchest)   
 
 ### TODO:    
-- configuration files handling    
+- configuration files handling (agent)   
 - microservice deployment       
