@@ -6,14 +6,15 @@ endif
 RTE_TARGET ?= x86_64-native-linuxapp-gcc
 
 INCS = -I$(RTE_SDK)/$(RTE_TARGET)/include
-LDFLAGS = -L$(RTE_SDK)/$(RTE_TARGET)/lib -L/usr/local/lib
+LDFLAGS = -L$(RTE_SDK)/$(RTE_TARGET)/lib -L/usr/local/lib -Xlinker -Map=a.map
 
 CXX = g++
 #CPPFLAGS += -I/usr/local/include -g -pthread 
 CXXFLAGS += -std=c++11 -mssse3 -g -O3 $(INCS) $(LIBDIR)
-LDLIBS +=  `pkg-config --libs grpc++ grpc --libs protobuf`\
+LDLIBS +=  -Wl,--whole-archive -lrte_pmd_mlx4 -ldpdk -libverbs -Wl,--no-whole-archive\
+					 `pkg-config --libs grpc++ grpc --libs protobuf`\
            -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed \
-           -lprotobuf  -Wl,--whole-archive -ldpdk -Wl,--no-whole-archive -libverbs -lpthread -ldl
+           -lprotobuf  -lpthread -ldl
            #-lprotobuf -lpthread -ldpdk -ldl   
 PROTOC = protoc
 GRPC_CPP_PLUGIN = grpc_cpp_plugin
