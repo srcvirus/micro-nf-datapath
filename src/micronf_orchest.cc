@@ -86,10 +86,11 @@ int main(int argc, char* argv[]){
 	RpcAgent* rpcAgent = new RpcAgent(grpc::CreateChannel(
 												"0.0.0.0:50051", grpc::InsecureChannelCredentials()));
 	
-	//TODO test rpc_create_ring
-	rpcAgent->RPCCreateRing("ring_u1_u2");
-	rpcAgent->RPCCreateRing("ring_u2_u3");
+	//rpcAgent->RPCCreateRing("ring_u1_u2");
+	//rpcAgent->RPCCreateRing("ring_u2_u3");
+	rpcAgent->RPCCreateRing("r1");
 	
+/*
 	string str_deployConf;
 	DeployConfig deployConf;
 	MicronfConfig micronfConf;
@@ -106,6 +107,7 @@ int main(int argc, char* argv[]){
 
   // Optional:  Delete all global objects allocated by libprotobuf.
   google::protobuf::ShutdownProtobufLibrary();
+*/
 
 return 0;	
 }

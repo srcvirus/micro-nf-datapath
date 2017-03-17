@@ -58,7 +58,7 @@ int main(int argc, char* argv[]){
 	cout<<"Agent is running"<<endl;
 	MicronfAgent micronfAgent;
 	micronfAgent.Init(argc, argv);
-
+		
 	RunAgent(&micronfAgent);	
 	cout<<"Agent finished blocking"<<endl;
 }
