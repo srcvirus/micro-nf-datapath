@@ -29,16 +29,19 @@ vpath %.proto $(PROTOS_PATH)
 
 all: micronf_config micronf_agent_daemon micronf_orchest 
 
-micronf_agent:  
+micronf_agent: 
 	$(CXX) -c $^ $(INCS) -o $@
 
-nic_classifier:
-	$(CXX) -c $^ $(INCS) -o $@
+cidr_address.o: util/cidr_address.cc
+	$(CXX) -c $(CXXFLAGS) $^ $(INCS) -o $@
+
+nic_classifier.o: nic_classifier.cc 
+	$(CXX) -c $(CXXFLAGS) $^ $(INCS) -o $@
 
 micronf_orchest: micronf_agent.pb.o micronf_agent.grpc.pb.o micronf_orchest.o micronf_config.pb.o
 	$(CXX) $^ $(INCS) $(LDLIBS) $(LDFLAGS) -o $@
 
-micronf_agent_daemon: micronf_agent.pb.o micronf_agent.grpc.pb.o micronf_agent_daemon.o  micronf_config.pb.o micronf_agent.o nic_classifier.o
+micronf_agent_daemon: micronf_agent.pb.o micronf_agent.grpc.pb.o micronf_agent_daemon.o  micronf_config.pb.o micronf_agent.o cidr_address.o nic_classifier.o
 	$(CXX) $^ $(INCS) $(LDLIBS) $(LDFLAGS) -o $@
 
 
