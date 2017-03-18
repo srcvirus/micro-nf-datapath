@@ -1,4 +1,5 @@
 #include "nic_classifier.h"
+#include <unistd.h>
 
 void NICClassifier::Init(MicronfAgent* agent){
 	//todo initialize using config file
@@ -11,10 +12,12 @@ void NICClassifier::Run(){
 	for(;;){
 		struct rte_mbuf *buf[PACKET_READ_SIZE];
 		uint16_t rx_count; 
+		bool match_flag = false;
 
-		rx_count = rte_eth_rx_burst(in_port_id, 0, buf, PACKET_READ_SIZE);
-		
+		rx_count = rte_eth_rx_burst(0, 0, buf, PACKET_READ_SIZE);
+	
 		if(likely(rx_count > 0)){
+			std::cout<<"rx_count	: "<< rx_count <<std::endl;		
 			for(int i=0; i<rx_count; i++){
 				struct ether_hdr* ethernet = rte_pktmbuf_mtod(buf[i], struct ether_hdr*);
 				struct ipv4_hdr* ipv4 = reinterpret_cast<struct ipv4_hdr*>(ethernet + 1);
@@ -24,8 +27,17 @@ void NICClassifier::Run(){
 					if(rule.Match(ipv4->src_addr, ipv4->dst_addr, tcp->src_port, 
 												tcp->dst_port)){
 						EnqueueRxPacket(rule.to_ring(), buf[i]);
+						match_flag = true;
 					}
-				}		
+				}
+
+				if(match_flag == false){
+					rte_pktmbuf_free(buf[i]);
+				}
+				else{
+					match_flag = false;
+				}
+						
 			}
 			//FIXME read from next port if available
 		}
@@ -55,7 +67,8 @@ void NICClassifier::FlushRxQueue(std::string ring_name){
 	struct rte_ring* rx_ring = rte_ring_lookup(ring_name.c_str());
 	if(rte_ring_enqueue_bulk(rx_ring, (void **)egress_rx_buf_[ring_name]->buffer, 
 			egress_rx_buf_[ring_name]->count) != 0){
-		//dropping packet
+		//FIXME if the next ring is full
+		//			do we dropping packet? or left it there and retry
 		for(int j=0; j < egress_rx_buf_[ring_name]->count; j++)
 			rte_pktmbuf_free(egress_rx_buf_[ring_name]->buffer[j]);
 	}

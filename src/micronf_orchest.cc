@@ -88,6 +88,7 @@ int main(int argc, char* argv[]){
 	
 	//rpcAgent->RPCCreateRing("ring_u1_u2");
 	//rpcAgent->RPCCreateRing("ring_u2_u3");
+	cout<<"creating ring r1"<<endl;
 	rpcAgent->RPCCreateRing("r1");
 	
 /*
