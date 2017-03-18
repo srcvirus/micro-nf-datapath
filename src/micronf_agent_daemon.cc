@@ -1,9 +1,11 @@
 #include<iostream>
+#include<thread>
 
 #include "micronf_agent.h"
-#include "grpc_service_impl.h"
 #include <grpc++/grpc++.h>
 #include "micronf_agent.grpc.pb.h"
+#include "grpc_service_impl.h"
+#include "nic_classifier.h"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -15,26 +17,6 @@ using namespace std;
 using namespace rpc_agent;
 using namespace micronf_config;
 
-/*
-class GrpcServiceImpl final : public RPC::Service {
-	private:
-		MicronfAgent *mAgent;
-		Status rpc_create_ring(ServerContext* context, const CreateRingRequest* s, 
-															Errno* reply) override {
-			cout<<"RPCCreateRing is called"<<endl;
-			string ring_name = s->name();
-			int ret = mAgent->CreateRing(ring_name);	
-			
-			return Status::OK;
-		}
-	
-	public:
-		int set_mAgent(MicronfAgent* agent){
-			mAgent = agent;
-		}
-};
-*/
-
 void RunAgent(MicronfAgent* agent){
 	//FIXME specify non-dpdk interface
 	std::string server_address("0.0.0.0:50051");
@@ -42,23 +24,37 @@ void RunAgent(MicronfAgent* agent){
 	service.set_mAgent(agent);
 
   ServerBuilder builder;
-
   builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
-
   builder.RegisterService(&service);
-
   std::unique_ptr<Server> server(builder.BuildAndStart());
   std::cout << "Agent(Server) listening on " << server_address << std::endl;
 
   server->Wait();
-
 }
+
+void RunNICClassifier(MicronfAgent* micronfAgent){
+	NICClassifier nicClassifier;
+	nicClassifier.Init(micronfAgent);
+
+	//create rule and add rule
+	vector<FwdRule> sampleRules;
+	CIDRAddress src_addr_1("192.168.1.0/24");
+	CIDRAddress dst_addr_1("192.168.1.0/24");
+	string ringName = "rx_ring_0";
+	FwdRule rule_1(src_addr_1, dst_addr_1, 80, 80, ringName);
+ 	nicClassifier.AddRule(rule_1); 
+  	
+	nicClassifier.Run();
+}
+
 
 int main(int argc, char* argv[]){
 	cout<<"Agent is running"<<endl;
 	MicronfAgent micronfAgent;
 	micronfAgent.Init(argc, argv);
-		
+	
+	thread classifierThread (RunNICClassifier, &micronfAgent);	
+			
 	RunAgent(&micronfAgent);	
 	cout<<"Agent finished blocking"<<endl;
 }
