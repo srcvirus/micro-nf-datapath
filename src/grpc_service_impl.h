@@ -1,5 +1,5 @@
-#ifndef _GRPC_SERVICE_IMPL_
-#define _GRPC_SERVICE_IMPL_
+#ifndef _GRPC_SERVICE_IMPL_H_
+#define _GRPC_SERVICE_IMPL_H_
 
 #include <string>
 #include <iostream>
