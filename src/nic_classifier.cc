@@ -10,7 +10,9 @@ void NICClassifier::Init(MicronfAgent* agent){
 
 void NICClassifier::Run(){
 	struct rte_mbuf *buf[PACKET_READ_SIZE] = {nullptr};
-  uint16_t rx_count = 0, to_free_cnt = 0, i = 0, j = 0;
+  uint16_t rx_count = 0;
+  register uint16_t i = 0;
+  register uint16_t j = 0;
 	for(;;) {
 		rx_count = rte_eth_rx_burst(0, 0, buf, PACKET_READ_SIZE);
     if (unlikely(rx_count == 0)) continue;
