@@ -39,12 +39,10 @@ void RunNICClassifier(MicronfAgent* micronfAgent){
 
 	//create rule and add rule
 	vector<FwdRule> sampleRules;
-	CIDRAddress src_addr_1("192.168.1.0/24");
-	CIDRAddress dst_addr_1("192.168.1.0/24");
-	string ringName = "rx_ring_0";
-	FwdRule rule_1(src_addr_1, dst_addr_1, 80, 80, ringName);
+	CIDRAddress src_addr_1("10.10.0.7/24");
+	CIDRAddress dst_addr_1("10.10.0.10/24");
+	FwdRule rule_1(src_addr_1, dst_addr_1, 1234, 5678, "rx_ring_0");
  	nicClassifier.AddRule(rule_1); 
-  	
 	nicClassifier.Run();
 }
 
