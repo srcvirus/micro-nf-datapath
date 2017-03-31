@@ -1,5 +1,7 @@
 #include "nic_classifier.h"
 #include <unistd.h>
+#include <rte_malloc.h>
+#include <rte_prefetch.h>
 
 void NICClassifier::Init(MicronfAgent* agent){
 	//todo initialize using config file
@@ -7,73 +9,50 @@ void NICClassifier::Init(MicronfAgent* agent){
 }
 
 void NICClassifier::Run(){
-	int in_port_id = 0;
-
-	for(;;){
-		struct rte_mbuf *buf[PACKET_READ_SIZE];
-		uint16_t rx_count; 
-		bool match_flag = false;
-
+	struct rte_mbuf *buf[PACKET_READ_SIZE] = {nullptr};
+  uint16_t rx_count = 0;
+  register uint16_t i = 0;
+  register uint16_t j = 0;
+	for(;;) {
 		rx_count = rte_eth_rx_burst(0, 0, buf, PACKET_READ_SIZE);
-	
-		if(likely(rx_count > 0)){
-			std::cout<<"rx_count	: "<< rx_count <<std::endl;		
-			for(int i=0; i<rx_count; i++){
-				struct ether_hdr* ethernet = rte_pktmbuf_mtod(buf[i], struct ether_hdr*);
-				struct ipv4_hdr* ipv4 = reinterpret_cast<struct ipv4_hdr*>(ethernet + 1);
-        struct tcp_hdr* tcp = reinterpret_cast<struct tcp_hdr*>(ipv4 + 1);
-		
-				for(auto& rule : fwd_rules_){
-					if(rule.Match(ipv4->src_addr, ipv4->dst_addr, tcp->src_port, 
-												tcp->dst_port)){
-						EnqueueRxPacket(rule.to_ring(), buf[i]);
-						match_flag = true;
-					}
-				}
-
-				if(match_flag == false){
-					rte_pktmbuf_free(buf[i]);
-				}
-				else{
-					match_flag = false;
-				}
-						
-			}
-			//FIXME read from next port if available
-		}
-		
+    if (unlikely(rx_count == 0)) continue;
+    for(i = 0; i < rx_count; i++){
+      rte_prefetch0(buf[i]);
+      struct ether_hdr* ethernet = rte_pktmbuf_mtod(buf[i], struct ether_hdr*);
+	    struct ipv4_hdr* ipv4 = reinterpret_cast<struct ipv4_hdr*>(ethernet + 1);
+      struct tcp_hdr* tcp = reinterpret_cast<struct tcp_hdr*>(ipv4 + 1);
+      for (j = 0; j < fwd_rules_.size(); ++j) {
+        if (fwd_rules_[j]->Match(ipv4->src_addr, ipv4->dst_addr, tcp->src_port, 
+            tcp->dst_port)) {
+          rule_buffers_[j].get()[rule_buffer_cnt_[j]++] = buf[i];
+          break;
+        }
+      }
+    }
+    for (i = 0; i < rule_buffers_.size(); ++i) {
+      rte_ring_enqueue_bulk(rings_[i], reinterpret_cast<void**>(rule_buffers_[i].get()),
+          rule_buffer_cnt_[i]);
+      rule_buffer_cnt_[i] = 0;
+    }
+    for (i = 0; i < rx_count; ++i) {
+      rte_pktmbuf_free(buf[i]);
+    }
+		// FIXME read from next port if available
 		// flushing the queued packets to ring
-		for(auto& rule : fwd_rules_){
-			FlushRxQueue(rule.to_ring());
-		}
 	}
 }
 
 void NICClassifier::AddRule(const FwdRule& fwd_rule){
-	fwd_rules_.push_back(fwd_rule);
+  std::unique_ptr<FwdRule> rule(
+      reinterpret_cast<FwdRule*>(
+        rte_zmalloc(NULL, sizeof(FwdRule), RTE_CACHE_LINE_SIZE)));
+  *(rule.get()) = fwd_rule;
+  fwd_rules_.push_back(std::move(rule));
 	agent_->CreateRing(fwd_rule.to_ring());
-	egress_rx_buf_.insert(std::pair<const std::string, EgressRxBuffer*>(fwd_rule.to_ring(), 
-													new NICClassifier::EgressRxBuffer()));
-
+  auto ptr = std::unique_ptr<struct rte_mbuf*>(reinterpret_cast<struct rte_mbuf**>(
+        rte_zmalloc(
+          NULL, sizeof(struct rte_mbuf*) * PACKET_READ_SIZE, RTE_CACHE_LINE_SIZE)));
+  rule_buffers_.push_back(std::move(ptr));
+  rule_buffer_cnt_.push_back(0);
+  rings_.push_back(rte_ring_lookup(fwd_rule.to_ring()));
 }
-
-void NICClassifier::EnqueueRxPacket(std::string ring_name, struct rte_mbuf* pkt){
-	egress_rx_buf_[ring_name]->buffer[egress_rx_buf_[ring_name]->count++] = pkt;	
-}
-
-void NICClassifier::FlushRxQueue(std::string ring_name){
-	if(egress_rx_buf_[ring_name]->count == 0)
-		return;
-	struct rte_ring* rx_ring = rte_ring_lookup(ring_name.c_str());
-	if(rte_ring_enqueue_bulk(rx_ring, (void **)egress_rx_buf_[ring_name]->buffer, 
-			egress_rx_buf_[ring_name]->count) != 0){
-		//FIXME if the next ring is full
-		//			do we dropping packet? or left it there and retry
-		for(int j=0; j < egress_rx_buf_[ring_name]->count; j++)
-			rte_pktmbuf_free(egress_rx_buf_[ring_name]->buffer[j]);
-	}
-	
-	egress_rx_buf_[ring_name]->count = 0;
-}
-
-
