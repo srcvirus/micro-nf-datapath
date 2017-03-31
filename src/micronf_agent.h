@@ -4,6 +4,7 @@
 #include <string>
 #include <sys/types.h>
 #include <iostream>
+#include "common.h"
 
 #include <grpc++/grpc++.h>
 #include "micronf_agent.grpc.pb.h"
@@ -27,13 +28,16 @@ class MicronfAgent final : public RPC::Service {
     int DeployMicroservices(std::string config_str);
     int StartMicroService();
     int StopMicroService();
-    int DestroyMicroService();
 
   private:
     int DeployOneMicroService(const micronf_config::Microservice& mserv);
 		int InitMbufPool();
 		int InitPort(int);	
+		int InitStatMz();
+
 		struct rte_mempool *pktmbuf_pool;
+		const struct rte_memzone *stat_mz;
+		MSStats* micronf_stats;
 
     int num_microservices_;
     int num_shared_rings_;

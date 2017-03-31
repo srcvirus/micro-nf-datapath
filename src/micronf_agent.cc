@@ -1,5 +1,6 @@
 #include "micronf_agent.h"
 #include "micronf_config.pb.h"
+#include "common.h"
 
 #include <rte_eal.h>
 #include <rte_common.h>
@@ -37,6 +38,8 @@ using namespace std;
 #define USERV_QUEUE_RINGSIZE 128
 #define NUM_TX_QUEUE_PERPORT 1
 #define NUM_RX_QUEUE_PERPORT 1
+
+#define MZ_STAT "MZ_STAT"
 
 MicronfAgent::MicronfAgent(){
 	num_microservices_ = 0;
@@ -179,6 +182,24 @@ int MicronfAgent::InitMbufPool(){
 		MBUF_CACHE_SIZE, 0, RTE_MBUF_DEFAULT_BUF_SIZE, rte_socket_id());
 
 	return (pktmbuf_pool == NULL); /* 0  on success */
+}
+
+int MicronfAgent::InitStatMz(){
+	//#define MZ_STAT "MZ_STAT"
+	//pstat_mz = rte_memzone_lookup(MZ_STAT);
+	stat_mz = rte_memzone_reserve(MZ_STAT, sizeof(*micronf_stats),
+							rte_socket_id(), 0);
+	
+	if (stat_mz == NULL)
+      rte_exit(EXIT_FAILURE, "Cannot reserve memory zone for port information\n");
+  memset(stat_mz->addr, 0, sizeof(*micronf_stats));
+	
+	micronf_stats = (MSStats*) stat_mz->addr;
+
+	for(int i = 0; i < micronf_stats->num_nf; i++){
+		micronf_stats->packet_drop[i] = 0;
+	}
+
 }
 
 int MicronfAgent::InitPort(int port_id)
