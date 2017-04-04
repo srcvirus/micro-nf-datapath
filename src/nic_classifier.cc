@@ -6,13 +6,11 @@
 #include <stdio.h>
 
 #include "common.h"
+#include <rte_cycles.h>
 
 void NICClassifier::Init(MicronfAgent* agent){
 	//todo initialize using config file
 	this->agent_ = agent;
-	this->agent_->stat_mz = rte_memzone_lookup(MZ_STAT);
-	this->agent_->micronf_stats = (MSStats*) this->agent_->stat_mz->addr;
-
 }
 
 void NICClassifier::Run(){
@@ -20,6 +18,11 @@ void NICClassifier::Run(){
   uint16_t rx_count = 0;
   register uint16_t i = 0;
   register uint16_t j = 0;
+
+  uint64_t cur_tsc = 0, diff_tsc = 0, prev_tsc = rte_rdtsc(), timer_tsc = 0,
+           total_tx = 0, cur_tx = 0;
+	const uint64_t kTimerPeriod = rte_get_timer_hz() * 3;
+
 	for(;;) {
 		rx_count = rte_eth_rx_burst(0, 0, buf, PACKET_READ_SIZE);
     if (unlikely(rx_count == 0)) continue;
@@ -48,14 +51,22 @@ void NICClassifier::Run(){
 		}
 		// TODO read from next port if available
 
-		// Check statistic of all microservices
-		int num_nf = this->agent_->micronf_stats->num_nf;
-		for(int i=0; i < num_nf; i++){
-			if(this->agent_->micronf_stats->packet_drop[i] != 0){
-				//TODO detect the rate
-				printf("Drop at %i : %u\n", i, this->agent_->micronf_stats->packet_drop[i]);	
+    cur_tsc = rte_rdtsc();
+    timer_tsc += (cur_tsc - prev_tsc);
+    if (unlikely(timer_tsc > kTimerPeriod)) {
+			int num_nf = this->agent_->micronf_stats->num_nf;
+			// Check statistic of all microservices
+			for(int i=0; i < num_nf; i++){
+				if(this->agent_->micronf_stats->packet_drop[i] != 0){
+					//TODO detect the rate
+					printf("num_nf: %d\n", num_nf);
+					printf("Drop at %i : %u\n", i, this->agent_->micronf_stats->packet_drop[i]);	
+				}
 			}
-		} 
+
+      timer_tsc = 0;
+    }
+    prev_tsc = cur_tsc;
 	}
 }
 

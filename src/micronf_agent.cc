@@ -39,8 +39,6 @@ using namespace std;
 #define NUM_TX_QUEUE_PERPORT 1
 #define NUM_RX_QUEUE_PERPORT 1
 
-#define MZ_STAT "MZ_STAT"
-
 MicronfAgent::MicronfAgent(){
 	num_microservices_ = 0;
 	num_shared_rings_ = 0;
@@ -75,7 +73,12 @@ int MicronfAgent::Init(int argc, char* argv[]){
 	if(retval < 0){
 			rte_exit(EXIT_FAILURE, "Cannot initialise port %u\n",
 					(unsigned)port_id);
-	}	
+	}
+
+	// Create memzone to store statistic
+	int num_nfs = 1;
+	InitStatMz(num_nfs);
+		
 }
 
 int MicronfAgent::CreateRing(string ring_name){
@@ -184,7 +187,7 @@ int MicronfAgent::InitMbufPool(){
 	return (pktmbuf_pool == NULL); /* 0  on success */
 }
 
-int MicronfAgent::InitStatMz(){
+int MicronfAgent::InitStatMz(int num_nfs){
 	stat_mz = rte_memzone_reserve(MZ_STAT, sizeof(*micronf_stats),
 							rte_socket_id(), 0);
 	
@@ -197,7 +200,10 @@ int MicronfAgent::InitStatMz(){
 	for(int i = 0; i < micronf_stats->num_nf; i++){
 		micronf_stats->packet_drop[i] = 0;
 	}
+	
+	micronf_stats->num_nf = num_nfs;
 
+return 0;
 }
 
 int MicronfAgent::InitPort(int port_id)

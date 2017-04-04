@@ -36,7 +36,7 @@ class MicronfAgent final : public RPC::Service {
     int DeployOneMicroService(const micronf_config::Microservice& mserv);
 		int InitMbufPool();
 		int InitPort(int);	
-		int InitStatMz();
+		int InitStatMz(int num_nf);
 
 		struct rte_mempool *pktmbuf_pool;
 
