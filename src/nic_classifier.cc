@@ -2,10 +2,17 @@
 #include <unistd.h>
 #include <rte_malloc.h>
 #include <rte_prefetch.h>
+#include <rte_memzone.h>
+#include <stdio.h>
+
+#include "common.h"
 
 void NICClassifier::Init(MicronfAgent* agent){
 	//todo initialize using config file
 	this->agent_ = agent;
+	this->agent_->stat_mz = rte_memzone_lookup(MZ_STAT);
+	this->agent_->micronf_stats = (MSStats*) this->agent_->stat_mz->addr;
+
 }
 
 void NICClassifier::Run(){
@@ -34,11 +41,21 @@ void NICClassifier::Run(){
           rule_buffer_cnt_[i]);
       rule_buffer_cnt_[i] = 0;
     }
-    for (i = 0; i < rx_count; ++i) {
-      rte_pktmbuf_free(buf[i]);
-    }
-		// FIXME read from next port if available
-		// flushing the queued packets to ring
+		if(rx_count == -ENOBUFS){
+			for (i = 0; i < rule_buffer_cnt_[i]; ++i) {
+				rte_pktmbuf_free(buf[i]);
+			}
+		}
+		// TODO read from next port if available
+
+		// Check statistic of all microservices
+		int num_nf = this->agent_->micronf_stats->num_nf;
+		for(int i=0; i < num_nf; i++){
+			if(this->agent_->micronf_stats->packet_drop[i] != 0){
+				//TODO detect the rate
+				printf("Drop at %i : %u\n", i, this->agent_->micronf_stats->packet_drop[i]);	
+			}
+		} 
 	}
 }
 

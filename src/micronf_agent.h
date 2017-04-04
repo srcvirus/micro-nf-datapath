@@ -29,6 +29,9 @@ class MicronfAgent final : public RPC::Service {
     int StartMicroService();
     int StopMicroService();
 
+		const struct rte_memzone *stat_mz;
+		MSStats* micronf_stats;
+
   private:
     int DeployOneMicroService(const micronf_config::Microservice& mserv);
 		int InitMbufPool();
@@ -36,8 +39,6 @@ class MicronfAgent final : public RPC::Service {
 		int InitStatMz();
 
 		struct rte_mempool *pktmbuf_pool;
-		const struct rte_memzone *stat_mz;
-		MSStats* micronf_stats;
 
     int num_microservices_;
     int num_shared_rings_;
