@@ -43,8 +43,5 @@ class MicronfAgent final : public RPC::Service {
     int num_shared_rings_;
 		int num_ports_;
 	
-		//TODO create Microservice_info class
-		// create a vector of deployed microservices (keep track for deletion)
-
 };
 #endif

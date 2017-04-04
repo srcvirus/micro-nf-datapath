@@ -185,8 +185,6 @@ int MicronfAgent::InitMbufPool(){
 }
 
 int MicronfAgent::InitStatMz(){
-	//#define MZ_STAT "MZ_STAT"
-	//pstat_mz = rte_memzone_lookup(MZ_STAT);
 	stat_mz = rte_memzone_reserve(MZ_STAT, sizeof(*micronf_stats),
 							rte_socket_id(), 0);
 	
