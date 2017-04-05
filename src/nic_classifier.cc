@@ -15,10 +15,9 @@ void NICClassifier::Init(MicronfAgent* agent){
 
 void NICClassifier::Run(){
 	struct rte_mbuf *buf[PACKET_READ_SIZE] = {nullptr};
-  uint16_t rx_count = 0;
+  uint16_t rx_count = 0, tx_count = 0;
   register uint16_t i = 0;
   register uint16_t j = 0;
-
   uint64_t cur_tsc = 0, diff_tsc = 0, prev_tsc = rte_rdtsc(), timer_tsc = 0,
            total_tx = 0, cur_tx = 0;
 	const uint64_t kTimerPeriod = rte_get_timer_hz() * 3;
@@ -40,17 +39,17 @@ void NICClassifier::Run(){
       }
     }
     for (i = 0; i < rule_buffers_.size(); ++i) {
-      rte_ring_enqueue_bulk(rings_[i], reinterpret_cast<void**>(rule_buffers_[i].get()),
+      tx_count = rte_ring_enqueue_burst(rings_[i],
+          reinterpret_cast<void**>(rule_buffers_[i].get()),
           rule_buffer_cnt_[i]);
+      if (unlikely(tx_count < rule_buffer_cnt_[i])) {
+        for(j = tx_count; j < rule_buffer_cnt_[i]; ++j)
+          rte_pktmbuf_free(rule_buffers_[i].get()[j]);
+      }
       rule_buffer_cnt_[i] = 0;
     }
-		if(rx_count == -ENOBUFS){
-			for (i = 0; i < rule_buffer_cnt_[i]; ++i) {
-				rte_pktmbuf_free(buf[i]);
-			}
-		}
 		// TODO read from next port if available
-
+/*    
     cur_tsc = rte_rdtsc();
     timer_tsc += (cur_tsc - prev_tsc);
     if (unlikely(timer_tsc > kTimerPeriod)) {
@@ -68,6 +67,7 @@ void NICClassifier::Run(){
       timer_tsc = 0;
     }
     prev_tsc = cur_tsc;
+*/
 	}
 }
 
