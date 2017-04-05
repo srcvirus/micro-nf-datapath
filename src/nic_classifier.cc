@@ -22,7 +22,7 @@ void NICClassifier::Run(){
   uint64_t cur_tsc = 0, diff_tsc = 0, prev_tsc = rte_rdtsc(), timer_tsc = 0,
            total_tx = 0, cur_tx = 0;
 	const uint64_t kTimerPeriod = rte_get_timer_hz() * 3;
-
+	printf("NicClassifier thread loop has started\n");
 	for(;;) {
 		rx_count = rte_eth_rx_burst(0, 0, buf, PACKET_READ_SIZE);
     if (unlikely(rx_count == 0)) continue;
@@ -55,6 +55,7 @@ void NICClassifier::Run(){
     timer_tsc += (cur_tsc - prev_tsc);
     if (unlikely(timer_tsc > kTimerPeriod)) {
 			int num_nf = this->agent_->micronf_stats->num_nf;
+			printf("detecting packet drop. . . . num_nf: %d\n", num_nf);
 			// Check statistic of all microservices
 			for(int i=0; i < num_nf; i++){
 				if(this->agent_->micronf_stats->packet_drop[i] != 0){
