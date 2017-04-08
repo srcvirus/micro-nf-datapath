@@ -61,7 +61,6 @@ int MicronfAgent::Init(int argc, char* argv[]){
 	if(num_ports_ == 0)
     rte_exit(EXIT_FAILURE, "No Ethernet ports - bye\n");	
 
-	//FIXME do we need to store & share port info
 	retval = InitMbufPool();
 	if (retval != 0)
 		rte_exit(EXIT_FAILURE, "Cannot create needed mbuf pools\n");
@@ -76,9 +75,10 @@ int MicronfAgent::Init(int argc, char* argv[]){
 	}
 
 	// Create memzone to store statistic
+	// FIXME initialize num_nfs from config file
 	int num_nfs = 1;
 	InitStatMz(num_nfs);
-		
+	InitScaleBits(num_nfs);	
 }
 
 int MicronfAgent::CreateRing(string ring_name){
@@ -197,11 +197,28 @@ int MicronfAgent::InitStatMz(int num_nfs){
 	
 	micronf_stats = (MSStats*) stat_mz->addr;
 
-	for(int i = 0; i < micronf_stats->num_nf; i++){
+	for(int i = 0; i < num_nfs; i++){
 		micronf_stats->packet_drop[i] = 0;
 	}
 	
 	micronf_stats->num_nf = num_nfs;
+
+return 0;
+}
+
+int MicronfAgent::InitScaleBits(int num_nfs){
+	scale_bits_mz = rte_memzone_reserve(MZ_SCALE, sizeof(*scale_bits),
+										rte_socket_id(), 0);
+
+	if (scale_bits_mz == NULL)
+      rte_exit(EXIT_FAILURE, "Cannot reserve memory zone for port information\n");
+
+	scale_bits = (ScaleBitVector*) scale_bits_mz->addr;
+
+	for(int i=0; i < num_nfs; i++){
+		scale_bits->bits[i] = 0;
+	}
+	scale_bits->num_nf = num_nfs;
 
 return 0;
 }

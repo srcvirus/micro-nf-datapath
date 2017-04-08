@@ -30,13 +30,16 @@ class MicronfAgent final : public RPC::Service {
     int StopMicroService();
 
 		const struct rte_memzone *stat_mz;
-		MSStats* micronf_stats;
+		MSStats *micronf_stats;
+		const struct rte_memzone *scale_bits_mz;
+		ScaleBitVector *scale_bits;
 
   private:
     int DeployOneMicroService(const micronf_config::Microservice& mserv);
 		int InitMbufPool();
 		int InitPort(int);	
-		int InitStatMz(int num_nf);
+		int InitStatMz(int);
+		int InitScaleBits(int);
 
 		struct rte_mempool *pktmbuf_pool;
 
