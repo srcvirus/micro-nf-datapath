@@ -2,14 +2,11 @@
 #include <unistd.h>
 #include <rte_malloc.h>
 #include <rte_prefetch.h>
-#include <rte_memzone.h>
 #include <stdio.h>
 
 #include "common.h"
-#include <rte_cycles.h>
 
 void NICClassifier::Init(MicronfAgent* agent){
-	//todo initialize using config file
 	this->agent_ = agent;
 }
 
@@ -18,13 +15,8 @@ void NICClassifier::Run(){
   uint16_t rx_count = 0, tx_count = 0;
   register uint16_t i = 0;
   register uint16_t j = 0;
-  uint64_t cur_tsc = 0, diff_tsc = 0, prev_tsc = rte_rdtsc(), timer_tsc = 0,
-           total_tx = 0, cur_tx = 0;
-	const uint64_t kTimerPeriod = rte_get_timer_hz() * 3;
-	bool scale_flag = false;
-	int idx_scale = 0;
-
 	printf("NicClassifier thread loop has started\n");
+
 	for(;;) {
 		rx_count = rte_eth_rx_burst(0, 0, buf, PACKET_READ_SIZE);
     if (unlikely(rx_count == 0)) continue;
@@ -52,30 +44,6 @@ void NICClassifier::Run(){
       rule_buffer_cnt_[i] = 0;
     }
 		// TODO read from next port if available
-
-    cur_tsc = rte_rdtsc();
-    timer_tsc += (cur_tsc - prev_tsc);
-    if (unlikely(timer_tsc > kTimerPeriod)) {
-			int num_nf = this->agent_->micronf_stats->num_nf;
-			printf("detecting packet drop. . . . num_nf: %d\n", num_nf);
-			// Check statistic of all microservices
-			for(int i=0; i < num_nf; i++){
-				if(this->agent_->micronf_stats->packet_drop[i] != 0){
-					// TODO
-					// IMPORTANT  detect the rate & set 'scale_flag' 'idx_scale'to true
-					printf("num_nf: %d\n", num_nf);
-					printf("Drop at %i : %u\n", i, this->agent_->micronf_stats->packet_drop[i]);	
-				}
-			}
-			
-			if(scale_flag){
-				// note i-1 is assumed to be the previous microservice needed to scale
-				this->agent_->scale_bits->bits[idx_scale - 1]	= 1;
-			}
-
-      timer_tsc = 0;
-    }
-    prev_tsc = cur_tsc;
 
 	}
 }
