@@ -26,7 +26,7 @@
 using namespace std;
 
 // mbuf pools configuration
-#define MAX_NUM_USERV 100
+#define MAX_NUM_USERV 150
 #define MBUFS_PER_USERV 1536
 #define MBUFS_PER_PORT 1536
 #define MBUF_CACHE_SIZE 512
@@ -197,8 +197,10 @@ int MicronfAgent::InitStatMz(int num_nfs){
 	
 	micronf_stats = (MSStats*) stat_mz->addr;
 
-	for(int i = 0; i < num_nfs; i++){
-		micronf_stats->packet_drop[i] = 0;
+	for(int i = 0; i < MAX_NUM_MS; i++){
+		for(int j = 0; j < MAX_NUM_PORT; j++){
+			micronf_stats->packet_drop[i][j] = 0;
+		}
 	}
 	
 	micronf_stats->num_nf = num_nfs;
@@ -215,8 +217,10 @@ int MicronfAgent::InitScaleBits(int num_nfs){
 
 	scale_bits = (ScaleBitVector*) scale_bits_mz->addr;
 
-	for(int i=0; i < num_nfs; i++){
-		scale_bits->bits[i] = 0;
+	for(int i=0; i < MAX_NUM_MS; i++){
+		for(int j = 0; j < MAX_NUM_PORT; j++){
+			scale_bits->bits[i][j] = 0;
+		}
 	}
 	scale_bits->num_nf = num_nfs;
 
