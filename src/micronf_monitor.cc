@@ -10,7 +10,7 @@ void MicronfMonitor::Init(MicronfAgent* agent){
 void MicronfMonitor::Run(){
   uint64_t cur_tsc = 0, diff_tsc = 0, prev_tsc = rte_rdtsc(), timer_tsc = 0,
            total_tx = 0, cur_tx = 0;
-  const uint64_t kTimerPeriod = rte_get_timer_hz() * 1;
+  const uint64_t kTimerPeriod = rte_get_timer_hz() * 2;
   int idx_scale = 0;
 	unsigned int drop_history[100][2] = {};	
 	unsigned int round = 0;	
@@ -36,6 +36,7 @@ void MicronfMonitor::Run(){
 			timer_tsc = 0;
 			round++;
 			if(round % 2 == 0){
+				// FIXME IMPORTANT need level_id instead of num_nf !!
 				for(int i=0; i < num_nf; i++){
 					if(drop_history[i][1] - drop_history[i][0] > DROP_RATE_LIMIT){
 						this->agent_->scale_bits->bits[i + 1] = 1;

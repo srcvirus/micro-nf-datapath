@@ -37,14 +37,21 @@ void NICClassifier::Run(){
       tx_count = rte_ring_enqueue_burst(rings_[i],
           reinterpret_cast<void**>(rule_buffers_[i].get()),
           rule_buffer_cnt_[i]);
+
       if (unlikely(tx_count < rule_buffer_cnt_[i])) {
+				this->micronf_stats->packet_drop[INSTANCE_ID_0] += rule_buffer_cnt_[i] - tx_count;
         for(j = tx_count; j < rule_buffer_cnt_[i]; ++j)
           rte_pktmbuf_free(rule_buffers_[i].get()[j]);
       }
+
       rule_buffer_cnt_[i] = 0;
     }
 		// TODO read from next port if available
-
+	
+		if(this->scale_bits->bits.test(INSTANCE_ID_0)){
+        // TODO 
+        // Change port to smart port
+    }
 	}
 }
 
