@@ -15,21 +15,25 @@ void NICClassifier::Init(MicronfAgent* agent){
 
 void NICClassifier::Run(){
 	struct rte_mbuf *buf[PACKET_READ_SIZE] = {nullptr};
+  struct ether_hdr* ethernet = nullptr;
+  struct ipv4_hdr* ipv4 = nullptr;
+  struct tcp_hdr* tcp = nullptr;
   uint16_t rx_count = 0, tx_count = 0;
   register uint16_t i = 0;
   register uint16_t j = 0;
   uint64_t cur_tsc = 0, diff_tsc = 0, prev_tsc = rte_rdtsc(), timer_tsc = 0,
-           total_tx = 0, cur_tx = 0;
+           total_tx = 0, cur_tx = 0, total_rx = 0;
 	const uint64_t kTimerPeriod = rte_get_timer_hz() * 3;
 	printf("NicClassifier thread loop has started\n");
 	for(;;) {
 		rx_count = rte_eth_rx_burst(0, 0, buf, PACKET_READ_SIZE);
+    total_rx += rx_count;
     if (unlikely(rx_count == 0)) continue;
     for(i = 0; i < rx_count; i++){
       rte_prefetch0(buf[i]);
-      struct ether_hdr* ethernet = rte_pktmbuf_mtod(buf[i], struct ether_hdr*);
-	    struct ipv4_hdr* ipv4 = reinterpret_cast<struct ipv4_hdr*>(ethernet + 1);
-      struct tcp_hdr* tcp = reinterpret_cast<struct tcp_hdr*>(ipv4 + 1);
+      ethernet = rte_pktmbuf_mtod(buf[i], struct ether_hdr*);
+	    ipv4 = reinterpret_cast<struct ipv4_hdr*>(ethernet + 1);
+      tcp = reinterpret_cast<struct tcp_hdr*>(ipv4 + 1);
       for (j = 0; j < fwd_rules_.size(); ++j) {
         if (fwd_rules_[j]->Match(ipv4->src_addr, ipv4->dst_addr, tcp->src_port, 
             tcp->dst_port)) {
@@ -49,11 +53,12 @@ void NICClassifier::Run(){
       rule_buffer_cnt_[i] = 0;
     }
 		// TODO read from next port if available
-/*    
     cur_tsc = rte_rdtsc();
     timer_tsc += (cur_tsc - prev_tsc);
     if (unlikely(timer_tsc > kTimerPeriod)) {
 			int num_nf = this->agent_->micronf_stats->num_nf;
+      printf("Total Rx: %lu\n", total_rx);
+      total_rx = 0;
 			printf("detecting packet drop. . . . num_nf: %d\n", num_nf);
 			// Check statistic of all microservices
 			for(int i=0; i < num_nf; i++){
@@ -67,7 +72,6 @@ void NICClassifier::Run(){
       timer_tsc = 0;
     }
     prev_tsc = cur_tsc;
-*/
 	}
 }
 
