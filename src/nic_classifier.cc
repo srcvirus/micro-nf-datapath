@@ -47,6 +47,8 @@ void NICClassifier::Run(){
 			if(this->scale_bits->bits[INSTANCE_ID_0].test(i)){
 					// TODO 
 					// Change port to smart port
+
+					this->scale_bits->bits[INSTANCE_ID_0].set(i, false);
 			}
 
       rule_buffer_cnt_[i] = 0;
