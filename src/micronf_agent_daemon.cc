@@ -3,6 +3,7 @@
 #include <rte_lcore.h>
 #include <thread>
 #include <unistd.h>
+#include <vector>
 
 #include "micronf_agent.h"
 #include <grpc++/grpc++.h>
@@ -19,7 +20,6 @@ using grpc::Status;
 
 using namespace std;
 using namespace rpc_agent;
-using namespace micronf_config;
 
 int RunAgent(void* arg) {
   MicronfAgent* agent = reinterpret_cast<MicronfAgent*>(arg);
@@ -32,6 +32,16 @@ int RunAgent(void* arg) {
   builder.RegisterService(&service);
   std::unique_ptr<Server> server(builder.BuildAndStart());
   std::cout << "Agent(Server) listening on " << server_address << std::endl;
+	
+	std::vector<std::string> chain_conf = {
+		"../confs/mac_swapper_1.conf",
+		"../confs/mac_swapper_2.conf",
+		"../confs/mac_swapper_3.conf",
+		"../confs/mac_swapper_4.conf"
+	};
+	
+	agent->DeployMicroservices(chain_conf);
+	
   server->Wait();
   return 0;
 }

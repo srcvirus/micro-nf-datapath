@@ -40,9 +40,13 @@ using namespace std;
 #define NUM_RX_QUEUE_PERPORT 1
 
 MicronfAgent::MicronfAgent(){
-	num_microservices_ = 0;
-	num_shared_rings_ = 0;
 	num_ports_ = 0;
+	for(int i=0; i < MAX_NUM_MS; i++)
+		for(int j=0; j < MAX_NUM_PORT; j++){
+				neighborGraph[i][j] = 0;
+				pp_ingress_name[i][j] = "";
+				pp_egress_name[i][j] = "";
+		}
 }
 
 MicronfAgent::~MicronfAgent(){}
@@ -100,63 +104,96 @@ int MicronfAgent::DeleteRing(string ring_name){
 	return 0;
 }
 
-
-int MicronfAgent::DeployMicroservices(string config_str){
-	micronf_config::MicronfConfig micronfConfig;
-
-	if(!micronfConfig.ParseFromString(config_str)){
-		cerr<<"Failed to parse the config"<<endl;
-		return -1;
-	}	
-
-	for(int i=0; i<micronfConfig.list_size(); i++){
-		const micronf_config::Microservice& mserv = micronfConfig.list(i);
-		//TODO deploy accordingly(factory may be) 
-		DeployOneMicroService(mserv);
+void MicronfAgent::UpdateNeighborGraph(PacketProcessorConfig& pp_config, 
+																									const PortConfig& pconfig){
+	// assuming port_parameter.at(1) countains ring_id/nic_queue_id
+	const auto ring_it = pconfig.port_parameters().find("ring_id");
+	if(ring_it == pconfig.port_parameters().end())
+		return;
+	for(int i=0; i < MAX_NUM_MS; i++){
+    for(int j=0; j < MAX_NUM_PORT; j++){
+			if(pconfig.port_type() == PortConfig::INGRESS_PORT){
+        	if(pp_egress_name[i][j] == ring_it->second){
+							neighborGraph[i][j] = pp_config.instance_id();
+					}
+			}
+			else if(pconfig.port_type() == PortConfig::EGRESS_PORT){
+        	if(pp_ingress_name[i][j] == ring_it->second){
+							neighborGraph[pp_config.instance_id()][pconfig.port_index()] = i;	
+					}
+			}
+    }
 	}
 
 }
 
-int  MicronfAgent::DeployOneMicroService(const micronf_config::Microservice& mserv){
-	string mserv_id = mserv.id();
-	vector<int> in_port_types; 
-	vector<int> eg_port_types; 
-	vector<string> in_port_names; 
-	vector<string> eg_port_names;
- 
-	for(int j=0; j < mserv.in_port_types_size(); j++){
-		//in_port_types.push_back(mserv.in_port_types(j));
-		//in_port_names.push_back(mserv.in_port_names(j));
-		CreateRing(mserv.in_port_names(j));
-		switch(mserv.in_port_types(j)){
-			case micronf_config::Microservice_PortType::Microservice_PortType_NORMAL_EGRESS:
-				
-				break;
-			
-			case micronf_config::Microservice_PortType::Microservice_PortType_SYNC_INGRESS:
-				break;
-			case micronf_config::Microservice_PortType::Microservice_PortType_NIC_INGRESS:
-				break;
-			
-		}
-	}
-
-	for(int j=0; j < mserv.eg_port_types_size(); j++){
-		//eg_port_types.push_back(mserv.eg_port_types(j));
-		//eg_port_names.push_back(mserv.eg_port_names(j));
-		CreateRing(mserv.eg_port_names(j));
-		switch(mserv.eg_port_types(j)){
-			case micronf_config::Microservice_PortType::Microservice_PortType_NORMAL_EGRESS:
-				//TODO instantiate the micronf !
-			 
-			break;
-
-			case micronf_config::Microservice_PortType::Microservice_PortType_BRANCH_EGRESS:
-			break;
-		}
-
+void MicronfAgent::MaintainLocalDS(PacketProcessorConfig& pp_conf){
+	// retrieve the config form this DS when scale out
+	ppConfigList[pp_conf.instance_id()] = pp_conf;
+	
+	// Check the existing edge and update graph if there is a link
+	for(int pid = 0; pid < pp_conf.port_configs_size(); pid++){
+		const PortConfig& pconfig = pp_conf.port_configs(pid);
+		UpdateNeighborGraph(pp_conf, pconfig);	
 	}
 	
+	// Update the edges information
+	for(int pid = 0; pid < pp_conf.port_configs_size(); pid++){
+		const PortConfig& pconfig = pp_conf.port_configs(pid);
+		// assuming port_parameter.at(1) countains ring_id/nic_queue_id
+		const auto ring_it = pconfig.port_parameters().find("ring_id");
+		if(ring_it == pconfig.port_parameters().end()){
+			continue;
+		}
+		if(pconfig.port_type() == PortConfig::INGRESS_PORT){
+			pp_ingress_name[pp_conf.instance_id()][pconfig.port_index()] = ring_it->second; 
+		} 
+		else if(pconfig.port_type() == PortConfig::EGRESS_PORT){
+			pp_egress_name[pp_conf.instance_id()][pconfig.port_index()] = ring_it->second; 
+		}
+	}
+	
+}
+
+int MicronfAgent::DeployMicroservices(std::vector<std::string> chain_conf){
+	for(int i=0; i < chain_conf.size(); i++){
+		PacketProcessorConfig pp_config;
+		std::string config_file_path = chain_conf[i];
+	  int fd = open(config_file_path.c_str(), O_RDONLY);
+		if (fd < 0)
+			rte_exit(EXIT_FAILURE, "Cannot open configuration file %s\n",
+							 config_file_path.c_str());
+
+		// Read the configuration file into a protobuf object.
+		google::protobuf::io::FileInputStream config_file_handle(fd);
+		config_file_handle.SetCloseOnDelete(true);
+		google::protobuf::TextFormat::Parse(&config_file_handle, &pp_config);
+		/*
+		For debugging purpose only.
+		printf("############################### %d #################################### \n", i);
+		std::string str = "";
+		google::protobuf::TextFormat::PrintToString(pp_config, &str);
+		printf("%s\n\n\n", str.c_str());
+		*/
+
+		MaintainLocalDS(pp_config);
+		DeployOneMicroService(pp_config, config_file_path);
+	}
+
+return 0;
+}
+
+int  MicronfAgent::DeployOneMicroService(const PacketProcessorConfig& pp_conf, 
+																					const std::string config_path){
+	// TODO execute microservices
+	/* 
+	int pid = fork();
+	if(pid == 0){
+		execl("sudo ./build/micronf -c 0x40 -n 2 --proc-type secondary -- --config-file=./confs/mac_swapper.conf");
+	}
+
+	*/
+return 0;
 }
 
 /*

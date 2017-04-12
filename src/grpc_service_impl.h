@@ -3,6 +3,7 @@
 
 #include <string>
 #include <iostream>
+#include <vector>
 
 class GrpcServiceImpl final : public RPC::Service {
   private:
@@ -24,8 +25,9 @@ class GrpcServiceImpl final : public RPC::Service {
 		Status rpc_deploy_microservices(ServerContext* context, const DeployConfig* dc,
 															Errno* reply) override {
       std::cout<<"rpc_deploy_microservices is called"<<std::endl;
-		 	std::string str_config = dc->config();
-			int ret = mAgent->DeployMicroservices(str_config);
+			//std::string chain_config = dc->config();	
+		 	std::vector<std::string> chain_config;
+			int ret = mAgent->DeployMicroservices(chain_config);
 			if(ret != 0){
 					std::cerr<<"DeployMicroservices fails"<<std::endl;
       		return Status::CANCELLED;
