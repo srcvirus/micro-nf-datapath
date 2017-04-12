@@ -26,98 +26,75 @@
 #include <google/protobuf/message.h>
 #include <google/protobuf/repeated_field.h>
 #include <google/protobuf/extension_set.h>
+#include <google/protobuf/map.h>
+#include <google/protobuf/map_field_inl.h>
 #include <google/protobuf/generated_enum_reflection.h>
 #include <google/protobuf/unknown_field_set.h>
 // @@protoc_insertion_point(includes)
-
-namespace micronf_config {
 
 // Internal implementation detail -- do not call these.
 void protobuf_AddDesc_micronf_5fconfig_2eproto();
 void protobuf_AssignDesc_micronf_5fconfig_2eproto();
 void protobuf_ShutdownFile_micronf_5fconfig_2eproto();
 
-class MicronfConfig;
-class Microservice;
+class PacketProcessorConfig;
+class PortConfig;
 
-enum Microservice_MicroServiceType {
-  Microservice_MicroServiceType_CLASSIFIER = 0,
-  Microservice_MicroServiceType_COUNTER = 1,
-  Microservice_MicroServiceType_MODIFIER = 2,
-  Microservice_MicroServiceType_Microservice_MicroServiceType_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
-  Microservice_MicroServiceType_Microservice_MicroServiceType_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
+enum PortConfig_PortType {
+  PortConfig_PortType_INGRESS_PORT = 0,
+  PortConfig_PortType_EGRESS_PORT = 1
 };
-bool Microservice_MicroServiceType_IsValid(int value);
-const Microservice_MicroServiceType Microservice_MicroServiceType_MicroServiceType_MIN = Microservice_MicroServiceType_CLASSIFIER;
-const Microservice_MicroServiceType Microservice_MicroServiceType_MicroServiceType_MAX = Microservice_MicroServiceType_MODIFIER;
-const int Microservice_MicroServiceType_MicroServiceType_ARRAYSIZE = Microservice_MicroServiceType_MicroServiceType_MAX + 1;
+bool PortConfig_PortType_IsValid(int value);
+const PortConfig_PortType PortConfig_PortType_PortType_MIN = PortConfig_PortType_INGRESS_PORT;
+const PortConfig_PortType PortConfig_PortType_PortType_MAX = PortConfig_PortType_EGRESS_PORT;
+const int PortConfig_PortType_PortType_ARRAYSIZE = PortConfig_PortType_PortType_MAX + 1;
 
-const ::google::protobuf::EnumDescriptor* Microservice_MicroServiceType_descriptor();
-inline const ::std::string& Microservice_MicroServiceType_Name(Microservice_MicroServiceType value) {
+const ::google::protobuf::EnumDescriptor* PortConfig_PortType_descriptor();
+inline const ::std::string& PortConfig_PortType_Name(PortConfig_PortType value) {
   return ::google::protobuf::internal::NameOfEnum(
-    Microservice_MicroServiceType_descriptor(), value);
+    PortConfig_PortType_descriptor(), value);
 }
-inline bool Microservice_MicroServiceType_Parse(
-    const ::std::string& name, Microservice_MicroServiceType* value) {
-  return ::google::protobuf::internal::ParseNamedEnum<Microservice_MicroServiceType>(
-    Microservice_MicroServiceType_descriptor(), name, value);
-}
-enum Microservice_PortType {
-  Microservice_PortType_NORMAL_EGRESS = 0,
-  Microservice_PortType_BRANCH_EGRESS = 1,
-  Microservice_PortType_MARK_FORWARD_EGRESS = 2,
-  Microservice_PortType_SET_BITMAP_EGRESS = 3,
-  Microservice_PortType_COPY_EGRESS = 4,
-  Microservice_PortType_NIC_EGRESS = 5,
-  Microservice_PortType_NORMAL_INGRESS = 10,
-  Microservice_PortType_SYNC_INGRESS = 11,
-  Microservice_PortType_NIC_INGRESS = 12,
-  Microservice_PortType_Microservice_PortType_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
-  Microservice_PortType_Microservice_PortType_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
-};
-bool Microservice_PortType_IsValid(int value);
-const Microservice_PortType Microservice_PortType_PortType_MIN = Microservice_PortType_NORMAL_EGRESS;
-const Microservice_PortType Microservice_PortType_PortType_MAX = Microservice_PortType_NIC_INGRESS;
-const int Microservice_PortType_PortType_ARRAYSIZE = Microservice_PortType_PortType_MAX + 1;
-
-const ::google::protobuf::EnumDescriptor* Microservice_PortType_descriptor();
-inline const ::std::string& Microservice_PortType_Name(Microservice_PortType value) {
-  return ::google::protobuf::internal::NameOfEnum(
-    Microservice_PortType_descriptor(), value);
-}
-inline bool Microservice_PortType_Parse(
-    const ::std::string& name, Microservice_PortType* value) {
-  return ::google::protobuf::internal::ParseNamedEnum<Microservice_PortType>(
-    Microservice_PortType_descriptor(), name, value);
+inline bool PortConfig_PortType_Parse(
+    const ::std::string& name, PortConfig_PortType* value) {
+  return ::google::protobuf::internal::ParseNamedEnum<PortConfig_PortType>(
+    PortConfig_PortType_descriptor(), name, value);
 }
 // ===================================================================
 
-class Microservice : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:micronf_config.Microservice) */ {
+class PacketProcessorConfig : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:PacketProcessorConfig) */ {
  public:
-  Microservice();
-  virtual ~Microservice();
+  PacketProcessorConfig();
+  virtual ~PacketProcessorConfig();
 
-  Microservice(const Microservice& from);
+  PacketProcessorConfig(const PacketProcessorConfig& from);
 
-  inline Microservice& operator=(const Microservice& from) {
+  inline PacketProcessorConfig& operator=(const PacketProcessorConfig& from) {
     CopyFrom(from);
     return *this;
   }
 
-  static const ::google::protobuf::Descriptor* descriptor();
-  static const Microservice& default_instance();
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _internal_metadata_.unknown_fields();
+  }
 
-  void Swap(Microservice* other);
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return _internal_metadata_.mutable_unknown_fields();
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const PacketProcessorConfig& default_instance();
+
+  void Swap(PacketProcessorConfig* other);
 
   // implements Message ----------------------------------------------
 
-  inline Microservice* New() const { return New(NULL); }
+  inline PacketProcessorConfig* New() const { return New(NULL); }
 
-  Microservice* New(::google::protobuf::Arena* arena) const;
+  PacketProcessorConfig* New(::google::protobuf::Arena* arena) const;
   void CopyFrom(const ::google::protobuf::Message& from);
   void MergeFrom(const ::google::protobuf::Message& from);
-  void CopyFrom(const Microservice& from);
-  void MergeFrom(const Microservice& from);
+  void CopyFrom(const PacketProcessorConfig& from);
+  void MergeFrom(const PacketProcessorConfig& from);
   void Clear();
   bool IsInitialized() const;
 
@@ -136,7 +113,7 @@ class Microservice : public ::google::protobuf::Message /* @@protoc_insertion_po
   void SharedCtor();
   void SharedDtor();
   void SetCachedSize(int size) const;
-  void InternalSwap(Microservice* other);
+  void InternalSwap(PacketProcessorConfig* other);
   private:
   inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
     return _internal_metadata_.arena();
@@ -150,194 +127,139 @@ class Microservice : public ::google::protobuf::Message /* @@protoc_insertion_po
 
   // nested types ----------------------------------------------------
 
-  typedef Microservice_MicroServiceType MicroServiceType;
-  static const MicroServiceType CLASSIFIER =
-    Microservice_MicroServiceType_CLASSIFIER;
-  static const MicroServiceType COUNTER =
-    Microservice_MicroServiceType_COUNTER;
-  static const MicroServiceType MODIFIER =
-    Microservice_MicroServiceType_MODIFIER;
-  static inline bool MicroServiceType_IsValid(int value) {
-    return Microservice_MicroServiceType_IsValid(value);
-  }
-  static const MicroServiceType MicroServiceType_MIN =
-    Microservice_MicroServiceType_MicroServiceType_MIN;
-  static const MicroServiceType MicroServiceType_MAX =
-    Microservice_MicroServiceType_MicroServiceType_MAX;
-  static const int MicroServiceType_ARRAYSIZE =
-    Microservice_MicroServiceType_MicroServiceType_ARRAYSIZE;
-  static inline const ::google::protobuf::EnumDescriptor*
-  MicroServiceType_descriptor() {
-    return Microservice_MicroServiceType_descriptor();
-  }
-  static inline const ::std::string& MicroServiceType_Name(MicroServiceType value) {
-    return Microservice_MicroServiceType_Name(value);
-  }
-  static inline bool MicroServiceType_Parse(const ::std::string& name,
-      MicroServiceType* value) {
-    return Microservice_MicroServiceType_Parse(name, value);
-  }
-
-  typedef Microservice_PortType PortType;
-  static const PortType NORMAL_EGRESS =
-    Microservice_PortType_NORMAL_EGRESS;
-  static const PortType BRANCH_EGRESS =
-    Microservice_PortType_BRANCH_EGRESS;
-  static const PortType MARK_FORWARD_EGRESS =
-    Microservice_PortType_MARK_FORWARD_EGRESS;
-  static const PortType SET_BITMAP_EGRESS =
-    Microservice_PortType_SET_BITMAP_EGRESS;
-  static const PortType COPY_EGRESS =
-    Microservice_PortType_COPY_EGRESS;
-  static const PortType NIC_EGRESS =
-    Microservice_PortType_NIC_EGRESS;
-  static const PortType NORMAL_INGRESS =
-    Microservice_PortType_NORMAL_INGRESS;
-  static const PortType SYNC_INGRESS =
-    Microservice_PortType_SYNC_INGRESS;
-  static const PortType NIC_INGRESS =
-    Microservice_PortType_NIC_INGRESS;
-  static inline bool PortType_IsValid(int value) {
-    return Microservice_PortType_IsValid(value);
-  }
-  static const PortType PortType_MIN =
-    Microservice_PortType_PortType_MIN;
-  static const PortType PortType_MAX =
-    Microservice_PortType_PortType_MAX;
-  static const int PortType_ARRAYSIZE =
-    Microservice_PortType_PortType_ARRAYSIZE;
-  static inline const ::google::protobuf::EnumDescriptor*
-  PortType_descriptor() {
-    return Microservice_PortType_descriptor();
-  }
-  static inline const ::std::string& PortType_Name(PortType value) {
-    return Microservice_PortType_Name(value);
-  }
-  static inline bool PortType_Parse(const ::std::string& name,
-      PortType* value) {
-    return Microservice_PortType_Parse(name, value);
-  }
 
   // accessors -------------------------------------------------------
 
-  // optional string id = 1;
-  void clear_id();
-  static const int kIdFieldNumber = 1;
-  const ::std::string& id() const;
-  void set_id(const ::std::string& value);
-  void set_id(const char* value);
-  void set_id(const char* value, size_t size);
-  ::std::string* mutable_id();
-  ::std::string* release_id();
-  void set_allocated_id(::std::string* id);
+  // required string packet_processor_class = 1;
+  bool has_packet_processor_class() const;
+  void clear_packet_processor_class();
+  static const int kPacketProcessorClassFieldNumber = 1;
+  const ::std::string& packet_processor_class() const;
+  void set_packet_processor_class(const ::std::string& value);
+  void set_packet_processor_class(const char* value);
+  void set_packet_processor_class(const char* value, size_t size);
+  ::std::string* mutable_packet_processor_class();
+  ::std::string* release_packet_processor_class();
+  void set_allocated_packet_processor_class(::std::string* packet_processor_class);
 
-  // optional .micronf_config.Microservice.MicroServiceType type = 2;
-  void clear_type();
-  static const int kTypeFieldNumber = 2;
-  ::micronf_config::Microservice_MicroServiceType type() const;
-  void set_type(::micronf_config::Microservice_MicroServiceType value);
+  // required int32 num_ingress_ports = 2;
+  bool has_num_ingress_ports() const;
+  void clear_num_ingress_ports();
+  static const int kNumIngressPortsFieldNumber = 2;
+  ::google::protobuf::int32 num_ingress_ports() const;
+  void set_num_ingress_ports(::google::protobuf::int32 value);
 
-  // repeated .micronf_config.Microservice.PortType in_port_types = 3;
-  int in_port_types_size() const;
-  void clear_in_port_types();
-  static const int kInPortTypesFieldNumber = 3;
-  ::micronf_config::Microservice_PortType in_port_types(int index) const;
-  void set_in_port_types(int index, ::micronf_config::Microservice_PortType value);
-  void add_in_port_types(::micronf_config::Microservice_PortType value);
-  const ::google::protobuf::RepeatedField<int>& in_port_types() const;
-  ::google::protobuf::RepeatedField<int>* mutable_in_port_types();
+  // required int32 num_egress_ports = 3;
+  bool has_num_egress_ports() const;
+  void clear_num_egress_ports();
+  static const int kNumEgressPortsFieldNumber = 3;
+  ::google::protobuf::int32 num_egress_ports() const;
+  void set_num_egress_ports(::google::protobuf::int32 value);
 
-  // repeated .micronf_config.Microservice.PortType eg_port_types = 4;
-  int eg_port_types_size() const;
-  void clear_eg_port_types();
-  static const int kEgPortTypesFieldNumber = 4;
-  ::micronf_config::Microservice_PortType eg_port_types(int index) const;
-  void set_eg_port_types(int index, ::micronf_config::Microservice_PortType value);
-  void add_eg_port_types(::micronf_config::Microservice_PortType value);
-  const ::google::protobuf::RepeatedField<int>& eg_port_types() const;
-  ::google::protobuf::RepeatedField<int>* mutable_eg_port_types();
+  // map<string, string> pp_parameters = 4;
+  int pp_parameters_size() const;
+  void clear_pp_parameters();
+  static const int kPpParametersFieldNumber = 4;
+  const ::google::protobuf::Map< ::std::string, ::std::string >&
+      pp_parameters() const;
+  ::google::protobuf::Map< ::std::string, ::std::string >*
+      mutable_pp_parameters();
 
-  // repeated string in_port_names = 5;
-  int in_port_names_size() const;
-  void clear_in_port_names();
-  static const int kInPortNamesFieldNumber = 5;
-  const ::std::string& in_port_names(int index) const;
-  ::std::string* mutable_in_port_names(int index);
-  void set_in_port_names(int index, const ::std::string& value);
-  void set_in_port_names(int index, const char* value);
-  void set_in_port_names(int index, const char* value, size_t size);
-  ::std::string* add_in_port_names();
-  void add_in_port_names(const ::std::string& value);
-  void add_in_port_names(const char* value);
-  void add_in_port_names(const char* value, size_t size);
-  const ::google::protobuf::RepeatedPtrField< ::std::string>& in_port_names() const;
-  ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_in_port_names();
+  // repeated .PortConfig port_configs = 5;
+  int port_configs_size() const;
+  void clear_port_configs();
+  static const int kPortConfigsFieldNumber = 5;
+  const ::PortConfig& port_configs(int index) const;
+  ::PortConfig* mutable_port_configs(int index);
+  ::PortConfig* add_port_configs();
+  ::google::protobuf::RepeatedPtrField< ::PortConfig >*
+      mutable_port_configs();
+  const ::google::protobuf::RepeatedPtrField< ::PortConfig >&
+      port_configs() const;
 
-  // repeated string eg_port_names = 6;
-  int eg_port_names_size() const;
-  void clear_eg_port_names();
-  static const int kEgPortNamesFieldNumber = 6;
-  const ::std::string& eg_port_names(int index) const;
-  ::std::string* mutable_eg_port_names(int index);
-  void set_eg_port_names(int index, const ::std::string& value);
-  void set_eg_port_names(int index, const char* value);
-  void set_eg_port_names(int index, const char* value, size_t size);
-  ::std::string* add_eg_port_names();
-  void add_eg_port_names(const ::std::string& value);
-  void add_eg_port_names(const char* value);
-  void add_eg_port_names(const char* value, size_t size);
-  const ::google::protobuf::RepeatedPtrField< ::std::string>& eg_port_names() const;
-  ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_eg_port_names();
+  // required int32 instance_id = 6;
+  bool has_instance_id() const;
+  void clear_instance_id();
+  static const int kInstanceIdFieldNumber = 6;
+  ::google::protobuf::int32 instance_id() const;
+  void set_instance_id(::google::protobuf::int32 value);
 
-  // @@protoc_insertion_point(class_scope:micronf_config.Microservice)
+  // @@protoc_insertion_point(class_scope:PacketProcessorConfig)
  private:
+  inline void set_has_packet_processor_class();
+  inline void clear_has_packet_processor_class();
+  inline void set_has_num_ingress_ports();
+  inline void clear_has_num_ingress_ports();
+  inline void set_has_num_egress_ports();
+  inline void clear_has_num_egress_ports();
+  inline void set_has_instance_id();
+  inline void clear_has_instance_id();
+
+  // helper for ByteSize()
+  int RequiredFieldsByteSizeFallback() const;
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  bool _is_default_instance_;
-  ::google::protobuf::internal::ArenaStringPtr id_;
-  ::google::protobuf::RepeatedField<int> in_port_types_;
-  mutable int _in_port_types_cached_byte_size_;
-  ::google::protobuf::RepeatedField<int> eg_port_types_;
-  mutable int _eg_port_types_cached_byte_size_;
-  ::google::protobuf::RepeatedPtrField< ::std::string> in_port_names_;
-  ::google::protobuf::RepeatedPtrField< ::std::string> eg_port_names_;
-  int type_;
+  ::google::protobuf::uint32 _has_bits_[1];
   mutable int _cached_size_;
+  ::google::protobuf::internal::ArenaStringPtr packet_processor_class_;
+  ::google::protobuf::int32 num_ingress_ports_;
+  ::google::protobuf::int32 num_egress_ports_;
+  typedef ::google::protobuf::internal::MapEntryLite<
+      ::std::string, ::std::string,
+      ::google::protobuf::internal::WireFormatLite::TYPE_STRING,
+      ::google::protobuf::internal::WireFormatLite::TYPE_STRING,
+      0 >
+      PacketProcessorConfig_PpParametersEntry;
+  ::google::protobuf::internal::MapField<
+      ::std::string, ::std::string,
+      ::google::protobuf::internal::WireFormatLite::TYPE_STRING,
+      ::google::protobuf::internal::WireFormatLite::TYPE_STRING,
+      0 > pp_parameters_;
+  ::google::protobuf::RepeatedPtrField< ::PortConfig > port_configs_;
+  ::google::protobuf::int32 instance_id_;
   friend void  protobuf_AddDesc_micronf_5fconfig_2eproto();
   friend void protobuf_AssignDesc_micronf_5fconfig_2eproto();
   friend void protobuf_ShutdownFile_micronf_5fconfig_2eproto();
 
   void InitAsDefaultInstance();
-  static Microservice* default_instance_;
+  static PacketProcessorConfig* default_instance_;
 };
 // -------------------------------------------------------------------
 
-class MicronfConfig : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:micronf_config.MicronfConfig) */ {
+class PortConfig : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:PortConfig) */ {
  public:
-  MicronfConfig();
-  virtual ~MicronfConfig();
+  PortConfig();
+  virtual ~PortConfig();
 
-  MicronfConfig(const MicronfConfig& from);
+  PortConfig(const PortConfig& from);
 
-  inline MicronfConfig& operator=(const MicronfConfig& from) {
+  inline PortConfig& operator=(const PortConfig& from) {
     CopyFrom(from);
     return *this;
   }
 
-  static const ::google::protobuf::Descriptor* descriptor();
-  static const MicronfConfig& default_instance();
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _internal_metadata_.unknown_fields();
+  }
 
-  void Swap(MicronfConfig* other);
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return _internal_metadata_.mutable_unknown_fields();
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const PortConfig& default_instance();
+
+  void Swap(PortConfig* other);
 
   // implements Message ----------------------------------------------
 
-  inline MicronfConfig* New() const { return New(NULL); }
+  inline PortConfig* New() const { return New(NULL); }
 
-  MicronfConfig* New(::google::protobuf::Arena* arena) const;
+  PortConfig* New(::google::protobuf::Arena* arena) const;
   void CopyFrom(const ::google::protobuf::Message& from);
   void MergeFrom(const ::google::protobuf::Message& from);
-  void CopyFrom(const MicronfConfig& from);
-  void MergeFrom(const MicronfConfig& from);
+  void CopyFrom(const PortConfig& from);
+  void MergeFrom(const PortConfig& from);
   void Clear();
   bool IsInitialized() const;
 
@@ -356,7 +278,7 @@ class MicronfConfig : public ::google::protobuf::Message /* @@protoc_insertion_p
   void SharedCtor();
   void SharedDtor();
   void SetCachedSize(int size) const;
-  void InternalSwap(MicronfConfig* other);
+  void InternalSwap(PortConfig* other);
   private:
   inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
     return _internal_metadata_.arena();
@@ -370,33 +292,105 @@ class MicronfConfig : public ::google::protobuf::Message /* @@protoc_insertion_p
 
   // nested types ----------------------------------------------------
 
+
+  typedef PortConfig_PortType PortType;
+  static const PortType INGRESS_PORT =
+    PortConfig_PortType_INGRESS_PORT;
+  static const PortType EGRESS_PORT =
+    PortConfig_PortType_EGRESS_PORT;
+  static inline bool PortType_IsValid(int value) {
+    return PortConfig_PortType_IsValid(value);
+  }
+  static const PortType PortType_MIN =
+    PortConfig_PortType_PortType_MIN;
+  static const PortType PortType_MAX =
+    PortConfig_PortType_PortType_MAX;
+  static const int PortType_ARRAYSIZE =
+    PortConfig_PortType_PortType_ARRAYSIZE;
+  static inline const ::google::protobuf::EnumDescriptor*
+  PortType_descriptor() {
+    return PortConfig_PortType_descriptor();
+  }
+  static inline const ::std::string& PortType_Name(PortType value) {
+    return PortConfig_PortType_Name(value);
+  }
+  static inline bool PortType_Parse(const ::std::string& name,
+      PortType* value) {
+    return PortConfig_PortType_Parse(name, value);
+  }
+
   // accessors -------------------------------------------------------
 
-  // repeated .micronf_config.Microservice list = 1;
-  int list_size() const;
-  void clear_list();
-  static const int kListFieldNumber = 1;
-  const ::micronf_config::Microservice& list(int index) const;
-  ::micronf_config::Microservice* mutable_list(int index);
-  ::micronf_config::Microservice* add_list();
-  ::google::protobuf::RepeatedPtrField< ::micronf_config::Microservice >*
-      mutable_list();
-  const ::google::protobuf::RepeatedPtrField< ::micronf_config::Microservice >&
-      list() const;
+  // required int32 port_index = 1;
+  bool has_port_index() const;
+  void clear_port_index();
+  static const int kPortIndexFieldNumber = 1;
+  ::google::protobuf::int32 port_index() const;
+  void set_port_index(::google::protobuf::int32 value);
 
-  // @@protoc_insertion_point(class_scope:micronf_config.MicronfConfig)
+  // required .PortConfig.PortType port_type = 2;
+  bool has_port_type() const;
+  void clear_port_type();
+  static const int kPortTypeFieldNumber = 2;
+  ::PortConfig_PortType port_type() const;
+  void set_port_type(::PortConfig_PortType value);
+
+  // required string port_class = 3;
+  bool has_port_class() const;
+  void clear_port_class();
+  static const int kPortClassFieldNumber = 3;
+  const ::std::string& port_class() const;
+  void set_port_class(const ::std::string& value);
+  void set_port_class(const char* value);
+  void set_port_class(const char* value, size_t size);
+  ::std::string* mutable_port_class();
+  ::std::string* release_port_class();
+  void set_allocated_port_class(::std::string* port_class);
+
+  // map<string, string> port_parameters = 4;
+  int port_parameters_size() const;
+  void clear_port_parameters();
+  static const int kPortParametersFieldNumber = 4;
+  const ::google::protobuf::Map< ::std::string, ::std::string >&
+      port_parameters() const;
+  ::google::protobuf::Map< ::std::string, ::std::string >*
+      mutable_port_parameters();
+
+  // @@protoc_insertion_point(class_scope:PortConfig)
  private:
+  inline void set_has_port_index();
+  inline void clear_has_port_index();
+  inline void set_has_port_type();
+  inline void clear_has_port_type();
+  inline void set_has_port_class();
+  inline void clear_has_port_class();
+
+  // helper for ByteSize()
+  int RequiredFieldsByteSizeFallback() const;
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  bool _is_default_instance_;
-  ::google::protobuf::RepeatedPtrField< ::micronf_config::Microservice > list_;
+  ::google::protobuf::uint32 _has_bits_[1];
   mutable int _cached_size_;
+  ::google::protobuf::int32 port_index_;
+  int port_type_;
+  ::google::protobuf::internal::ArenaStringPtr port_class_;
+  typedef ::google::protobuf::internal::MapEntryLite<
+      ::std::string, ::std::string,
+      ::google::protobuf::internal::WireFormatLite::TYPE_STRING,
+      ::google::protobuf::internal::WireFormatLite::TYPE_STRING,
+      0 >
+      PortConfig_PortParametersEntry;
+  ::google::protobuf::internal::MapField<
+      ::std::string, ::std::string,
+      ::google::protobuf::internal::WireFormatLite::TYPE_STRING,
+      ::google::protobuf::internal::WireFormatLite::TYPE_STRING,
+      0 > port_parameters_;
   friend void  protobuf_AddDesc_micronf_5fconfig_2eproto();
   friend void protobuf_AssignDesc_micronf_5fconfig_2eproto();
   friend void protobuf_ShutdownFile_micronf_5fconfig_2eproto();
 
   void InitAsDefaultInstance();
-  static MicronfConfig* default_instance_;
+  static PortConfig* default_instance_;
 };
 // ===================================================================
 
@@ -404,268 +398,305 @@ class MicronfConfig : public ::google::protobuf::Message /* @@protoc_insertion_p
 // ===================================================================
 
 #if !PROTOBUF_INLINE_NOT_IN_HEADERS
-// Microservice
+// PacketProcessorConfig
 
-// optional string id = 1;
-inline void Microservice::clear_id() {
-  id_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+// required string packet_processor_class = 1;
+inline bool PacketProcessorConfig::has_packet_processor_class() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
 }
-inline const ::std::string& Microservice::id() const {
-  // @@protoc_insertion_point(field_get:micronf_config.Microservice.id)
-  return id_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+inline void PacketProcessorConfig::set_has_packet_processor_class() {
+  _has_bits_[0] |= 0x00000001u;
 }
-inline void Microservice::set_id(const ::std::string& value) {
-  
-  id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:micronf_config.Microservice.id)
+inline void PacketProcessorConfig::clear_has_packet_processor_class() {
+  _has_bits_[0] &= ~0x00000001u;
 }
-inline void Microservice::set_id(const char* value) {
-  
-  id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:micronf_config.Microservice.id)
+inline void PacketProcessorConfig::clear_packet_processor_class() {
+  packet_processor_class_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  clear_has_packet_processor_class();
 }
-inline void Microservice::set_id(const char* value, size_t size) {
-  
-  id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+inline const ::std::string& PacketProcessorConfig::packet_processor_class() const {
+  // @@protoc_insertion_point(field_get:PacketProcessorConfig.packet_processor_class)
+  return packet_processor_class_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void PacketProcessorConfig::set_packet_processor_class(const ::std::string& value) {
+  set_has_packet_processor_class();
+  packet_processor_class_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:PacketProcessorConfig.packet_processor_class)
+}
+inline void PacketProcessorConfig::set_packet_processor_class(const char* value) {
+  set_has_packet_processor_class();
+  packet_processor_class_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:PacketProcessorConfig.packet_processor_class)
+}
+inline void PacketProcessorConfig::set_packet_processor_class(const char* value, size_t size) {
+  set_has_packet_processor_class();
+  packet_processor_class_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:micronf_config.Microservice.id)
+  // @@protoc_insertion_point(field_set_pointer:PacketProcessorConfig.packet_processor_class)
 }
-inline ::std::string* Microservice::mutable_id() {
-  
-  // @@protoc_insertion_point(field_mutable:micronf_config.Microservice.id)
-  return id_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+inline ::std::string* PacketProcessorConfig::mutable_packet_processor_class() {
+  set_has_packet_processor_class();
+  // @@protoc_insertion_point(field_mutable:PacketProcessorConfig.packet_processor_class)
+  return packet_processor_class_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline ::std::string* Microservice::release_id() {
-  // @@protoc_insertion_point(field_release:micronf_config.Microservice.id)
-  
-  return id_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+inline ::std::string* PacketProcessorConfig::release_packet_processor_class() {
+  // @@protoc_insertion_point(field_release:PacketProcessorConfig.packet_processor_class)
+  clear_has_packet_processor_class();
+  return packet_processor_class_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline void Microservice::set_allocated_id(::std::string* id) {
-  if (id != NULL) {
-    
+inline void PacketProcessorConfig::set_allocated_packet_processor_class(::std::string* packet_processor_class) {
+  if (packet_processor_class != NULL) {
+    set_has_packet_processor_class();
   } else {
-    
+    clear_has_packet_processor_class();
   }
-  id_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), id);
-  // @@protoc_insertion_point(field_set_allocated:micronf_config.Microservice.id)
+  packet_processor_class_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), packet_processor_class);
+  // @@protoc_insertion_point(field_set_allocated:PacketProcessorConfig.packet_processor_class)
 }
 
-// optional .micronf_config.Microservice.MicroServiceType type = 2;
-inline void Microservice::clear_type() {
-  type_ = 0;
+// required int32 num_ingress_ports = 2;
+inline bool PacketProcessorConfig::has_num_ingress_ports() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
 }
-inline ::micronf_config::Microservice_MicroServiceType Microservice::type() const {
-  // @@protoc_insertion_point(field_get:micronf_config.Microservice.type)
-  return static_cast< ::micronf_config::Microservice_MicroServiceType >(type_);
+inline void PacketProcessorConfig::set_has_num_ingress_ports() {
+  _has_bits_[0] |= 0x00000002u;
 }
-inline void Microservice::set_type(::micronf_config::Microservice_MicroServiceType value) {
-  
-  type_ = value;
-  // @@protoc_insertion_point(field_set:micronf_config.Microservice.type)
+inline void PacketProcessorConfig::clear_has_num_ingress_ports() {
+  _has_bits_[0] &= ~0x00000002u;
 }
-
-// repeated .micronf_config.Microservice.PortType in_port_types = 3;
-inline int Microservice::in_port_types_size() const {
-  return in_port_types_.size();
+inline void PacketProcessorConfig::clear_num_ingress_ports() {
+  num_ingress_ports_ = 0;
+  clear_has_num_ingress_ports();
 }
-inline void Microservice::clear_in_port_types() {
-  in_port_types_.Clear();
+inline ::google::protobuf::int32 PacketProcessorConfig::num_ingress_ports() const {
+  // @@protoc_insertion_point(field_get:PacketProcessorConfig.num_ingress_ports)
+  return num_ingress_ports_;
 }
-inline ::micronf_config::Microservice_PortType Microservice::in_port_types(int index) const {
-  // @@protoc_insertion_point(field_get:micronf_config.Microservice.in_port_types)
-  return static_cast< ::micronf_config::Microservice_PortType >(in_port_types_.Get(index));
-}
-inline void Microservice::set_in_port_types(int index, ::micronf_config::Microservice_PortType value) {
-  in_port_types_.Set(index, value);
-  // @@protoc_insertion_point(field_set:micronf_config.Microservice.in_port_types)
-}
-inline void Microservice::add_in_port_types(::micronf_config::Microservice_PortType value) {
-  in_port_types_.Add(value);
-  // @@protoc_insertion_point(field_add:micronf_config.Microservice.in_port_types)
-}
-inline const ::google::protobuf::RepeatedField<int>&
-Microservice::in_port_types() const {
-  // @@protoc_insertion_point(field_list:micronf_config.Microservice.in_port_types)
-  return in_port_types_;
-}
-inline ::google::protobuf::RepeatedField<int>*
-Microservice::mutable_in_port_types() {
-  // @@protoc_insertion_point(field_mutable_list:micronf_config.Microservice.in_port_types)
-  return &in_port_types_;
+inline void PacketProcessorConfig::set_num_ingress_ports(::google::protobuf::int32 value) {
+  set_has_num_ingress_ports();
+  num_ingress_ports_ = value;
+  // @@protoc_insertion_point(field_set:PacketProcessorConfig.num_ingress_ports)
 }
 
-// repeated .micronf_config.Microservice.PortType eg_port_types = 4;
-inline int Microservice::eg_port_types_size() const {
-  return eg_port_types_.size();
+// required int32 num_egress_ports = 3;
+inline bool PacketProcessorConfig::has_num_egress_ports() const {
+  return (_has_bits_[0] & 0x00000004u) != 0;
 }
-inline void Microservice::clear_eg_port_types() {
-  eg_port_types_.Clear();
+inline void PacketProcessorConfig::set_has_num_egress_ports() {
+  _has_bits_[0] |= 0x00000004u;
 }
-inline ::micronf_config::Microservice_PortType Microservice::eg_port_types(int index) const {
-  // @@protoc_insertion_point(field_get:micronf_config.Microservice.eg_port_types)
-  return static_cast< ::micronf_config::Microservice_PortType >(eg_port_types_.Get(index));
+inline void PacketProcessorConfig::clear_has_num_egress_ports() {
+  _has_bits_[0] &= ~0x00000004u;
 }
-inline void Microservice::set_eg_port_types(int index, ::micronf_config::Microservice_PortType value) {
-  eg_port_types_.Set(index, value);
-  // @@protoc_insertion_point(field_set:micronf_config.Microservice.eg_port_types)
+inline void PacketProcessorConfig::clear_num_egress_ports() {
+  num_egress_ports_ = 0;
+  clear_has_num_egress_ports();
 }
-inline void Microservice::add_eg_port_types(::micronf_config::Microservice_PortType value) {
-  eg_port_types_.Add(value);
-  // @@protoc_insertion_point(field_add:micronf_config.Microservice.eg_port_types)
+inline ::google::protobuf::int32 PacketProcessorConfig::num_egress_ports() const {
+  // @@protoc_insertion_point(field_get:PacketProcessorConfig.num_egress_ports)
+  return num_egress_ports_;
 }
-inline const ::google::protobuf::RepeatedField<int>&
-Microservice::eg_port_types() const {
-  // @@protoc_insertion_point(field_list:micronf_config.Microservice.eg_port_types)
-  return eg_port_types_;
-}
-inline ::google::protobuf::RepeatedField<int>*
-Microservice::mutable_eg_port_types() {
-  // @@protoc_insertion_point(field_mutable_list:micronf_config.Microservice.eg_port_types)
-  return &eg_port_types_;
+inline void PacketProcessorConfig::set_num_egress_ports(::google::protobuf::int32 value) {
+  set_has_num_egress_ports();
+  num_egress_ports_ = value;
+  // @@protoc_insertion_point(field_set:PacketProcessorConfig.num_egress_ports)
 }
 
-// repeated string in_port_names = 5;
-inline int Microservice::in_port_names_size() const {
-  return in_port_names_.size();
+// map<string, string> pp_parameters = 4;
+inline int PacketProcessorConfig::pp_parameters_size() const {
+  return pp_parameters_.size();
 }
-inline void Microservice::clear_in_port_names() {
-  in_port_names_.Clear();
+inline void PacketProcessorConfig::clear_pp_parameters() {
+  pp_parameters_.Clear();
 }
-inline const ::std::string& Microservice::in_port_names(int index) const {
-  // @@protoc_insertion_point(field_get:micronf_config.Microservice.in_port_names)
-  return in_port_names_.Get(index);
+inline const ::google::protobuf::Map< ::std::string, ::std::string >&
+PacketProcessorConfig::pp_parameters() const {
+  // @@protoc_insertion_point(field_map:PacketProcessorConfig.pp_parameters)
+  return pp_parameters_.GetMap();
 }
-inline ::std::string* Microservice::mutable_in_port_names(int index) {
-  // @@protoc_insertion_point(field_mutable:micronf_config.Microservice.in_port_names)
-  return in_port_names_.Mutable(index);
-}
-inline void Microservice::set_in_port_names(int index, const ::std::string& value) {
-  // @@protoc_insertion_point(field_set:micronf_config.Microservice.in_port_names)
-  in_port_names_.Mutable(index)->assign(value);
-}
-inline void Microservice::set_in_port_names(int index, const char* value) {
-  in_port_names_.Mutable(index)->assign(value);
-  // @@protoc_insertion_point(field_set_char:micronf_config.Microservice.in_port_names)
-}
-inline void Microservice::set_in_port_names(int index, const char* value, size_t size) {
-  in_port_names_.Mutable(index)->assign(
-    reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_set_pointer:micronf_config.Microservice.in_port_names)
-}
-inline ::std::string* Microservice::add_in_port_names() {
-  // @@protoc_insertion_point(field_add_mutable:micronf_config.Microservice.in_port_names)
-  return in_port_names_.Add();
-}
-inline void Microservice::add_in_port_names(const ::std::string& value) {
-  in_port_names_.Add()->assign(value);
-  // @@protoc_insertion_point(field_add:micronf_config.Microservice.in_port_names)
-}
-inline void Microservice::add_in_port_names(const char* value) {
-  in_port_names_.Add()->assign(value);
-  // @@protoc_insertion_point(field_add_char:micronf_config.Microservice.in_port_names)
-}
-inline void Microservice::add_in_port_names(const char* value, size_t size) {
-  in_port_names_.Add()->assign(reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_add_pointer:micronf_config.Microservice.in_port_names)
-}
-inline const ::google::protobuf::RepeatedPtrField< ::std::string>&
-Microservice::in_port_names() const {
-  // @@protoc_insertion_point(field_list:micronf_config.Microservice.in_port_names)
-  return in_port_names_;
-}
-inline ::google::protobuf::RepeatedPtrField< ::std::string>*
-Microservice::mutable_in_port_names() {
-  // @@protoc_insertion_point(field_mutable_list:micronf_config.Microservice.in_port_names)
-  return &in_port_names_;
+inline ::google::protobuf::Map< ::std::string, ::std::string >*
+PacketProcessorConfig::mutable_pp_parameters() {
+  // @@protoc_insertion_point(field_mutable_map:PacketProcessorConfig.pp_parameters)
+  return pp_parameters_.MutableMap();
 }
 
-// repeated string eg_port_names = 6;
-inline int Microservice::eg_port_names_size() const {
-  return eg_port_names_.size();
+// repeated .PortConfig port_configs = 5;
+inline int PacketProcessorConfig::port_configs_size() const {
+  return port_configs_.size();
 }
-inline void Microservice::clear_eg_port_names() {
-  eg_port_names_.Clear();
+inline void PacketProcessorConfig::clear_port_configs() {
+  port_configs_.Clear();
 }
-inline const ::std::string& Microservice::eg_port_names(int index) const {
-  // @@protoc_insertion_point(field_get:micronf_config.Microservice.eg_port_names)
-  return eg_port_names_.Get(index);
+inline const ::PortConfig& PacketProcessorConfig::port_configs(int index) const {
+  // @@protoc_insertion_point(field_get:PacketProcessorConfig.port_configs)
+  return port_configs_.Get(index);
 }
-inline ::std::string* Microservice::mutable_eg_port_names(int index) {
-  // @@protoc_insertion_point(field_mutable:micronf_config.Microservice.eg_port_names)
-  return eg_port_names_.Mutable(index);
+inline ::PortConfig* PacketProcessorConfig::mutable_port_configs(int index) {
+  // @@protoc_insertion_point(field_mutable:PacketProcessorConfig.port_configs)
+  return port_configs_.Mutable(index);
 }
-inline void Microservice::set_eg_port_names(int index, const ::std::string& value) {
-  // @@protoc_insertion_point(field_set:micronf_config.Microservice.eg_port_names)
-  eg_port_names_.Mutable(index)->assign(value);
+inline ::PortConfig* PacketProcessorConfig::add_port_configs() {
+  // @@protoc_insertion_point(field_add:PacketProcessorConfig.port_configs)
+  return port_configs_.Add();
 }
-inline void Microservice::set_eg_port_names(int index, const char* value) {
-  eg_port_names_.Mutable(index)->assign(value);
-  // @@protoc_insertion_point(field_set_char:micronf_config.Microservice.eg_port_names)
+inline ::google::protobuf::RepeatedPtrField< ::PortConfig >*
+PacketProcessorConfig::mutable_port_configs() {
+  // @@protoc_insertion_point(field_mutable_list:PacketProcessorConfig.port_configs)
+  return &port_configs_;
 }
-inline void Microservice::set_eg_port_names(int index, const char* value, size_t size) {
-  eg_port_names_.Mutable(index)->assign(
-    reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_set_pointer:micronf_config.Microservice.eg_port_names)
+inline const ::google::protobuf::RepeatedPtrField< ::PortConfig >&
+PacketProcessorConfig::port_configs() const {
+  // @@protoc_insertion_point(field_list:PacketProcessorConfig.port_configs)
+  return port_configs_;
 }
-inline ::std::string* Microservice::add_eg_port_names() {
-  // @@protoc_insertion_point(field_add_mutable:micronf_config.Microservice.eg_port_names)
-  return eg_port_names_.Add();
+
+// required int32 instance_id = 6;
+inline bool PacketProcessorConfig::has_instance_id() const {
+  return (_has_bits_[0] & 0x00000020u) != 0;
 }
-inline void Microservice::add_eg_port_names(const ::std::string& value) {
-  eg_port_names_.Add()->assign(value);
-  // @@protoc_insertion_point(field_add:micronf_config.Microservice.eg_port_names)
+inline void PacketProcessorConfig::set_has_instance_id() {
+  _has_bits_[0] |= 0x00000020u;
 }
-inline void Microservice::add_eg_port_names(const char* value) {
-  eg_port_names_.Add()->assign(value);
-  // @@protoc_insertion_point(field_add_char:micronf_config.Microservice.eg_port_names)
+inline void PacketProcessorConfig::clear_has_instance_id() {
+  _has_bits_[0] &= ~0x00000020u;
 }
-inline void Microservice::add_eg_port_names(const char* value, size_t size) {
-  eg_port_names_.Add()->assign(reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_add_pointer:micronf_config.Microservice.eg_port_names)
+inline void PacketProcessorConfig::clear_instance_id() {
+  instance_id_ = 0;
+  clear_has_instance_id();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::std::string>&
-Microservice::eg_port_names() const {
-  // @@protoc_insertion_point(field_list:micronf_config.Microservice.eg_port_names)
-  return eg_port_names_;
+inline ::google::protobuf::int32 PacketProcessorConfig::instance_id() const {
+  // @@protoc_insertion_point(field_get:PacketProcessorConfig.instance_id)
+  return instance_id_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::std::string>*
-Microservice::mutable_eg_port_names() {
-  // @@protoc_insertion_point(field_mutable_list:micronf_config.Microservice.eg_port_names)
-  return &eg_port_names_;
+inline void PacketProcessorConfig::set_instance_id(::google::protobuf::int32 value) {
+  set_has_instance_id();
+  instance_id_ = value;
+  // @@protoc_insertion_point(field_set:PacketProcessorConfig.instance_id)
 }
 
 // -------------------------------------------------------------------
 
-// MicronfConfig
+// PortConfig
 
-// repeated .micronf_config.Microservice list = 1;
-inline int MicronfConfig::list_size() const {
-  return list_.size();
+// required int32 port_index = 1;
+inline bool PortConfig::has_port_index() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
 }
-inline void MicronfConfig::clear_list() {
-  list_.Clear();
+inline void PortConfig::set_has_port_index() {
+  _has_bits_[0] |= 0x00000001u;
 }
-inline const ::micronf_config::Microservice& MicronfConfig::list(int index) const {
-  // @@protoc_insertion_point(field_get:micronf_config.MicronfConfig.list)
-  return list_.Get(index);
+inline void PortConfig::clear_has_port_index() {
+  _has_bits_[0] &= ~0x00000001u;
 }
-inline ::micronf_config::Microservice* MicronfConfig::mutable_list(int index) {
-  // @@protoc_insertion_point(field_mutable:micronf_config.MicronfConfig.list)
-  return list_.Mutable(index);
+inline void PortConfig::clear_port_index() {
+  port_index_ = 0;
+  clear_has_port_index();
 }
-inline ::micronf_config::Microservice* MicronfConfig::add_list() {
-  // @@protoc_insertion_point(field_add:micronf_config.MicronfConfig.list)
-  return list_.Add();
+inline ::google::protobuf::int32 PortConfig::port_index() const {
+  // @@protoc_insertion_point(field_get:PortConfig.port_index)
+  return port_index_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::micronf_config::Microservice >*
-MicronfConfig::mutable_list() {
-  // @@protoc_insertion_point(field_mutable_list:micronf_config.MicronfConfig.list)
-  return &list_;
+inline void PortConfig::set_port_index(::google::protobuf::int32 value) {
+  set_has_port_index();
+  port_index_ = value;
+  // @@protoc_insertion_point(field_set:PortConfig.port_index)
 }
-inline const ::google::protobuf::RepeatedPtrField< ::micronf_config::Microservice >&
-MicronfConfig::list() const {
-  // @@protoc_insertion_point(field_list:micronf_config.MicronfConfig.list)
-  return list_;
+
+// required .PortConfig.PortType port_type = 2;
+inline bool PortConfig::has_port_type() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
+}
+inline void PortConfig::set_has_port_type() {
+  _has_bits_[0] |= 0x00000002u;
+}
+inline void PortConfig::clear_has_port_type() {
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline void PortConfig::clear_port_type() {
+  port_type_ = 0;
+  clear_has_port_type();
+}
+inline ::PortConfig_PortType PortConfig::port_type() const {
+  // @@protoc_insertion_point(field_get:PortConfig.port_type)
+  return static_cast< ::PortConfig_PortType >(port_type_);
+}
+inline void PortConfig::set_port_type(::PortConfig_PortType value) {
+  assert(::PortConfig_PortType_IsValid(value));
+  set_has_port_type();
+  port_type_ = value;
+  // @@protoc_insertion_point(field_set:PortConfig.port_type)
+}
+
+// required string port_class = 3;
+inline bool PortConfig::has_port_class() const {
+  return (_has_bits_[0] & 0x00000004u) != 0;
+}
+inline void PortConfig::set_has_port_class() {
+  _has_bits_[0] |= 0x00000004u;
+}
+inline void PortConfig::clear_has_port_class() {
+  _has_bits_[0] &= ~0x00000004u;
+}
+inline void PortConfig::clear_port_class() {
+  port_class_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  clear_has_port_class();
+}
+inline const ::std::string& PortConfig::port_class() const {
+  // @@protoc_insertion_point(field_get:PortConfig.port_class)
+  return port_class_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void PortConfig::set_port_class(const ::std::string& value) {
+  set_has_port_class();
+  port_class_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:PortConfig.port_class)
+}
+inline void PortConfig::set_port_class(const char* value) {
+  set_has_port_class();
+  port_class_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:PortConfig.port_class)
+}
+inline void PortConfig::set_port_class(const char* value, size_t size) {
+  set_has_port_class();
+  port_class_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:PortConfig.port_class)
+}
+inline ::std::string* PortConfig::mutable_port_class() {
+  set_has_port_class();
+  // @@protoc_insertion_point(field_mutable:PortConfig.port_class)
+  return port_class_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* PortConfig::release_port_class() {
+  // @@protoc_insertion_point(field_release:PortConfig.port_class)
+  clear_has_port_class();
+  return port_class_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void PortConfig::set_allocated_port_class(::std::string* port_class) {
+  if (port_class != NULL) {
+    set_has_port_class();
+  } else {
+    clear_has_port_class();
+  }
+  port_class_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), port_class);
+  // @@protoc_insertion_point(field_set_allocated:PortConfig.port_class)
+}
+
+// map<string, string> port_parameters = 4;
+inline int PortConfig::port_parameters_size() const {
+  return port_parameters_.size();
+}
+inline void PortConfig::clear_port_parameters() {
+  port_parameters_.Clear();
+}
+inline const ::google::protobuf::Map< ::std::string, ::std::string >&
+PortConfig::port_parameters() const {
+  // @@protoc_insertion_point(field_map:PortConfig.port_parameters)
+  return port_parameters_.GetMap();
+}
+inline ::google::protobuf::Map< ::std::string, ::std::string >*
+PortConfig::mutable_port_parameters() {
+  // @@protoc_insertion_point(field_mutable_map:PortConfig.port_parameters)
+  return port_parameters_.MutableMap();
 }
 
 #endif  // !PROTOBUF_INLINE_NOT_IN_HEADERS
@@ -674,21 +705,14 @@ MicronfConfig::list() const {
 
 // @@protoc_insertion_point(namespace_scope)
 
-}  // namespace micronf_config
-
 #ifndef SWIG
 namespace google {
 namespace protobuf {
 
-template <> struct is_proto_enum< ::micronf_config::Microservice_MicroServiceType> : ::google::protobuf::internal::true_type {};
+template <> struct is_proto_enum< ::PortConfig_PortType> : ::google::protobuf::internal::true_type {};
 template <>
-inline const EnumDescriptor* GetEnumDescriptor< ::micronf_config::Microservice_MicroServiceType>() {
-  return ::micronf_config::Microservice_MicroServiceType_descriptor();
-}
-template <> struct is_proto_enum< ::micronf_config::Microservice_PortType> : ::google::protobuf::internal::true_type {};
-template <>
-inline const EnumDescriptor* GetEnumDescriptor< ::micronf_config::Microservice_PortType>() {
-  return ::micronf_config::Microservice_PortType_descriptor();
+inline const EnumDescriptor* GetEnumDescriptor< ::PortConfig_PortType>() {
+  return ::PortConfig_PortType_descriptor();
 }
 
 }  // namespace protobuf

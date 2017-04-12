@@ -1,39 +1,61 @@
-syntax = "proto3";
+syntax = "proto2";
 
-package micronf_config;
+message PacketProcessorConfig {
+  // Specifies the class of packet processor object. For instance, setting the
+  // value of this field to MacSwapper will instantiate a MacSwapper instance.
+  required string packet_processor_class = 1;
 
-message Microservice {
-	enum MicroServiceType {
-		CLASSIFIER = 0;
-		COUNTER = 1;
-		MODIFIER = 2;
+  // The number of ingress ports of a packet processor. This field can be set to
+  // 0 for packet processors if required (e.g., for a packet generator type
+  // packet processor).
+  required int32 num_ingress_ports = 2;
 
-	}
-	
-	enum PortType {
-		NORMAL_EGRESS = 0;
-		BRANCH_EGRESS = 1;
-		MARK_FORWARD_EGRESS = 2;
-		SET_BITMAP_EGRESS = 3;
-		COPY_EGRESS = 4;
-		NIC_EGRESS = 5;
-	
-		NORMAL_INGRESS = 10;
-		SYNC_INGRESS = 11;
-		NIC_INGRESS = 12;
+  // The number of egress ports of a packet processor. This field can have a
+  // value of 0 if required. (e.g., for a packet processor that drops packets or
+  // just logs packets and does not forward anything).
+  required int32 num_egress_ports = 3;
 
-	}	
+  // A set of (key, value) pairs representing packet processor specific
+  // configuration. 
+  // TODO: Add more documentation on the possible parameters.
+  map<string, string> pp_parameters = 4;
 
-	string id = 1;
-	MicroServiceType type = 2;
-	repeated PortType in_port_types = 3;
-	repeated PortType eg_port_types = 4;
-	repeated string in_port_names = 5;
-	repeated string eg_port_names = 6;
-}
+  // A list of port configurations. Port configurations will contain
+  // configurations for both ingress and egress ports.
+  repeated PortConfig port_configs = 5;
 
-message MicronfConfig {
-	repeated Microservice list = 1; 
-}
+  required int32 instance_id = 6;
+};
+
+message PortConfig {
+  // Port index identifies the order of a port in a list of a port. It can be
+  // considered as an index in an array.
+  required int32 port_index = 1;
+
+  // PortType enumerates the different major types of ports that can be present.
+  // In our case, we have IngressPort and EgressPort as the two major types of
+  // ports. All other ports are specialization of either IngressPort or
+  // EgressPort.
+  enum PortType {
+    INGRESS_PORT = 0;
+    EGRESS_PORT = 1;
+  }
+
+  // Port type indicates the type of the port, i.e., INGRESS_PORT or
+  // EGRESS_PORT.
+  required PortType port_type = 2;
+
+  // Port class is the name of the class that this port is an instance of. For
+  // instance, setting port_class to RteIngressPort will create an instance of
+  // RteIngressPort type of port.
+  required string port_class = 3;
+
+	// A map of (key, value) pairs that represent the configurations of a port.
+  // For more information on what can be configured for ports please look into
+  // src/port/*ingress_port.h, src/port/*egress_port.h files and look for kConf*
+  // constants in the class definitions.
+  // TODO: Add a more detailed description on what can be configured for a port.
+  map<string, string> port_parameters = 4;
+};
 
 
