@@ -43,7 +43,7 @@ MicronfAgent::MicronfAgent(){
 	num_ports_ = 0;
 	for(int i=0; i < MAX_NUM_MS; i++)
 		for(int j=0; j < MAX_NUM_PORT; j++){
-				neighborGraph[i][j] = 0;
+				neighborGraph[i][j] = std::make_pair(0,0);
 				pp_ingress_name[i][j] = "";
 				pp_egress_name[i][j] = "";
 		}
@@ -89,7 +89,9 @@ int MicronfAgent::CreateRing(string ring_name){
 	unsigned socket_id = rte_socket_id();
 	const unsigned ring_size = USERV_QUEUE_RINGSIZE;
 	struct rte_ring* rx_q = rte_ring_create(ring_name.c_str(), ring_size, socket_id,
-														RING_F_SP_ENQ | RING_F_SC_DEQ ); /* single prod, single cons */
+														//RING_F_SP_ENQ | RING_F_SC_DEQ ); /* single prod, single cons */
+														// RING_F_SC_DEQ ); /* multi prod, single cons */
+														 0 ); /* multi prod cons */
 	if (rx_q == NULL)
 		rte_exit(EXIT_FAILURE, "Cannot create rx ring queue for userv %s\n", ring_name.c_str());
 	
@@ -110,16 +112,23 @@ void MicronfAgent::UpdateNeighborGraph(PacketProcessorConfig& pp_config,
 	const auto ring_it = pconfig.port_parameters().find("ring_id");
 	if(ring_it == pconfig.port_parameters().end())
 		return;
+	// FIXME hardcoded for the next of rx thread
+	// Can be determine by looking at config
+	std::get<0>(neighborGraph[0][0]) = 1;
+	std::get<1>(neighborGraph[0][0]) = 0;
+
 	for(int i=0; i < MAX_NUM_MS; i++){
     for(int j=0; j < MAX_NUM_PORT; j++){
 			if(pconfig.port_type() == PortConfig::INGRESS_PORT){
         	if(pp_egress_name[i][j] == ring_it->second){
-							neighborGraph[i][j] = pp_config.instance_id();
+							std::get<0>(neighborGraph[i][j]) = pp_config.instance_id();
+							std::get<1>(neighborGraph[i][j]) = pconfig.port_index();
 					}
 			}
 			else if(pconfig.port_type() == PortConfig::EGRESS_PORT){
         	if(pp_ingress_name[i][j] == ring_it->second){
-							neighborGraph[pp_config.instance_id()][pconfig.port_index()] = i;	
+							std::get<0>(neighborGraph[pp_config.instance_id()][pconfig.port_index()]) = i;	
+							std::get<1>(neighborGraph[pp_config.instance_id()][pconfig.port_index()]) = j;	
 					}
 			}
     }
@@ -130,6 +139,10 @@ void MicronfAgent::UpdateNeighborGraph(PacketProcessorConfig& pp_config,
 void MicronfAgent::MaintainLocalDS(PacketProcessorConfig& pp_conf){
 	// retrieve the config form this DS when scale out
 	ppConfigList[pp_conf.instance_id()] = pp_conf;
+	printf("\npp_conf id: %d\n", pp_conf.instance_id());
+	printf("pp_conf class: %s\n", pp_conf.packet_processor_class().c_str());
+	printf("pp_con num_ingress: %d\n\n", pp_conf.num_ingress_ports());
+
 	
 	// Check the existing edge and update graph if there is a link
 	for(int pid = 0; pid < pp_conf.port_configs_size(); pid++){
@@ -169,7 +182,7 @@ int MicronfAgent::DeployMicroservices(std::vector<std::string> chain_conf){
 		config_file_handle.SetCloseOnDelete(true);
 		google::protobuf::TextFormat::Parse(&config_file_handle, &pp_config);
 		/*
-		For debugging purpose only.
+		//For debugging purpose only.
 		printf("############################### %d #################################### \n", i);
 		std::string str = "";
 		google::protobuf::TextFormat::PrintToString(pp_config, &str);
@@ -179,6 +192,17 @@ int MicronfAgent::DeployMicroservices(std::vector<std::string> chain_conf){
 		MaintainLocalDS(pp_config);
 		DeployOneMicroService(pp_config, config_file_path);
 	}
+	
+	
+	//For debugging purpose only.
+	for(int t = 0; t < MAX_NUM_MS; t++){
+		for(int u = 0; u < MAX_NUM_PORT; u++){
+			if(std::get<0>(neighborGraph[t][u]) != 0){
+				printf("%d %d -> %d\n", t, u, std::get<0>(neighborGraph[t][u]));
+			}
+		}
+	}	
+	
 
 return 0;
 }
@@ -194,6 +218,14 @@ int  MicronfAgent::DeployOneMicroService(const PacketProcessorConfig& pp_conf,
 
 	*/
 return 0;
+}
+
+std::string MicronfAgent::getScaleRingName(){
+	return ring_prefix_ + std::to_string(highest_ring_num_++);
+}
+
+int MicronfAgent::getNewInstanceId(){
+	return ++highest_instance_id;
 }
 
 /*
