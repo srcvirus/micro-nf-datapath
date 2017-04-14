@@ -28,14 +28,14 @@ using namespace std;
 // mbuf pools configuration
 #define MAX_NUM_USERV 100
 #define MBUFS_PER_USERV 1536
-#define MBUFS_PER_PORT 1536
+#define MBUFS_PER_PORT 8192 // 1536
 #define MBUF_CACHE_SIZE 512
 #define PKTMBUF_POOL_NAME "MICRONF_MBUF_POOL"
 
 // Port configuration
-#define RTE_MP_RX_DESC_DEFAULT 1024 // 512
-#define RTE_MP_TX_DESC_DEFAULT 1024 // 512
-#define USERV_QUEUE_RINGSIZE 256 // 128
+#define RTE_MP_RX_DESC_DEFAULT 2048 // 512
+#define RTE_MP_TX_DESC_DEFAULT 2048 // 512
+#define USERV_QUEUE_RINGSIZE 2048 // 128
 #define NUM_TX_QUEUE_PERPORT 1
 #define NUM_RX_QUEUE_PERPORT 1
 
@@ -177,7 +177,7 @@ int  MicronfAgent::DestroyMicroService(){
 int MicronfAgent::InitMbufPool(){
 	const unsigned num_mbufs = (MAX_NUM_USERV * MBUFS_PER_USERV) \
 			+ (num_ports_ * MBUFS_PER_PORT);
-
+  // const unsigned num_mbufs = num_ports_ * MBUFS_PER_PORT;
 	printf("Creating mbuf pool '%s' [%u mbufs] ...\n",
 			PKTMBUF_POOL_NAME, num_mbufs);
 
