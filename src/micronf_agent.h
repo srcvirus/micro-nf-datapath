@@ -7,6 +7,7 @@
 #include <iostream>
 #include <fcntl.h>
 #include <utility>
+#include <queue>
 
 #include "common.h"
 
@@ -47,6 +48,14 @@ class MicronfAgent final : public RPC::Service {
 		PacketProcessorConfig ppConfigList[MAX_NUM_MS];
     int DeployOneMicroService(const PacketProcessorConfig& pp_conf,
 																const std::string config_path);
+		//setting available coremask
+		void addAvailCore(std::string str){ avail_core.push(str); };
+		std::string getAvailCore(){ 
+				std::string cm = avail_core.front(); 
+				avail_core.pop(); 
+				return cm;
+		};
+		std::queue<std::string> avail_core;
 
   private:
 		int InitMbufPool();
@@ -57,7 +66,6 @@ class MicronfAgent final : public RPC::Service {
 		void UpdateNeighborGraph(PacketProcessorConfig& pp_config, const PortConfig& pconfig);
 		void MaintainLocalDS(PacketProcessorConfig& pp_conf);
 		void MaintainRingCreation(const PortConfig& pconfig);
- 	
 
 		struct rte_mempool *pktmbuf_pool;
 		int num_ports_;

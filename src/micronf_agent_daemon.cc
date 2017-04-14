@@ -21,7 +21,7 @@ using grpc::Status;
 using namespace std;
 using namespace rpc_agent;
 
-int RunAgent(void* arg) {
+int RunGRPCService(void* arg) {
   MicronfAgent* agent = reinterpret_cast<MicronfAgent*>(arg);
 	//FIXME specify non-dpdk interface
 	std::string server_address("0.0.0.0:50051");
@@ -76,6 +76,8 @@ int main(int argc, char* argv[]){
 		//conf_folder_path + "mac_swapper_4.conf"
 	};
 	
+	micronfAgent.addAvailCore("0x40");	
+	micronfAgent.addAvailCore("0x02");	
 	micronfAgent.DeployMicroservices(chain_conf);
 
 	int monitor_lcore_id = rte_get_next_lcore(rte_lcore_id(), 1, 1);
@@ -88,7 +90,7 @@ int main(int argc, char* argv[]){
                         reinterpret_cast<void*>(&micronfAgent), 
                         nic_classifier_lcore_id);
 
-  RunAgent(&micronfAgent);
+  RunGRPCService(&micronfAgent);
 	
   rte_eal_mp_wait_lcore();
 

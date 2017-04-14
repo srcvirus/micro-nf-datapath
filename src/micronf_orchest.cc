@@ -13,7 +13,6 @@ using grpc::ClientReader;
 
 using namespace std;
 using namespace rpc_agent;
-using namespace micronf_config;
 
 
 class RpcAgent{
@@ -62,6 +61,7 @@ class RpcAgent{
 
 };
 
+/*
 void AddConfigFile(Microservice* ms, string msType, string r1, string r2){
 	ms->set_id(to_string(rand()%1000 + 1));
 
@@ -79,6 +79,7 @@ void AddConfigFile(Microservice* ms, string msType, string r1, string r2){
 	
 //	inPortType->set
 }
+*/
 
 int main(int argc, char* argv[]){
 	cout<<"this is orchestrator"<<endl;

@@ -55,7 +55,7 @@ void NICClassifier::Run(){
           reinterpret_cast<void**>(rule_buffers_[i].get()),
           rule_buffer_cnt_[i]);
       // if (unlikely(tx_count < rule_buffer_cnt_[i])) {
-      this->micronf_stats->packet_drop[INSTANCE_ID_0] += 
+      this->micronf_stats->packet_drop[INSTANCE_ID_0][i] += 
         (rule_buffer_cnt_[i] - tx_count);
       for(j = tx_count; j < rule_buffer_cnt_[i]; ++j)
         rte_pktmbuf_free(rule_buffers_[i].get()[j]);
@@ -63,7 +63,7 @@ void NICClassifier::Run(){
       rule_buffer_cnt_[i] = 0;
     }
 		// TODO read from next port if available
-		if(this->scale_bits->bits.test(INSTANCE_ID_0)){
+		if(this->scale_bits->bits[INSTANCE_ID_0].test(i)){
         // TODO: Change port to smart port
     }
 	}

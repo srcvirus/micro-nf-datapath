@@ -222,17 +222,19 @@ return 0;
 int MicronfAgent::DeployOneMicroService(const PacketProcessorConfig& pp_conf, 
 																					const std::string config_path){
 	printf("Deploying One Micro Service . . .\n");
-	int pid = fork();
-	std::string str = "";
-	if(pid == 0){
-		printf("child started. id: %d\n", pid);
-		char *const argv[] = {"/home/nfuser/dpdk_study/micro-nf-datapath/exec/MacSwapper", "-c", "0x40",
- 		"-n", "2", "--proc-type", "secondary", "--", 
-		"--config-file=/home/nfuser/dpdk_study/micro-nf-datapath/confs/mac_swapper_1.conf", NULL};
+  std::string core_mask = getAvailCore();
+  std::string config_para = "--config-file="+config_path;
 
-		execv("/home/nfuser/dpdk_study/micro-nf-datapath/exec/MacSwapper", argv);
-		return pid;
-	}
+  int pid = fork();
+  if(pid == 0){
+    printf("child started. id: %d\n", pid);
+    char * const argv[] = {"/home/nfuser/dpdk_study/micro-nf-datapath/exec/MacSwapper", "-c", 
+										strdup(core_mask.c_str()), "-n", "2", "--proc-type", "secondary", "--",
+    								strdup(config_para.c_str()), NULL};
+
+    execv("/home/nfuser/dpdk_study/micro-nf-datapath/exec/MacSwapper", argv);
+    return pid;
+  }
 	else {
 		printf("parent id: %d\n", pid);
 		return pid;
