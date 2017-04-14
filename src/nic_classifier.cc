@@ -2,14 +2,11 @@
 #include <unistd.h>
 #include <rte_malloc.h>
 #include <rte_prefetch.h>
-#include <rte_memzone.h>
 #include <stdio.h>
 
 #include "common.h"
-#include <rte_cycles.h>
 
 void NICClassifier::Init(MicronfAgent* agent){
-	//todo initialize using config file
 	this->agent_ = agent;
 }
 
@@ -19,18 +16,29 @@ void NICClassifier::Run(){
   struct ipv4_hdr* ipv4 = nullptr;
   struct tcp_hdr* tcp = nullptr;
   uint16_t rx_count = 0, tx_count = 0;
-  register uint16_t i = 0;
+  register int16_t i = 0;
   register uint16_t j = 0;
-  uint64_t cur_tsc = 0, diff_tsc = 0, prev_tsc = rte_rdtsc(), timer_tsc = 0,
-           total_tx = 0, cur_tx = 0, total_rx = 0;
-	const uint64_t kTimerPeriod = rte_get_timer_hz() * 3;
+  const int16_t kNumPrefetch = 8;
 	printf("NicClassifier thread loop has started\n");
 	for(;;) {
 		rx_count = rte_eth_rx_burst(0, 0, buf, PACKET_READ_SIZE);
-    total_rx += rx_count;
-    if (unlikely(rx_count == 0)) continue;
-    for(i = 0; i < rx_count; i++){
-      rte_prefetch0(buf[i]);
+    // if (unlikely(rx_count == 0)) continue;
+    for (i = 0; i < rx_count && i < kNumPrefetch; ++i)
+      rte_prefetch0(rte_pktmbuf_mtod(buf[i], void*));
+    for (i = 0; i < rx_count - kNumPrefetch; ++i) {
+      rte_prefetch0(rte_pktmbuf_mtod(buf[i], void*));
+      ethernet = rte_pktmbuf_mtod(buf[i], struct ether_hdr*);
+	    ipv4 = reinterpret_cast<struct ipv4_hdr*>(ethernet + 1);
+      tcp = reinterpret_cast<struct tcp_hdr*>(ipv4 + 1);
+      for (j = 0; j < fwd_rules_.size(); ++j) {
+        if (fwd_rules_[j]->Match(ipv4->src_addr, ipv4->dst_addr, tcp->src_port, 
+            tcp->dst_port)) {
+          rule_buffers_[j].get()[rule_buffer_cnt_[j]++] = buf[i];
+          break;
+        }
+      }
+    }
+    for ( ; i < rx_count; ++i) {
       ethernet = rte_pktmbuf_mtod(buf[i], struct ether_hdr*);
 	    ipv4 = reinterpret_cast<struct ipv4_hdr*>(ethernet + 1);
       tcp = reinterpret_cast<struct tcp_hdr*>(ipv4 + 1);
@@ -46,32 +54,18 @@ void NICClassifier::Run(){
       tx_count = rte_ring_enqueue_burst(rings_[i],
           reinterpret_cast<void**>(rule_buffers_[i].get()),
           rule_buffer_cnt_[i]);
-      if (unlikely(tx_count < rule_buffer_cnt_[i])) {
-        for(j = tx_count; j < rule_buffer_cnt_[i]; ++j)
-          rte_pktmbuf_free(rule_buffers_[i].get()[j]);
-      }
+      // if (unlikely(tx_count < rule_buffer_cnt_[i])) {
+      this->micronf_stats->packet_drop[INSTANCE_ID_0] += 
+        (rule_buffer_cnt_[i] - tx_count);
+      for(j = tx_count; j < rule_buffer_cnt_[i]; ++j)
+        rte_pktmbuf_free(rule_buffers_[i].get()[j]);
+      // }
       rule_buffer_cnt_[i] = 0;
     }
 		// TODO read from next port if available
-    cur_tsc = rte_rdtsc();
-    timer_tsc += (cur_tsc - prev_tsc);
-    if (unlikely(timer_tsc > kTimerPeriod)) {
-			int num_nf = this->agent_->micronf_stats->num_nf;
-      printf("Total Rx: %lu\n", total_rx);
-      total_rx = 0;
-			printf("detecting packet drop. . . . num_nf: %d\n", num_nf);
-			// Check statistic of all microservices
-			for(int i=0; i < num_nf; i++){
-				if(this->agent_->micronf_stats->packet_drop[i] != 0){
-					//TODO detect the rate
-					printf("num_nf: %d\n", num_nf);
-					printf("Drop at %i : %u\n", i, this->agent_->micronf_stats->packet_drop[i]);	
-				}
-			}
-
-      timer_tsc = 0;
+		if(this->scale_bits->bits.test(INSTANCE_ID_0)){
+        // TODO: Change port to smart port
     }
-    prev_tsc = cur_tsc;
 	}
 }
 

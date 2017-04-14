@@ -9,6 +9,7 @@
 #include "micronf_agent.grpc.pb.h"
 #include "grpc_service_impl.h"
 #include "nic_classifier.h"
+#include "micronf_monitor.h"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -51,16 +52,32 @@ int RunNICClassifier(void* arg) {
   return 0;
 }
 
+int RunMonitor(void* arg) {
+	MicronfAgent* micronfAgent = reinterpret_cast<MicronfAgent*>(arg);
+	MicronfMonitor micronfMonitor;
+	micronfMonitor.Init(micronfAgent);
+  printf("in RunMonitor\n");
+
+	micronfMonitor.Run();
+	return 0;
+}
 
 int main(int argc, char* argv[]){
 	cout<<"Agent is running"<<endl;
 	MicronfAgent micronfAgent;
 	micronfAgent.Init(argc, argv);
+
   int nic_classifier_lcore_id = rte_get_next_lcore(rte_lcore_id(), 1, 1);
-  rte_eal_remote_launch(RunNICClassifier, 
+	int monitor_lcore_id = rte_get_next_lcore(nic_classifier_lcore_id, 1, 1);
+	rte_eal_remote_launch(RunNICClassifier, 
                         reinterpret_cast<void*>(&micronfAgent), 
                         nic_classifier_lcore_id);
+	rte_eal_remote_launch(RunMonitor, reinterpret_cast<void*> (&micronfAgent),
+													monitor_lcore_id);
+
   RunAgent(&micronfAgent);
-  rte_eal_wait_lcore(nic_classifier_lcore_id);
-	cout<<"Agent finished blocking"<<endl;
+
+  rte_eal_mp_wait_lcore();
+
+return 0;
 }
