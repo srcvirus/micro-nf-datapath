@@ -56,7 +56,8 @@ class MicronfAgent final : public RPC::Service {
 	
 		void UpdateNeighborGraph(PacketProcessorConfig& pp_config, const PortConfig& pconfig);
 		void MaintainLocalDS(PacketProcessorConfig& pp_conf);
-		
+		void MaintainRingCreation(const PortConfig& pconfig);
+ 	
 
 		struct rte_mempool *pktmbuf_pool;
 		int num_ports_;

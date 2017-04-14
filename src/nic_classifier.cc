@@ -64,7 +64,7 @@ void NICClassifier::AddRule(const FwdRule& fwd_rule){
         rte_zmalloc(NULL, sizeof(FwdRule), RTE_CACHE_LINE_SIZE)));
   *(rule.get()) = fwd_rule;
   fwd_rules_.push_back(std::move(rule));
-	agent_->CreateRing(fwd_rule.to_ring());
+	//agent_->CreateRing(fwd_rule.to_ring());
   auto ptr = std::unique_ptr<struct rte_mbuf*>(reinterpret_cast<struct rte_mbuf**>(
         rte_zmalloc(
           NULL, sizeof(struct rte_mbuf*) * PACKET_READ_SIZE, RTE_CACHE_LINE_SIZE)));

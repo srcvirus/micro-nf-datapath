@@ -33,16 +33,6 @@ int RunAgent(void* arg) {
   std::unique_ptr<Server> server(builder.BuildAndStart());
   std::cout << "Agent(Server) listening on " << server_address << std::endl;
 
-	std::string conf_folder_path = "/home/nfuser/dpdk_study/micro-nf-datapath/confs/";	
-	std::vector<std::string> chain_conf = {
-		conf_folder_path + "mac_swapper_1.conf"//,
-		//conf_folder_path + "mac_swapper_2.conf",
-		//conf_folder_path + "mac_swapper_3.conf",
-		//conf_folder_path + "mac_swapper_4.conf"
-	};
-	
-	agent->DeployMicroservices(chain_conf);
-	
   server->Wait();
   return 0;
 }
@@ -77,12 +67,23 @@ int main(int argc, char* argv[]){
 	cout<<"Agent is running"<<endl;
 	MicronfAgent micronfAgent;
 	micronfAgent.Init(argc, argv);
+	
+	std::string conf_folder_path = "/home/nfuser/dpdk_study/micro-nf-datapath/confs/";	
+	std::vector<std::string> chain_conf = {
+		conf_folder_path + "mac_swapper_1.conf"//,
+		//conf_folder_path + "mac_swapper_2.conf",
+		//conf_folder_path + "mac_swapper_3.conf",
+		//conf_folder_path + "mac_swapper_4.conf"
+	};
+	
+	int pid = micronfAgent.DeployMicroservices(chain_conf);
+	//if(pid == 0)
+	//	return 0;
 
 	int monitor_lcore_id = rte_get_next_lcore(rte_lcore_id(), 1, 1);
   int nic_classifier_lcore_id = rte_get_next_lcore(monitor_lcore_id, 1, 1);
-
 	printf("master lcore: %d, monitor lcore: %d, nic_classifier lcore: %d\n", rte_lcore_id(), monitor_lcore_id, nic_classifier_lcore_id);
-	
+
 	rte_eal_remote_launch(RunMonitor, reinterpret_cast<void*> (&micronfAgent),
 													monitor_lcore_id);
 	rte_eal_remote_launch(RunNICClassifier, 
@@ -90,7 +91,7 @@ int main(int argc, char* argv[]){
                         nic_classifier_lcore_id);
 
   RunAgent(&micronfAgent);
-
+	
   rte_eal_mp_wait_lcore();
 
 return 0;

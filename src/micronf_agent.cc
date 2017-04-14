@@ -109,10 +109,10 @@ int MicronfAgent::DeleteRing(string ring_name){
 
 void MicronfAgent::UpdateNeighborGraph(PacketProcessorConfig& pp_config, 
 																									const PortConfig& pconfig){
-	// assuming port_parameter.at(1) countains ring_id/nic_queue_id
 	const auto ring_it = pconfig.port_parameters().find("ring_id");
 	if(ring_it == pconfig.port_parameters().end())
 		return;
+	
 	// FIXME hardcoded for the next of rx thread
 	// Can be determine by looking at config
 	std::get<0>(neighborGraph[0][0]) = 1;
@@ -137,6 +137,16 @@ void MicronfAgent::UpdateNeighborGraph(PacketProcessorConfig& pp_config,
 
 }
 
+void MicronfAgent::MaintainRingCreation(const PortConfig& pconfig){
+	const auto ring_it = pconfig.port_parameters().find("ring_id");
+  if(ring_it == pconfig.port_parameters().end())
+    return;
+	struct rte_ring *ring;
+	ring = rte_ring_lookup(ring_it->second.c_str());
+	if(ring == NULL)
+		CreateRing(ring_it->second.c_str());
+}
+
 void MicronfAgent::MaintainLocalDS(PacketProcessorConfig& pp_conf){
 	// retrieve the config form this DS when scale out
 	ppConfigList[pp_conf.instance_id()] = pp_conf;
@@ -148,6 +158,9 @@ void MicronfAgent::MaintainLocalDS(PacketProcessorConfig& pp_conf){
 	// Check the existing edge and update graph if there is a link
 	for(int pid = 0; pid < pp_conf.port_configs_size(); pid++){
 		const PortConfig& pconfig = pp_conf.port_configs(pid);
+		// Maintain rings created for this config
+		MaintainRingCreation(pconfig);		
+
 		UpdateNeighborGraph(pp_conf, pconfig);	
 	}
 	
@@ -171,14 +184,14 @@ void MicronfAgent::MaintainLocalDS(PacketProcessorConfig& pp_conf){
 
 int MicronfAgent::DeployMicroservices(std::vector<std::string> chain_conf){
 	for(int i=0; i < chain_conf.size(); i++){
+		printf("Chain_conf size: %lu i: %d\n", chain_conf.size(), i);
 		PacketProcessorConfig pp_config;
 		std::string config_file_path = chain_conf[i];
+	
 	  int fd = open(config_file_path.c_str(), O_RDONLY);
 		if (fd < 0)
 			rte_exit(EXIT_FAILURE, "Cannot open configuration file %s\n",
 							 config_file_path.c_str());
-
-		// Read the configuration file into a protobuf object.
 		google::protobuf::io::FileInputStream config_file_handle(fd);
 		config_file_handle.SetCloseOnDelete(true);
 		google::protobuf::TextFormat::Parse(&config_file_handle, &pp_config);
@@ -206,30 +219,25 @@ int MicronfAgent::DeployMicroservices(std::vector<std::string> chain_conf){
 return 0;
 }
 
-int  MicronfAgent::DeployOneMicroService(const PacketProcessorConfig& pp_conf, 
+int MicronfAgent::DeployOneMicroService(const PacketProcessorConfig& pp_conf, 
 																					const std::string config_path){
 	printf("Deploying One Micro Service . . .\n");
 	int pid = fork();
-	printf("in parent after fork, pid: %d\n", pid);
+	printf("parent start id: %d\n", pid);
 	std::string str = "";
 	if(pid == 0){
-		printf("in child, pid: %d\n", pid);
+		printf("child start id: %d\n", pid);
 		char *const argv[] = {"/home/nfuser/dpdk_study/micro-nf-datapath/exec/MacSwapper", "-c", "0x40",
  		"-n", "2", "--proc-type", "secondary", "--", 
 		"--config-file=/home/nfuser/dpdk_study/micro-nf-datapath/confs/mac_swapper_1.conf", NULL};
 
-		execl("","/home/nfuser/dpdk_study/micro-nf-datapath/exec/MacSwapper", "-c", "0x40", "-n", "2", "--proc-type", "secondary", "--", "--config-file=/home/nfuser/dpdk_study/micro-nf-datapath/confs/mac_swapper_1.conf", NULL);		
-
-		//execv("/home/nfuser/dpdk_study/micro-nf-datapath/exec/MacSwapper", argv);
-
-	/*
-		execl((str+"/home/nfuser/dpdk_study/micro-nf-datapath/exec/" + pp_conf.packet_processor_class()).c_str(), 
-							"-c", "0x40", "-n", "2", "--proc-type", "secondary", "--",
-							(str+"--config-file=" + config_path).c_str(), (char*) NULL);
-	*/	
+		execv("/home/nfuser/dpdk_study/micro-nf-datapath/exec/MacSwapper", argv);
+		printf("child end id: %d\n", pid);
+		return pid;
 	}
 
-	return 0;
+	printf("parent return id: %d\n", pid);
+	return pid;
 }
 
 std::string MicronfAgent::getScaleRingName(){
