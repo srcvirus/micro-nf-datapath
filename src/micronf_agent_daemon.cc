@@ -76,9 +76,7 @@ int main(int argc, char* argv[]){
 		//conf_folder_path + "mac_swapper_4.conf"
 	};
 	
-	int pid = micronfAgent.DeployMicroservices(chain_conf);
-	//if(pid == 0)
-	//	return 0;
+	micronfAgent.DeployMicroservices(chain_conf);
 
 	int monitor_lcore_id = rte_get_next_lcore(rte_lcore_id(), 1, 1);
   int nic_classifier_lcore_id = rte_get_next_lcore(monitor_lcore_id, 1, 1);

@@ -150,7 +150,7 @@ void MicronfAgent::MaintainRingCreation(const PortConfig& pconfig){
 void MicronfAgent::MaintainLocalDS(PacketProcessorConfig& pp_conf){
 	// retrieve the config form this DS when scale out
 	ppConfigList[pp_conf.instance_id()] = pp_conf;
-	printf("\npp_conf id: %d\n", pp_conf.instance_id());
+	printf("\npp_conf instance_id: %d\n", pp_conf.instance_id());
 	printf("pp_conf class: %s\n", pp_conf.packet_processor_class().c_str());
 	printf("pp_con num_ingress: %d\n\n", pp_conf.num_ingress_ports());
 
@@ -223,21 +223,20 @@ int MicronfAgent::DeployOneMicroService(const PacketProcessorConfig& pp_conf,
 																					const std::string config_path){
 	printf("Deploying One Micro Service . . .\n");
 	int pid = fork();
-	printf("parent start id: %d\n", pid);
 	std::string str = "";
 	if(pid == 0){
-		printf("child start id: %d\n", pid);
+		printf("child started. id: %d\n", pid);
 		char *const argv[] = {"/home/nfuser/dpdk_study/micro-nf-datapath/exec/MacSwapper", "-c", "0x40",
  		"-n", "2", "--proc-type", "secondary", "--", 
 		"--config-file=/home/nfuser/dpdk_study/micro-nf-datapath/confs/mac_swapper_1.conf", NULL};
 
 		execv("/home/nfuser/dpdk_study/micro-nf-datapath/exec/MacSwapper", argv);
-		printf("child end id: %d\n", pid);
 		return pid;
 	}
-
-	printf("parent return id: %d\n", pid);
-	return pid;
+	else {
+		printf("parent id: %d\n", pid);
+		return pid;
+	}
 }
 
 std::string MicronfAgent::getScaleRingName(){
