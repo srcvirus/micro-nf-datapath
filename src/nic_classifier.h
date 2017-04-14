@@ -17,8 +17,7 @@
 #include <rte_tcp.h>
 #include <rte_memzone.h>
 
-
-#define PACKET_READ_SIZE 32
+#define PACKET_READ_SIZE 64
 #define INSTANCE_ID_0 0
 
 class NICClassifier {
@@ -45,8 +44,6 @@ class NICClassifier {
  		ScaleBitVector *scale_bits;
 		const struct rte_memzone *stat_mz;
 		MSStats* micronf_stats;
-
-
 };
 
 #endif

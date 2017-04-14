@@ -13,7 +13,7 @@ CXX = g++
 CXXFLAGS += -std=c++11 -mssse3 -g -O3 $(INCS) $(LIBDIR)
 LDLIBS +=  `pkg-config --libs grpc++ grpc --libs protobuf`\
            -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed \
-           -lprotobuf  -Wl,--whole-archive -ldpdk -Wl,--no-whole-archive -libverbs -lpthread -ldl
+           -lprotobuf  -Wl,--whole-archive -lrte_pmd_mlx4 -ldpdk -Wl,--no-whole-archive -libverbs -lpthread -ldl
            #-lprotobuf -lpthread -ldpdk -ldl   
 PROTOC = protoc
 GRPC_CPP_PLUGIN = grpc_cpp_plugin
