@@ -22,6 +22,7 @@
 #include <sys/types.h>
 #include <string>
 #include <vector>
+#include <unistd.h>
 
 using namespace std;
 
@@ -193,7 +194,6 @@ int MicronfAgent::DeployMicroservices(std::vector<std::string> chain_conf){
 		DeployOneMicroService(pp_config, config_file_path);
 	}
 	
-	
 	//For debugging purpose only.
 	for(int t = 0; t < MAX_NUM_MS; t++){
 		for(int u = 0; u < MAX_NUM_PORT; u++){
@@ -202,22 +202,34 @@ int MicronfAgent::DeployMicroservices(std::vector<std::string> chain_conf){
 			}
 		}
 	}	
-	
 
 return 0;
 }
 
 int  MicronfAgent::DeployOneMicroService(const PacketProcessorConfig& pp_conf, 
 																					const std::string config_path){
-	// TODO execute microservices
-	/* 
+	printf("Deploying One Micro Service . . .\n");
 	int pid = fork();
+	printf("in parent after fork, pid: %d\n", pid);
+	std::string str = "";
 	if(pid == 0){
-		execl("sudo ./build/micronf -c 0x40 -n 2 --proc-type secondary -- --config-file=./confs/mac_swapper.conf");
+		printf("in child, pid: %d\n", pid);
+		char *const argv[] = {"/home/nfuser/dpdk_study/micro-nf-datapath/exec/MacSwapper", "-c", "0x40",
+ 		"-n", "2", "--proc-type", "secondary", "--", 
+		"--config-file=/home/nfuser/dpdk_study/micro-nf-datapath/confs/mac_swapper_1.conf", NULL};
+
+		execl("","/home/nfuser/dpdk_study/micro-nf-datapath/exec/MacSwapper", "-c", "0x40", "-n", "2", "--proc-type", "secondary", "--", "--config-file=/home/nfuser/dpdk_study/micro-nf-datapath/confs/mac_swapper_1.conf", NULL);		
+
+		//execv("/home/nfuser/dpdk_study/micro-nf-datapath/exec/MacSwapper", argv);
+
+	/*
+		execl((str+"/home/nfuser/dpdk_study/micro-nf-datapath/exec/" + pp_conf.packet_processor_class()).c_str(), 
+							"-c", "0x40", "-n", "2", "--proc-type", "secondary", "--",
+							(str+"--config-file=" + config_path).c_str(), (char*) NULL);
+	*/	
 	}
 
-	*/
-return 0;
+	return 0;
 }
 
 std::string MicronfAgent::getScaleRingName(){

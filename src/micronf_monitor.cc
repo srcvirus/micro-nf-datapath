@@ -58,7 +58,6 @@ void MicronfMonitor::Run(){
 								this->agent_->scale_bits->bits[i].set(j, true);
 								countup_timer[i][j] = 0;	
 								printf("scale out timer is fired up!\n");
-								//TODO deploy the new microservice of type next(i,j) from graph
 								int next_pp_id = std::get<0>(this->agent_->neighborGraph[i][j]);
 								int next_pp_port = std::get<1>(this->agent_->neighborGraph[i][j]);
 								PacketProcessorConfig pp_config_scale = this->agent_->ppConfigList[next_pp_id];

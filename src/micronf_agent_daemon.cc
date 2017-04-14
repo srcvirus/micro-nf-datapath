@@ -32,12 +32,13 @@ int RunAgent(void* arg) {
   builder.RegisterService(&service);
   std::unique_ptr<Server> server(builder.BuildAndStart());
   std::cout << "Agent(Server) listening on " << server_address << std::endl;
-	
+
+	std::string conf_folder_path = "/home/nfuser/dpdk_study/micro-nf-datapath/confs/";	
 	std::vector<std::string> chain_conf = {
-		"../confs/mac_swapper_1.conf",
-		"../confs/mac_swapper_2.conf",
-		"../confs/mac_swapper_3.conf",
-		"../confs/mac_swapper_4.conf"
+		conf_folder_path + "mac_swapper_1.conf"//,
+		//conf_folder_path + "mac_swapper_2.conf",
+		//conf_folder_path + "mac_swapper_3.conf",
+		//conf_folder_path + "mac_swapper_4.conf"
 	};
 	
 	agent->DeployMicroservices(chain_conf);
