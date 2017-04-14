@@ -3,6 +3,7 @@
 #include <rte_lcore.h>
 #include <thread>
 #include <unistd.h>
+#include <vector>
 
 #include "micronf_agent.h"
 #include <grpc++/grpc++.h>
@@ -19,7 +20,6 @@ using grpc::Status;
 
 using namespace std;
 using namespace rpc_agent;
-using namespace micronf_config;
 
 int RunAgent(void* arg) {
   MicronfAgent* agent = reinterpret_cast<MicronfAgent*>(arg);
@@ -32,6 +32,7 @@ int RunAgent(void* arg) {
   builder.RegisterService(&service);
   std::unique_ptr<Server> server(builder.BuildAndStart());
   std::cout << "Agent(Server) listening on " << server_address << std::endl;
+
   server->Wait();
   return 0;
 }
@@ -66,17 +67,31 @@ int main(int argc, char* argv[]){
 	cout<<"Agent is running"<<endl;
 	MicronfAgent micronfAgent;
 	micronfAgent.Init(argc, argv);
+	
+	std::string conf_folder_path = "/home/nfuser/dpdk_study/micro-nf-datapath/confs/";	
+	std::vector<std::string> chain_conf = {
+		conf_folder_path + "mac_swapper_1.conf"//,
+		//conf_folder_path + "mac_swapper_2.conf",
+		//conf_folder_path + "mac_swapper_3.conf",
+		//conf_folder_path + "mac_swapper_4.conf"
+	};
+	
+	int pid = micronfAgent.DeployMicroservices(chain_conf);
+	//if(pid == 0)
+	//	return 0;
 
-  int nic_classifier_lcore_id = rte_get_next_lcore(rte_lcore_id(), 1, 1);
-	int monitor_lcore_id = rte_get_next_lcore(nic_classifier_lcore_id, 1, 1);
+	int monitor_lcore_id = rte_get_next_lcore(rte_lcore_id(), 1, 1);
+  int nic_classifier_lcore_id = rte_get_next_lcore(monitor_lcore_id, 1, 1);
+	printf("master lcore: %d, monitor lcore: %d, nic_classifier lcore: %d\n", rte_lcore_id(), monitor_lcore_id, nic_classifier_lcore_id);
+
+	rte_eal_remote_launch(RunMonitor, reinterpret_cast<void*> (&micronfAgent),
+													monitor_lcore_id);
 	rte_eal_remote_launch(RunNICClassifier, 
                         reinterpret_cast<void*>(&micronfAgent), 
                         nic_classifier_lcore_id);
-	rte_eal_remote_launch(RunMonitor, reinterpret_cast<void*> (&micronfAgent),
-													monitor_lcore_id);
 
   RunAgent(&micronfAgent);
-
+	
   rte_eal_mp_wait_lcore();
 
 return 0;

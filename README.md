@@ -7,7 +7,7 @@ export RTE_SDK=/home/nfuser/dpdk_study/dpdk-17.02
 ### BUILD & RUN     
 make    
 
-sudo ./micronf_agent_daemon --proc-type primary -c 0x01
+sudo ./micronf_agent_daemon --proc-type primary -c 0x1c
 
 ./micronf_orchest    
 
