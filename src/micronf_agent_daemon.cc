@@ -69,7 +69,6 @@ int main(int argc, char* argv[]){
 	MicronfAgent micronfAgent;
 	micronfAgent.Init(argc, argv);
 	
-	// std::string conf_folder_path = "/home/nfuser/dpdk_study/micro-nf-datapath/confs/";	
 	std::string conf_folder_path = "../confs/";	
 	std::vector<std::string> chain_conf = {
 		conf_folder_path + "mac_swapper_test.conf"//,
