@@ -13,59 +13,23 @@ void NICClassifier::Init(MicronfAgent* agent){
 void NICClassifier::Run(){
 	struct rte_mbuf *buf[PACKET_READ_SIZE] = {nullptr};
   struct ether_hdr* ethernet = nullptr;
-  struct ipv4_hdr* ipv4 = nullptr;
-  struct tcp_hdr* tcp = nullptr;
-  uint16_t rx_count = 0, tx_count = 0;
+  uint16_t rx_count = 0;
   register int16_t i = 0;
-  register uint16_t j = 0;
   const int16_t kNumPrefetch = 8;
 	printf("NicClassifier thread loop has started\n");
 	for(;;) {
 		rx_count = rte_eth_rx_burst(0, 0, buf, PACKET_READ_SIZE);
-    // if (unlikely(rx_count == 0)) continue;
+    rte_eth_tx_burst(0, 0, buf, PACKET_READ_SIZE);
     for (i = 0; i < rx_count && i < kNumPrefetch; ++i)
       rte_prefetch0(rte_pktmbuf_mtod(buf[i], void*));
     for (i = 0; i < rx_count - kNumPrefetch; ++i) {
-      rte_prefetch0(rte_pktmbuf_mtod(buf[i], void*));
+      rte_prefetch0(rte_pktmbuf_mtod(buf[i + kNumPrefetch], void*));
       ethernet = rte_pktmbuf_mtod(buf[i], struct ether_hdr*);
-	    ipv4 = reinterpret_cast<struct ipv4_hdr*>(ethernet + 1);
-      tcp = reinterpret_cast<struct tcp_hdr*>(ipv4 + 1);
-      for (j = 0; j < fwd_rules_.size(); ++j) {
-        if (fwd_rules_[j]->Match(ipv4->src_addr, ipv4->dst_addr, tcp->src_port, 
-            tcp->dst_port)) {
-          rule_buffers_[j].get()[rule_buffer_cnt_[j]++] = buf[i];
-          break;
-        }
-      }
+      std::swap(ethernet->s_addr.addr_bytes, ethernet->d_addr.addr_bytes);
     }
     for ( ; i < rx_count; ++i) {
       ethernet = rte_pktmbuf_mtod(buf[i], struct ether_hdr*);
-	    ipv4 = reinterpret_cast<struct ipv4_hdr*>(ethernet + 1);
-      tcp = reinterpret_cast<struct tcp_hdr*>(ipv4 + 1);
-      for (j = 0; j < fwd_rules_.size(); ++j) {
-        if (fwd_rules_[j]->Match(ipv4->src_addr, ipv4->dst_addr, tcp->src_port, 
-            tcp->dst_port)) {
-          rule_buffers_[j].get()[rule_buffer_cnt_[j]++] = buf[i];
-          break;
-        }
-      }
-    }
-    for (i = 0; i < rule_buffers_.size(); ++i) {
-      tx_count = rte_ring_enqueue_burst(rings_[i],
-          reinterpret_cast<void**>(rule_buffers_[i].get()),
-          rule_buffer_cnt_[i]);
-      //if (unlikely(tx_count < rule_buffer_cnt_[i])) {
-			//printf("Dropping: %u\n", (unsigned) (rule_buffer_cnt_[i] - tx_count));
-      this->micronf_stats->packet_drop[INSTANCE_ID_0][i] += 
-        (rule_buffer_cnt_[i] - tx_count);
-      for(j = tx_count; j < rule_buffer_cnt_[i]; ++j)
-        rte_pktmbuf_free(rule_buffers_[i].get()[j]);
-      //}
-      rule_buffer_cnt_[i] = 0;
-    }
-		// TODO read from next port if available
-		if(this->scale_bits->bits[INSTANCE_ID_0].test(i)){
-        // TODO: Change port to smart port
+      std::swap(ethernet->s_addr.addr_bytes, ethernet->d_addr.addr_bytes);
     }
 	}
 }
@@ -76,7 +40,6 @@ void NICClassifier::AddRule(const FwdRule& fwd_rule){
         rte_zmalloc(NULL, sizeof(FwdRule), RTE_CACHE_LINE_SIZE)));
   *(rule.get()) = fwd_rule;
   fwd_rules_.push_back(std::move(rule));
-	//agent_->CreateRing(fwd_rule.to_ring());
   auto ptr = std::unique_ptr<struct rte_mbuf*>(reinterpret_cast<struct rte_mbuf**>(
         rte_zmalloc(
           NULL, sizeof(struct rte_mbuf*) * PACKET_READ_SIZE, RTE_CACHE_LINE_SIZE)));
