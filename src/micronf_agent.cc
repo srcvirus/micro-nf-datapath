@@ -228,11 +228,11 @@ int MicronfAgent::DeployOneMicroService(const PacketProcessorConfig& pp_conf,
   int pid = fork();
   if(pid == 0){
     printf("child started. id: %d\n", pid);
-    char * const argv[] = {"/home/nfuser/dpdk_study/micro-nf-datapath/exec/MacSwapper", "-c", 
+    char * const argv[] = {"../exec/MacSwapper", "-c", 
 										strdup(core_mask.c_str()), "-n", "2", "--proc-type", "secondary", "--",
     								strdup(config_para.c_str()), NULL};
 
-    execv("/home/nfuser/dpdk_study/micro-nf-datapath/exec/MacSwapper", argv);
+    execv("../exec/MacSwapper", argv);
     return pid;
   }
 	else {
