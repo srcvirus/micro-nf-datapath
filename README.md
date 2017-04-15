@@ -9,7 +9,11 @@ make
 
 sudo ./micronf_agent_daemon --proc-type primary -c 0x1c
 
-./micronf_orchest    
+### Moving packet processor executables   
+copy file to micro-nf-datapath/exec/$PACKET_PROCESSOR_CLASS   
+e.g.     
+cp ../../micro-nf/build/micronf ../exec/MacSwapper    
+
 
 ### DONE:     
 - skeleton class for agent    
@@ -17,7 +21,8 @@ sudo ./micronf_agent_daemon --proc-type primary -c 0x1c
 - implementing ring creation  
 - configuration files handling (orchest)   
 - statistic shared between ms
+- microservice deployment       
 
 ### TODO:    
-- configuration files handling (agent)   
-- microservice deployment       
+- scale out testing and impact    
+- evaluation    
