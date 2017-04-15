@@ -26,3 +26,7 @@ cp ../../micro-nf/build/micronf ../exec/MacSwapper
 ### TODO:    
 - scale out testing and impact    
 - evaluation    
+
+### Run pktgen
+$ cd ~/pktgen-dpdk
+$ sudo ./app/app/x86_64-native-linuxapp-gcc/pktgen -c 0x00000FC0 -n 8 --master-lcore 6 -- -P -m "[7:7].0"
