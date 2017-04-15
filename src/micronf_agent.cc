@@ -349,7 +349,7 @@ int MicronfAgent::InitPort(int port_id)
 		if (retval < 0) return retval;
 	}
 	
-	for(int q=0; q < rx_rings; q++){
+	for(int q=0; q < tx_rings; q++){
 		retval = rte_eth_tx_queue_setup(port_id, q, tx_ring_size,
 				rte_eth_dev_socket_id(port_id), NULL);
 		if (retval < 0) return retval;
