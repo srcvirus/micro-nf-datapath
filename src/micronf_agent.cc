@@ -37,7 +37,7 @@ using namespace std;
 #define RTE_MP_RX_DESC_DEFAULT 2048 // 512
 #define RTE_MP_TX_DESC_DEFAULT 2048 // 512
 #define USERV_QUEUE_RINGSIZE 2048 // 128
-#define NUM_TX_QUEUE_PERPORT 1
+#define NUM_TX_QUEUE_PERPORT 1 
 #define NUM_RX_QUEUE_PERPORT 1
 
 MicronfAgent::MicronfAgent(){
@@ -228,6 +228,7 @@ int MicronfAgent::DeployOneMicroService(const PacketProcessorConfig& pp_conf,
   int pid = fork();
   if(pid == 0){
     printf("child started. id: %d\n", pid);
+		printf("coremask: %s\n", strdup(core_mask.c_str()));
     char * const argv[] = {"/home/nfuser/dpdk_study/micro-nf-datapath/exec/MacSwapper", "-c", 
 										strdup(core_mask.c_str()), "-n", "2", "--proc-type", "secondary", "--",
     								strdup(config_para.c_str()), NULL};
@@ -349,7 +350,7 @@ int MicronfAgent::InitPort(int port_id)
 		if (retval < 0) return retval;
 	}
 	
-	for(int q=0; q < rx_rings; q++){
+	for(int q=0; q < tx_rings; q++){
 		retval = rte_eth_tx_queue_setup(port_id, q, tx_ring_size,
 				rte_eth_dev_socket_id(port_id), NULL);
 		if (retval < 0) return retval;

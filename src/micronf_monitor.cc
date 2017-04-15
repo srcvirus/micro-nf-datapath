@@ -15,7 +15,7 @@ void MicronfMonitor::Run(){
 	// gather the statistic per second
   const uint64_t kTimerPeriod = rte_get_timer_hz() * 1;
 	// wait 5s after the scale-out operation is performed
-  const uint64_t countupTimerPeriod = rte_get_timer_hz() * 5;
+  const uint64_t countupTimerPeriod = rte_get_timer_hz() * 100;
 	unsigned int drop_history[MAX_NUM_MS][MAX_NUM_PORT][2] = {};	
 	unsigned int round = 0;
 	uint64_t countup_timer[MAX_NUM_MS][MAX_NUM_PORT] = {};
@@ -66,6 +66,8 @@ void MicronfMonitor::Run(){
 								std::string new_conf_path = "../confs/mac_swapper_" + new_instance_id+".conf";
 
 								pp_config_scale.set_instance_id(int_new_instance_id);
+								
+								remove(new_conf_path.c_str());
 								int fd = open(new_conf_path.c_str(), O_RDWR|O_CREAT, 0644);
 								if(fd < 0)
 									rte_exit(EXIT_FAILURE, "Cannot open configuration file %s\n", 
