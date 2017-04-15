@@ -13,13 +13,12 @@ void NICClassifier::Init(MicronfAgent* agent){
 void NICClassifier::Run(){
 	struct rte_mbuf *buf[PACKET_READ_SIZE] = {nullptr};
   struct ether_hdr* ethernet = nullptr;
-  uint16_t rx_count = 0;
+  uint16_t rx_count = 0, tx_count = 0;
   register int16_t i = 0;
   const int16_t kNumPrefetch = 8;
 	printf("NicClassifier thread loop has started\n");
 	for(;;) {
 		rx_count = rte_eth_rx_burst(0, 0, buf, PACKET_READ_SIZE);
-    rte_eth_tx_burst(0, 0, buf, PACKET_READ_SIZE);
     for (i = 0; i < rx_count && i < kNumPrefetch; ++i)
       rte_prefetch0(rte_pktmbuf_mtod(buf[i], void*));
     for (i = 0; i < rx_count - kNumPrefetch; ++i) {
@@ -31,6 +30,9 @@ void NICClassifier::Run(){
       ethernet = rte_pktmbuf_mtod(buf[i], struct ether_hdr*);
       std::swap(ethernet->s_addr.addr_bytes, ethernet->d_addr.addr_bytes);
     }
+    tx_count = rte_eth_tx_burst(0, 0, buf, rx_count);
+    for (i = tx_count; i < rx_count; ++i)
+      rte_pktmbuf_free(buf[i]);
 	}
 }
 
