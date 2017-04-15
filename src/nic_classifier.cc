@@ -19,17 +19,17 @@ void NICClassifier::Run(){
 	printf("NicClassifier thread loop has started\n");
 	for(;;) {
 		rx_count = rte_eth_rx_burst(0, 0, buf, PACKET_READ_SIZE);
-    for (i = 0; i < rx_count && i < kNumPrefetch; ++i)
-      rte_prefetch0(rte_pktmbuf_mtod(buf[i], void*));
-    for (i = 0; i < rx_count - kNumPrefetch; ++i) {
-      rte_prefetch0(rte_pktmbuf_mtod(buf[i + kNumPrefetch], void*));
+    // for (i = 0; i < rx_count && i < kNumPrefetch; ++i)
+    //   rte_prefetch0(rte_pktmbuf_mtod(buf[i], void*));
+    for (i = 0; i < rx_count; ++i) {
+      // rte_prefetch0(rte_pktmbuf_mtod(buf[i + kNumPrefetch], void*));
       ethernet = rte_pktmbuf_mtod(buf[i], struct ether_hdr*);
       std::swap(ethernet->s_addr.addr_bytes, ethernet->d_addr.addr_bytes);
     }
-    for ( ; i < rx_count; ++i) {
-      ethernet = rte_pktmbuf_mtod(buf[i], struct ether_hdr*);
-      std::swap(ethernet->s_addr.addr_bytes, ethernet->d_addr.addr_bytes);
-    }
+    //for ( ; i < rx_count; ++i) {
+    //  ethernet = rte_pktmbuf_mtod(buf[i], struct ether_hdr*);
+    //  std::swap(ethernet->s_addr.addr_bytes, ethernet->d_addr.addr_bytes);
+    //}
     tx_count = rte_eth_tx_burst(0, 0, buf, rx_count);
     for (i = tx_count; i < rx_count; ++i)
       rte_pktmbuf_free(buf[i]);
