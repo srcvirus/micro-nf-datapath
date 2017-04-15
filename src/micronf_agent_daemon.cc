@@ -70,7 +70,7 @@ int main(int argc, char* argv[]){
 	
 	std::string conf_folder_path = "/home/nfuser/dpdk_study/micro-nf-datapath/confs/";	
 	std::vector<std::string> chain_conf = {
-		conf_folder_path + "mac_swapper_1.conf"//,
+		conf_folder_path + "mac_swapper_test.conf"//,
 		//conf_folder_path + "mac_swapper_2.conf",
 		//conf_folder_path + "mac_swapper_3.conf",
 		//conf_folder_path + "mac_swapper_4.conf"

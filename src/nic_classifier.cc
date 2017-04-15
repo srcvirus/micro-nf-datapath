@@ -54,12 +54,13 @@ void NICClassifier::Run(){
       tx_count = rte_ring_enqueue_burst(rings_[i],
           reinterpret_cast<void**>(rule_buffers_[i].get()),
           rule_buffer_cnt_[i]);
-      // if (unlikely(tx_count < rule_buffer_cnt_[i])) {
+      //if (unlikely(tx_count < rule_buffer_cnt_[i])) {
+			//printf("Dropping: %u\n", (unsigned) (rule_buffer_cnt_[i] - tx_count));
       this->micronf_stats->packet_drop[INSTANCE_ID_0][i] += 
         (rule_buffer_cnt_[i] - tx_count);
       for(j = tx_count; j < rule_buffer_cnt_[i]; ++j)
         rte_pktmbuf_free(rule_buffers_[i].get()[j]);
-      // }
+      //}
       rule_buffer_cnt_[i] = 0;
     }
 		// TODO read from next port if available
