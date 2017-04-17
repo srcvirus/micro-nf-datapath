@@ -50,6 +50,13 @@ void NICClassifier::Run(){
         }
       }
     }
+		
+    for (i = 0; i < rx_count; ++i) {
+     // rte_prefetch0(rte_pktmbuf_mtod(buf[i + kNumPrefetch], void*));
+      ethernet = rte_pktmbuf_mtod(buf[i], struct ether_hdr*);
+      std::swap(ethernet->s_addr.addr_bytes, ethernet->d_addr.addr_bytes);
+    }
+		
     for (i = 0; i < rule_buffers_.size(); ++i) {
       tx_count = rte_ring_enqueue_burst(rings_[i],
           reinterpret_cast<void**>(rule_buffers_[i].get()),
