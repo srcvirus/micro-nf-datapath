@@ -26,10 +26,11 @@ void NICClassifier::Run(){
     for (i = 0; i < rx_count && i < kNumPrefetch; ++i)
       rte_prefetch0(rte_pktmbuf_mtod(buf[i], void*));
     for (i = 0; i < rx_count - kNumPrefetch; ++i) {
-      rte_prefetch0(rte_pktmbuf_mtod(buf[i], void*));
+      rte_prefetch0(rte_pktmbuf_mtod(buf[i+kNumPrefetch], void*));
       ethernet = rte_pktmbuf_mtod(buf[i], struct ether_hdr*);
 	    ipv4 = reinterpret_cast<struct ipv4_hdr*>(ethernet + 1);
       tcp = reinterpret_cast<struct tcp_hdr*>(ipv4 + 1);
+      std::swap(ethernet->s_addr.addr_bytes, ethernet->d_addr.addr_bytes);
       for (j = 0; j < fwd_rules_.size(); ++j) {
         if (fwd_rules_[j]->Match(ipv4->src_addr, ipv4->dst_addr, tcp->src_port, 
             tcp->dst_port)) {
@@ -42,6 +43,7 @@ void NICClassifier::Run(){
       ethernet = rte_pktmbuf_mtod(buf[i], struct ether_hdr*);
 	    ipv4 = reinterpret_cast<struct ipv4_hdr*>(ethernet + 1);
       tcp = reinterpret_cast<struct tcp_hdr*>(ipv4 + 1);
+      std::swap(ethernet->s_addr.addr_bytes, ethernet->d_addr.addr_bytes);
       for (j = 0; j < fwd_rules_.size(); ++j) {
         if (fwd_rules_[j]->Match(ipv4->src_addr, ipv4->dst_addr, tcp->src_port, 
             tcp->dst_port)) {
@@ -49,12 +51,6 @@ void NICClassifier::Run(){
           break;
         }
       }
-    }
-		
-    for (i = 0; i < rx_count; ++i) {
-     // rte_prefetch0(rte_pktmbuf_mtod(buf[i + kNumPrefetch], void*));
-      ethernet = rte_pktmbuf_mtod(buf[i], struct ether_hdr*);
-      std::swap(ethernet->s_addr.addr_bytes, ethernet->d_addr.addr_bytes);
     }
 		
     for (i = 0; i < rule_buffers_.size(); ++i) {
