@@ -224,15 +224,20 @@ int MicronfAgent::DeployOneMicroService(const PacketProcessorConfig& pp_conf,
 	printf("Deploying One Micro Service . . .\n");
   std::string core_mask = getAvailCore();
   std::string config_para = "--config-file="+config_path;
+	
+	if(core_mask == "empty"){
+			printf("No available core ! ! !\n");
+			return -1;
+	}	
 
   int pid = fork();
   if(pid == 0){
     printf("child started. id: %d\n", pid);
-    char * const argv[] = {"../exec/MacSwapper", "-c", 
+    char * const argv[] = {"../exec/micronf", "-c", 
 										strdup(core_mask.c_str()), "-n", "2", "--proc-type", "secondary", "--",
     								strdup(config_para.c_str()), NULL};
 
-    execv("../exec/MacSwapper", argv);
+    execv("../exec/micronf", argv);
     return pid;
   }
 	else {
