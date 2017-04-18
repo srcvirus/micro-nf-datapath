@@ -195,13 +195,13 @@ int MicronfAgent::DeployMicroservices(std::vector<std::string> chain_conf){
 		google::protobuf::io::FileInputStream config_file_handle(fd);
 		config_file_handle.SetCloseOnDelete(true);
 		google::protobuf::TextFormat::Parse(&config_file_handle, &pp_config);
-		/*
+		
 		//For debugging purpose only.
 		printf("############################### %d #################################### \n", i);
 		std::string str = "";
 		google::protobuf::TextFormat::PrintToString(pp_config, &str);
 		printf("%s\n\n\n", str.c_str());
-		*/
+		
 
 		MaintainLocalDS(pp_config);
 		DeployOneMicroService(pp_config, config_file_path);
