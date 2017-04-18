@@ -4,6 +4,7 @@
 #include <thread>
 #include <unistd.h>
 #include <vector>
+#include <rte_cycles.h>
 
 #include "micronf_agent.h"
 #include <grpc++/grpc++.h>
@@ -58,7 +59,7 @@ int RunMonitor(void* arg) {
 	MicronfMonitor micronfMonitor;
 	micronfMonitor.Init(micronfAgent);
   printf("in RunMonitor\n");
-
+	rte_delay_ms(10000);
 	micronfMonitor.Run();
 	return 0;
 }
@@ -71,15 +72,18 @@ int main(int argc, char* argv[]){
 	// std::string conf_folder_path = "/home/nfuser/dpdk_study/micro-nf-datapath/confs/";	
 	std::string conf_folder_path = "../confs/";	
 	std::vector<std::string> chain_conf = {
-		conf_folder_path + "sleepy.conf"//,
-		//conf_folder_path + "mac_swapper_test.conf"//,
-		//conf_folder_path + "mac_swapper_2.conf",
-		//conf_folder_path + "mac_swapper_3.conf",
-		//conf_folder_path + "mac_swapper_4.conf"
+		conf_folder_path + "Sleepy.conf"//,
+		//conf_folder_path + "MacSwapper_test.conf"//,
+		//conf_folder_path + "MacSwapper_2.conf",
+		//conf_folder_path + "MacSwapper_3.conf",
+		//conf_folder_path + "MacSwapper_4.conf"
 	};
 	
-	micronfAgent.addAvailCore("0x200");	
-	micronfAgent.addAvailCore("0x400");	
+	micronfAgent.addAvailCore("0x40");	
+	micronfAgent.addAvailCore("0x02");	
+	micronfAgent.addAvailCore("0x80");	
+	//micronfAgent.addAvailCore("0x200");	
+	//micronfAgent.addAvailCore("0x400");	
 	micronfAgent.DeployMicroservices(chain_conf);
 
 	int monitor_lcore_id = rte_get_next_lcore(rte_lcore_id(), 1, 1);
