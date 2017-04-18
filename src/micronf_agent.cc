@@ -30,7 +30,7 @@ using namespace std;
 #define MAX_NUM_USERV 150
 #define MBUFS_PER_USERV 1536
 #define MBUFS_PER_PORT 8192 // 1536
-#define MBUF_CACHE_SIZE 512
+#define MBUF_CACHE_SIZE 0 // 512
 #define PKTMBUF_POOL_NAME "MICRONF_MBUF_POOL"
 
 // Port configuration
