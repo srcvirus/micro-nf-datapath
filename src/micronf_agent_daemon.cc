@@ -72,18 +72,26 @@ int main(int argc, char* argv[]){
 	// std::string conf_folder_path = "/home/nfuser/dpdk_study/micro-nf-datapath/confs/";	
 	std::string conf_folder_path = "../confs/";	
 	std::vector<std::string> chain_conf = {
-		conf_folder_path + "Sleepy.conf"//,
+		conf_folder_path + "p1.conf",
+		conf_folder_path + "p2.conf",
+		conf_folder_path + "p3.conf",
+		conf_folder_path + "p4.conf"
+		//conf_folder_path + "Sleepy.conf"//,
 		//conf_folder_path + "MacSwapper_test.conf"//,
 		//conf_folder_path + "MacSwapper_2.conf",
 		//conf_folder_path + "MacSwapper_3.conf",
-		//conf_folder_path + "MacSwapper_4.conf"
+		//conf_folder_path + "MacSwapper_4.conf" */
 	};
 	
 	micronfAgent.addAvailCore("0x40");	
 	micronfAgent.addAvailCore("0x02");	
 	micronfAgent.addAvailCore("0x80");	
+	micronfAgent.addAvailCore("0x04");	
+	micronfAgent.addAvailCore("0x08");	
 	//micronfAgent.addAvailCore("0x200");	
 	//micronfAgent.addAvailCore("0x400");	
+	micronfAgent.CreateRing("ring_1_0");
+	micronfAgent.CreateRing("ring_1_1");
 	micronfAgent.DeployMicroservices(chain_conf);
 
 	int monitor_lcore_id = rte_get_next_lcore(rte_lcore_id(), 1, 1);
