@@ -37,7 +37,7 @@ using namespace std;
 #define RTE_MP_RX_DESC_DEFAULT 2048 // 512
 #define RTE_MP_TX_DESC_DEFAULT 2048 // 512
 #define USERV_QUEUE_RINGSIZE 2048 // 128
-#define NUM_TX_QUEUE_PERPORT 1
+#define NUM_TX_QUEUE_PERPORT 1 
 #define NUM_RX_QUEUE_PERPORT 1
 
 MicronfAgent::MicronfAgent(){
