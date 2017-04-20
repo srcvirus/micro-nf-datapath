@@ -18,7 +18,7 @@ void NICClassifier::Run(){
   uint16_t rx_count = 0, tx_count = 0;
   register int16_t i = 0;
   register uint16_t j = 0;
-  const int16_t kNumPrefetch = 8;
+  const int16_t kNumPrefetch = 0;
 	printf("NicClassifier thread loop has started\n");
 	for(;;) {
 		rx_count = rte_eth_rx_burst(0, 0, buf, PACKET_READ_SIZE);
@@ -26,7 +26,7 @@ void NICClassifier::Run(){
     for (i = 0; i < rx_count && i < kNumPrefetch; ++i)
       rte_prefetch0(rte_pktmbuf_mtod(buf[i], void*));
     for (i = 0; i < rx_count - kNumPrefetch; ++i) {
-      rte_prefetch0(rte_pktmbuf_mtod(buf[i]+kNumPrefetch, void*));
+      rte_prefetch0(rte_pktmbuf_mtod(buf[i+kNumPrefetch], void*));
       ethernet = rte_pktmbuf_mtod(buf[i], struct ether_hdr*);
 	    ipv4 = reinterpret_cast<struct ipv4_hdr*>(ethernet + 1);
       tcp = reinterpret_cast<struct tcp_hdr*>(ipv4 + 1);

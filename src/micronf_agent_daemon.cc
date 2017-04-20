@@ -60,7 +60,7 @@ int RunMonitor(void* arg) {
 	micronfMonitor.Init(micronfAgent);
   printf("in RunMonitor\n");
 	rte_delay_ms(1000*10);
-	micronfMonitor.Run();
+	//micronfMonitor.Run();
 	return 0;
 }
 
@@ -85,13 +85,12 @@ int main(int argc, char* argv[]){
 	micronfAgent.addAvailCore("0x800000");	
 	micronfAgent.DeployMicroservices(chain_conf);
 
-	//int monitor_lcore_id = rte_get_next_lcore(rte_lcore_id(), 1, 1);
+	// int monitor_lcore_id = rte_get_next_lcore(rte_lcore_id(), 1, 1);
 	int monitor_lcore_id = 15;
-  	int nic_classifier_lcore_id = 18;
+  	int nic_classifier_lcore_id = 19;
+	// int nic_classifier_lcore_id = rte_get_next_lcore(monitor_lcore_id, 1, 1);
 	printf("master lcore: %d, monitor lcore: %d, nic_classifier lcore: %d\n", rte_lcore_id(), monitor_lcore_id, nic_classifier_lcore_id);
-
-	rte_eal_remote_launch(RunMonitor, reinterpret_cast<void*> (&micronfAgent),
-													monitor_lcore_id);
+	rte_eal_remote_launch(RunMonitor, reinterpret_cast<void*> (&micronfAgent), monitor_lcore_id);
 	rte_eal_remote_launch(RunNICClassifier, 
                         reinterpret_cast<void*>(&micronfAgent), 
                         nic_classifier_lcore_id);
