@@ -15,7 +15,7 @@ void MicronfMonitor::Run(){
 	// gather the statistic per second
   const uint64_t kTimerPeriod = rte_get_timer_hz() * 1;
 	// wait 5s after the scale-out operation is performed
-  const uint64_t countupTimerPeriod = rte_get_timer_hz() * 100;
+  const uint64_t countupTimerPeriod = rte_get_timer_hz() * 5;
 	unsigned int drop_history[MAX_NUM_MS][MAX_NUM_PORT][2] = {};	
 	unsigned int round = 0;
 	uint64_t countup_timer[MAX_NUM_MS][MAX_NUM_PORT] = {};
@@ -63,7 +63,8 @@ void MicronfMonitor::Run(){
 								PacketProcessorConfig pp_config_scale = this->agent_->ppConfigList[next_pp_id];
 								int int_new_instance_id = this->agent_->getNewInstanceId();
 								std::string new_instance_id = std::to_string(int_new_instance_id);
-								std::string new_conf_path = "../confs/mac_swapper_" + new_instance_id+".conf";
+								std::string new_conf_path = "../confs/"+pp_config_scale.packet_processor_class() + 
+												"_" + new_instance_id + ".conf";
 
 								pp_config_scale.set_instance_id(int_new_instance_id);
 								
