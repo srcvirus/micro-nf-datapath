@@ -15,7 +15,7 @@ void MicronfMonitor::Run(){
 	// gather the statistic per second
   const uint64_t kTimerPeriod = rte_get_timer_hz() * 1;
 	// wait 5s after the scale-out operation is performed
-  const uint64_t countupTimerPeriod = rte_get_timer_hz() * 5;
+  const uint64_t countupTimerPeriod = rte_get_timer_hz() * 10;
 	unsigned int drop_history[MAX_NUM_MS][MAX_NUM_PORT][2] = {};	
 	unsigned int round = 0;
 	uint64_t countup_timer[MAX_NUM_MS][MAX_NUM_PORT] = {};
