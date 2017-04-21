@@ -224,7 +224,10 @@ int MicronfAgent::DeployOneMicroService(const PacketProcessorConfig& pp_conf,
 	printf("Deploying One Micro Service . . .\n");
   std::string core_mask = getAvailCore();
   std::string config_para = "--config-file="+config_path;
-
+  if(core_mask == "empty"){
+	    printf("No available core ! ! !\n");
+		  return -1;
+  } 
   int pid = fork();
   if(pid == 0){
     printf("child started. id: %d\n", pid);

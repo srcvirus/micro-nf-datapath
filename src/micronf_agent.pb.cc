@@ -18,128 +18,138 @@
 // @@protoc_insertion_point(includes)
 
 namespace rpc_agent {
-class CreateRingRequestDefaultTypeInternal : public ::google::protobuf::internal::ExplicitlyConstructed<CreateRingRequest> {
-} _CreateRingRequest_default_instance_;
-class ErrnoDefaultTypeInternal : public ::google::protobuf::internal::ExplicitlyConstructed<Errno> {
-} _Errno_default_instance_;
-class DeployConfigDefaultTypeInternal : public ::google::protobuf::internal::ExplicitlyConstructed<DeployConfig> {
-} _DeployConfig_default_instance_;
-
-namespace protobuf_micronf_5fagent_2eproto {
-
 
 namespace {
 
-::google::protobuf::Metadata file_level_metadata[3];
+const ::google::protobuf::Descriptor* CreateRingRequest_descriptor_ = NULL;
+const ::google::protobuf::internal::GeneratedMessageReflection*
+  CreateRingRequest_reflection_ = NULL;
+const ::google::protobuf::Descriptor* Errno_descriptor_ = NULL;
+const ::google::protobuf::internal::GeneratedMessageReflection*
+  Errno_reflection_ = NULL;
+const ::google::protobuf::Descriptor* DeployConfig_descriptor_ = NULL;
+const ::google::protobuf::internal::GeneratedMessageReflection*
+  DeployConfig_reflection_ = NULL;
 
 }  // namespace
 
-const ::google::protobuf::uint32 TableStruct::offsets[] = {
-  ~0u,  // no _has_bits_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(CreateRingRequest, _internal_metadata_),
-  ~0u,  // no _extensions_
-  ~0u,  // no _oneof_case_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(CreateRingRequest, name_),
-  ~0u,  // no _has_bits_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Errno, _internal_metadata_),
-  ~0u,  // no _extensions_
-  ~0u,  // no _oneof_case_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Errno, err_),
-  ~0u,  // no _has_bits_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DeployConfig, _internal_metadata_),
-  ~0u,  // no _extensions_
-  ~0u,  // no _oneof_case_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DeployConfig, config_),
-};
 
-static const ::google::protobuf::internal::MigrationSchema schemas[] = {
-  { 0, -1, sizeof(CreateRingRequest)},
-  { 5, -1, sizeof(Errno)},
-  { 10, -1, sizeof(DeployConfig)},
-};
-
-static ::google::protobuf::Message const * const file_default_instances[] = {
-  reinterpret_cast<const ::google::protobuf::Message*>(&_CreateRingRequest_default_instance_),
-  reinterpret_cast<const ::google::protobuf::Message*>(&_Errno_default_instance_),
-  reinterpret_cast<const ::google::protobuf::Message*>(&_DeployConfig_default_instance_),
-};
+void protobuf_AssignDesc_micronf_5fagent_2eproto() GOOGLE_ATTRIBUTE_COLD;
+void protobuf_AssignDesc_micronf_5fagent_2eproto() {
+  protobuf_AddDesc_micronf_5fagent_2eproto();
+  const ::google::protobuf::FileDescriptor* file =
+    ::google::protobuf::DescriptorPool::generated_pool()->FindFileByName(
+      "micronf_agent.proto");
+  GOOGLE_CHECK(file != NULL);
+  CreateRingRequest_descriptor_ = file->message_type(0);
+  static const int CreateRingRequest_offsets_[1] = {
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(CreateRingRequest, name_),
+  };
+  CreateRingRequest_reflection_ =
+    ::google::protobuf::internal::GeneratedMessageReflection::NewGeneratedMessageReflection(
+      CreateRingRequest_descriptor_,
+      CreateRingRequest::default_instance_,
+      CreateRingRequest_offsets_,
+      -1,
+      -1,
+      -1,
+      sizeof(CreateRingRequest),
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(CreateRingRequest, _internal_metadata_),
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(CreateRingRequest, _is_default_instance_));
+  Errno_descriptor_ = file->message_type(1);
+  static const int Errno_offsets_[1] = {
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Errno, err_),
+  };
+  Errno_reflection_ =
+    ::google::protobuf::internal::GeneratedMessageReflection::NewGeneratedMessageReflection(
+      Errno_descriptor_,
+      Errno::default_instance_,
+      Errno_offsets_,
+      -1,
+      -1,
+      -1,
+      sizeof(Errno),
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Errno, _internal_metadata_),
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Errno, _is_default_instance_));
+  DeployConfig_descriptor_ = file->message_type(2);
+  static const int DeployConfig_offsets_[1] = {
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DeployConfig, config_),
+  };
+  DeployConfig_reflection_ =
+    ::google::protobuf::internal::GeneratedMessageReflection::NewGeneratedMessageReflection(
+      DeployConfig_descriptor_,
+      DeployConfig::default_instance_,
+      DeployConfig_offsets_,
+      -1,
+      -1,
+      -1,
+      sizeof(DeployConfig),
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DeployConfig, _internal_metadata_),
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DeployConfig, _is_default_instance_));
+}
 
 namespace {
 
-void protobuf_AssignDescriptors() {
-  AddDescriptors();
-  ::google::protobuf::MessageFactory* factory = NULL;
-  AssignDescriptors(
-      "micronf_agent.proto", schemas, file_default_instances, TableStruct::offsets, factory,
-      file_level_metadata, NULL, NULL);
-}
-
-void protobuf_AssignDescriptorsOnce() {
-  static GOOGLE_PROTOBUF_DECLARE_ONCE(once);
-  ::google::protobuf::GoogleOnceInit(&once, &protobuf_AssignDescriptors);
+GOOGLE_PROTOBUF_DECLARE_ONCE(protobuf_AssignDescriptors_once_);
+inline void protobuf_AssignDescriptorsOnce() {
+  ::google::protobuf::GoogleOnceInit(&protobuf_AssignDescriptors_once_,
+                 &protobuf_AssignDesc_micronf_5fagent_2eproto);
 }
 
 void protobuf_RegisterTypes(const ::std::string&) GOOGLE_ATTRIBUTE_COLD;
 void protobuf_RegisterTypes(const ::std::string&) {
   protobuf_AssignDescriptorsOnce();
-  ::google::protobuf::internal::RegisterAllTypes(file_level_metadata, 3);
+  ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
+      CreateRingRequest_descriptor_, &CreateRingRequest::default_instance());
+  ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
+      Errno_descriptor_, &Errno::default_instance());
+  ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
+      DeployConfig_descriptor_, &DeployConfig::default_instance());
 }
 
 }  // namespace
 
-void TableStruct::Shutdown() {
-  _CreateRingRequest_default_instance_.Shutdown();
-  delete file_level_metadata[0].reflection;
-  _Errno_default_instance_.Shutdown();
-  delete file_level_metadata[1].reflection;
-  _DeployConfig_default_instance_.Shutdown();
-  delete file_level_metadata[2].reflection;
+void protobuf_ShutdownFile_micronf_5fagent_2eproto() {
+  delete CreateRingRequest::default_instance_;
+  delete CreateRingRequest_reflection_;
+  delete Errno::default_instance_;
+  delete Errno_reflection_;
+  delete DeployConfig::default_instance_;
+  delete DeployConfig_reflection_;
 }
 
-void TableStruct::InitDefaultsImpl() {
+void protobuf_AddDesc_micronf_5fagent_2eproto() GOOGLE_ATTRIBUTE_COLD;
+void protobuf_AddDesc_micronf_5fagent_2eproto() {
+  static bool already_here = false;
+  if (already_here) return;
+  already_here = true;
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-  ::google::protobuf::internal::InitProtobufDefaults();
-  _CreateRingRequest_default_instance_.DefaultConstruct();
-  _Errno_default_instance_.DefaultConstruct();
-  _DeployConfig_default_instance_.DefaultConstruct();
-}
-
-void InitDefaults() {
-  static GOOGLE_PROTOBUF_DECLARE_ONCE(once);
-  ::google::protobuf::GoogleOnceInit(&once, &TableStruct::InitDefaultsImpl);
-}
-void AddDescriptorsImpl() {
-  InitDefaults();
-  static const char descriptor[] = {
-      "\n\023micronf_agent.proto\022\trpc_agent\"!\n\021Crea"
-      "teRingRequest\022\014\n\004name\030\001 \001(\t\"\024\n\005Errno\022\013\n\003"
-      "err\030\001 \001(\005\"\036\n\014DeployConfig\022\016\n\006config\030\001 \001("
-      "\t2\217\001\n\003RPC\022A\n\017rpc_create_ring\022\034.rpc_agent"
-      ".CreateRingRequest\032\020.rpc_agent.Errno\022E\n\030"
-      "rpc_deploy_microservices\022\027.rpc_agent.Dep"
-      "loyConfig\032\020.rpc_agent.Errnob\006proto3"
-  };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 275);
+    "\n\023micronf_agent.proto\022\trpc_agent\"!\n\021Crea"
+    "teRingRequest\022\014\n\004name\030\001 \001(\t\"\024\n\005Errno\022\013\n\003"
+    "err\030\001 \001(\005\"\036\n\014DeployConfig\022\016\n\006config\030\001 \001("
+    "\t2\217\001\n\003RPC\022A\n\017rpc_create_ring\022\034.rpc_agent"
+    ".CreateRingRequest\032\020.rpc_agent.Errno\022E\n\030"
+    "rpc_deploy_microservices\022\027.rpc_agent.Dep"
+    "loyConfig\032\020.rpc_agent.Errnob\006proto3", 275);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "micronf_agent.proto", &protobuf_RegisterTypes);
-  ::google::protobuf::internal::OnShutdown(&TableStruct::Shutdown);
+  CreateRingRequest::default_instance_ = new CreateRingRequest();
+  Errno::default_instance_ = new Errno();
+  DeployConfig::default_instance_ = new DeployConfig();
+  CreateRingRequest::default_instance_->InitAsDefaultInstance();
+  Errno::default_instance_->InitAsDefaultInstance();
+  DeployConfig::default_instance_->InitAsDefaultInstance();
+  ::google::protobuf::internal::OnShutdown(&protobuf_ShutdownFile_micronf_5fagent_2eproto);
 }
 
-void AddDescriptors() {
-  static GOOGLE_PROTOBUF_DECLARE_ONCE(once);
-  ::google::protobuf::GoogleOnceInit(&once, &AddDescriptorsImpl);
-}
 // Force AddDescriptors() to be called at static initialization time.
-struct StaticDescriptorInitializer {
-  StaticDescriptorInitializer() {
-    AddDescriptors();
+struct StaticDescriptorInitializer_micronf_5fagent_2eproto {
+  StaticDescriptorInitializer_micronf_5fagent_2eproto() {
+    protobuf_AddDesc_micronf_5fagent_2eproto();
   }
-} static_descriptor_initializer;
-
-}  // namespace protobuf_micronf_5fagent_2eproto
-
+} static_descriptor_initializer_micronf_5fagent_2eproto_;
 
 // ===================================================================
 
@@ -149,27 +159,27 @@ const int CreateRingRequest::kNameFieldNumber;
 
 CreateRingRequest::CreateRingRequest()
   : ::google::protobuf::Message(), _internal_metadata_(NULL) {
-  if (GOOGLE_PREDICT_TRUE(this != internal_default_instance())) {
-    protobuf_micronf_5fagent_2eproto::InitDefaults();
-  }
   SharedCtor();
   // @@protoc_insertion_point(constructor:rpc_agent.CreateRingRequest)
 }
+
+void CreateRingRequest::InitAsDefaultInstance() {
+  _is_default_instance_ = true;
+}
+
 CreateRingRequest::CreateRingRequest(const CreateRingRequest& from)
   : ::google::protobuf::Message(),
-      _internal_metadata_(NULL),
-      _cached_size_(0) {
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  name_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.name().size() > 0) {
-    name_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.name_);
-  }
+    _internal_metadata_(NULL) {
+  SharedCtor();
+  MergeFrom(from);
   // @@protoc_insertion_point(copy_constructor:rpc_agent.CreateRingRequest)
 }
 
 void CreateRingRequest::SharedCtor() {
-  name_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+    _is_default_instance_ = false;
+  ::google::protobuf::internal::GetEmptyString();
   _cached_size_ = 0;
+  name_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 
 CreateRingRequest::~CreateRingRequest() {
@@ -179,6 +189,8 @@ CreateRingRequest::~CreateRingRequest() {
 
 void CreateRingRequest::SharedDtor() {
   name_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (this != default_instance_) {
+  }
 }
 
 void CreateRingRequest::SetCachedSize(int size) const {
@@ -187,14 +199,16 @@ void CreateRingRequest::SetCachedSize(int size) const {
   GOOGLE_SAFE_CONCURRENT_WRITES_END();
 }
 const ::google::protobuf::Descriptor* CreateRingRequest::descriptor() {
-  protobuf_micronf_5fagent_2eproto::protobuf_AssignDescriptorsOnce();
-  return protobuf_micronf_5fagent_2eproto::file_level_metadata[0].descriptor;
+  protobuf_AssignDescriptorsOnce();
+  return CreateRingRequest_descriptor_;
 }
 
 const CreateRingRequest& CreateRingRequest::default_instance() {
-  protobuf_micronf_5fagent_2eproto::InitDefaults();
-  return *internal_default_instance();
+  if (default_instance_ == NULL) protobuf_AddDesc_micronf_5fagent_2eproto();
+  return *default_instance_;
 }
+
+CreateRingRequest* CreateRingRequest::default_instance_ = NULL;
 
 CreateRingRequest* CreateRingRequest::New(::google::protobuf::Arena* arena) const {
   CreateRingRequest* n = new CreateRingRequest;
@@ -215,14 +229,13 @@ bool CreateRingRequest::MergePartialFromCodedStream(
   ::google::protobuf::uint32 tag;
   // @@protoc_insertion_point(parse_start:rpc_agent.CreateRingRequest)
   for (;;) {
-    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoff(127);
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // string name = 1;
+      // optional string name = 1;
       case 1: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(10u)) {
+        if (tag == 10) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadString(
                 input, this->mutable_name()));
           DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
@@ -232,6 +245,7 @@ bool CreateRingRequest::MergePartialFromCodedStream(
         } else {
           goto handle_unusual;
         }
+        if (input->ExpectAtEnd()) goto success;
         break;
       }
 
@@ -259,7 +273,7 @@ failure:
 void CreateRingRequest::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
   // @@protoc_insertion_point(serialize_start:rpc_agent.CreateRingRequest)
-  // string name = 1;
+  // optional string name = 1;
   if (this->name().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->name().data(), this->name().length(),
@@ -274,9 +288,8 @@ void CreateRingRequest::SerializeWithCachedSizes(
 
 ::google::protobuf::uint8* CreateRingRequest::InternalSerializeWithCachedSizesToArray(
     bool deterministic, ::google::protobuf::uint8* target) const {
-  (void)deterministic;  // Unused
   // @@protoc_insertion_point(serialize_to_array_start:rpc_agent.CreateRingRequest)
-  // string name = 1;
+  // optional string name = 1;
   if (this->name().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->name().data(), this->name().length(),
@@ -291,28 +304,29 @@ void CreateRingRequest::SerializeWithCachedSizes(
   return target;
 }
 
-size_t CreateRingRequest::ByteSizeLong() const {
+int CreateRingRequest::ByteSize() const {
 // @@protoc_insertion_point(message_byte_size_start:rpc_agent.CreateRingRequest)
-  size_t total_size = 0;
+  int total_size = 0;
 
-  // string name = 1;
+  // optional string name = 1;
   if (this->name().size() > 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::StringSize(
         this->name());
   }
 
-  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
   GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
-  _cached_size_ = cached_size;
+  _cached_size_ = total_size;
   GOOGLE_SAFE_CONCURRENT_WRITES_END();
   return total_size;
 }
 
 void CreateRingRequest::MergeFrom(const ::google::protobuf::Message& from) {
 // @@protoc_insertion_point(generalized_merge_from_start:rpc_agent.CreateRingRequest)
-  GOOGLE_DCHECK_NE(&from, this);
-  const CreateRingRequest* source =
+  if (GOOGLE_PREDICT_FALSE(&from == this)) {
+    ::google::protobuf::internal::MergeFromFail(__FILE__, __LINE__);
+  }
+  const CreateRingRequest* source = 
       ::google::protobuf::internal::DynamicCastToGenerated<const CreateRingRequest>(
           &from);
   if (source == NULL) {
@@ -326,8 +340,9 @@ void CreateRingRequest::MergeFrom(const ::google::protobuf::Message& from) {
 
 void CreateRingRequest::MergeFrom(const CreateRingRequest& from) {
 // @@protoc_insertion_point(class_specific_merge_from_start:rpc_agent.CreateRingRequest)
-  GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  if (GOOGLE_PREDICT_FALSE(&from == this)) {
+    ::google::protobuf::internal::MergeFromFail(__FILE__, __LINE__);
+  }
   if (from.name().size() > 0) {
 
     name_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.name_);
@@ -349,6 +364,7 @@ void CreateRingRequest::CopyFrom(const CreateRingRequest& from) {
 }
 
 bool CreateRingRequest::IsInitialized() const {
+
   return true;
 }
 
@@ -358,60 +374,56 @@ void CreateRingRequest::Swap(CreateRingRequest* other) {
 }
 void CreateRingRequest::InternalSwap(CreateRingRequest* other) {
   name_.Swap(&other->name_);
+  _internal_metadata_.Swap(&other->_internal_metadata_);
   std::swap(_cached_size_, other->_cached_size_);
 }
 
 ::google::protobuf::Metadata CreateRingRequest::GetMetadata() const {
-  protobuf_micronf_5fagent_2eproto::protobuf_AssignDescriptorsOnce();
-  return protobuf_micronf_5fagent_2eproto::file_level_metadata[0];
+  protobuf_AssignDescriptorsOnce();
+  ::google::protobuf::Metadata metadata;
+  metadata.descriptor = CreateRingRequest_descriptor_;
+  metadata.reflection = CreateRingRequest_reflection_;
+  return metadata;
 }
 
 #if PROTOBUF_INLINE_NOT_IN_HEADERS
 // CreateRingRequest
 
-// string name = 1;
+// optional string name = 1;
 void CreateRingRequest::clear_name() {
   name_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-const ::std::string& CreateRingRequest::name() const {
+ const ::std::string& CreateRingRequest::name() const {
   // @@protoc_insertion_point(field_get:rpc_agent.CreateRingRequest.name)
-  return name_.GetNoArena();
+  return name_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-void CreateRingRequest::set_name(const ::std::string& value) {
+ void CreateRingRequest::set_name(const ::std::string& value) {
   
   name_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
   // @@protoc_insertion_point(field_set:rpc_agent.CreateRingRequest.name)
 }
-#if LANG_CXX11
-void CreateRingRequest::set_name(::std::string&& value) {
-  
-  name_.SetNoArena(
-    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:rpc_agent.CreateRingRequest.name)
-}
-#endif
-void CreateRingRequest::set_name(const char* value) {
+ void CreateRingRequest::set_name(const char* value) {
   
   name_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
   // @@protoc_insertion_point(field_set_char:rpc_agent.CreateRingRequest.name)
 }
-void CreateRingRequest::set_name(const char* value, size_t size) {
+ void CreateRingRequest::set_name(const char* value, size_t size) {
   
   name_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
   // @@protoc_insertion_point(field_set_pointer:rpc_agent.CreateRingRequest.name)
 }
-::std::string* CreateRingRequest::mutable_name() {
+ ::std::string* CreateRingRequest::mutable_name() {
   
   // @@protoc_insertion_point(field_mutable:rpc_agent.CreateRingRequest.name)
   return name_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-::std::string* CreateRingRequest::release_name() {
+ ::std::string* CreateRingRequest::release_name() {
   // @@protoc_insertion_point(field_release:rpc_agent.CreateRingRequest.name)
   
   return name_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-void CreateRingRequest::set_allocated_name(::std::string* name) {
+ void CreateRingRequest::set_allocated_name(::std::string* name) {
   if (name != NULL) {
     
   } else {
@@ -431,24 +443,26 @@ const int Errno::kErrFieldNumber;
 
 Errno::Errno()
   : ::google::protobuf::Message(), _internal_metadata_(NULL) {
-  if (GOOGLE_PREDICT_TRUE(this != internal_default_instance())) {
-    protobuf_micronf_5fagent_2eproto::InitDefaults();
-  }
   SharedCtor();
   // @@protoc_insertion_point(constructor:rpc_agent.Errno)
 }
+
+void Errno::InitAsDefaultInstance() {
+  _is_default_instance_ = true;
+}
+
 Errno::Errno(const Errno& from)
   : ::google::protobuf::Message(),
-      _internal_metadata_(NULL),
-      _cached_size_(0) {
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  err_ = from.err_;
+    _internal_metadata_(NULL) {
+  SharedCtor();
+  MergeFrom(from);
   // @@protoc_insertion_point(copy_constructor:rpc_agent.Errno)
 }
 
 void Errno::SharedCtor() {
-  err_ = 0;
+    _is_default_instance_ = false;
   _cached_size_ = 0;
+  err_ = 0;
 }
 
 Errno::~Errno() {
@@ -457,6 +471,8 @@ Errno::~Errno() {
 }
 
 void Errno::SharedDtor() {
+  if (this != default_instance_) {
+  }
 }
 
 void Errno::SetCachedSize(int size) const {
@@ -465,14 +481,16 @@ void Errno::SetCachedSize(int size) const {
   GOOGLE_SAFE_CONCURRENT_WRITES_END();
 }
 const ::google::protobuf::Descriptor* Errno::descriptor() {
-  protobuf_micronf_5fagent_2eproto::protobuf_AssignDescriptorsOnce();
-  return protobuf_micronf_5fagent_2eproto::file_level_metadata[1].descriptor;
+  protobuf_AssignDescriptorsOnce();
+  return Errno_descriptor_;
 }
 
 const Errno& Errno::default_instance() {
-  protobuf_micronf_5fagent_2eproto::InitDefaults();
-  return *internal_default_instance();
+  if (default_instance_ == NULL) protobuf_AddDesc_micronf_5fagent_2eproto();
+  return *default_instance_;
 }
+
+Errno* Errno::default_instance_ = NULL;
 
 Errno* Errno::New(::google::protobuf::Arena* arena) const {
   Errno* n = new Errno;
@@ -493,21 +511,21 @@ bool Errno::MergePartialFromCodedStream(
   ::google::protobuf::uint32 tag;
   // @@protoc_insertion_point(parse_start:rpc_agent.Errno)
   for (;;) {
-    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoff(127);
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // int32 err = 1;
+      // optional int32 err = 1;
       case 1: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(8u)) {
-
+        if (tag == 8) {
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
                  input, &err_)));
+
         } else {
           goto handle_unusual;
         }
+        if (input->ExpectAtEnd()) goto success;
         break;
       }
 
@@ -535,7 +553,7 @@ failure:
 void Errno::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
   // @@protoc_insertion_point(serialize_start:rpc_agent.Errno)
-  // int32 err = 1;
+  // optional int32 err = 1;
   if (this->err() != 0) {
     ::google::protobuf::internal::WireFormatLite::WriteInt32(1, this->err(), output);
   }
@@ -545,9 +563,8 @@ void Errno::SerializeWithCachedSizes(
 
 ::google::protobuf::uint8* Errno::InternalSerializeWithCachedSizesToArray(
     bool deterministic, ::google::protobuf::uint8* target) const {
-  (void)deterministic;  // Unused
   // @@protoc_insertion_point(serialize_to_array_start:rpc_agent.Errno)
-  // int32 err = 1;
+  // optional int32 err = 1;
   if (this->err() != 0) {
     target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(1, this->err(), target);
   }
@@ -556,28 +573,29 @@ void Errno::SerializeWithCachedSizes(
   return target;
 }
 
-size_t Errno::ByteSizeLong() const {
+int Errno::ByteSize() const {
 // @@protoc_insertion_point(message_byte_size_start:rpc_agent.Errno)
-  size_t total_size = 0;
+  int total_size = 0;
 
-  // int32 err = 1;
+  // optional int32 err = 1;
   if (this->err() != 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::Int32Size(
         this->err());
   }
 
-  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
   GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
-  _cached_size_ = cached_size;
+  _cached_size_ = total_size;
   GOOGLE_SAFE_CONCURRENT_WRITES_END();
   return total_size;
 }
 
 void Errno::MergeFrom(const ::google::protobuf::Message& from) {
 // @@protoc_insertion_point(generalized_merge_from_start:rpc_agent.Errno)
-  GOOGLE_DCHECK_NE(&from, this);
-  const Errno* source =
+  if (GOOGLE_PREDICT_FALSE(&from == this)) {
+    ::google::protobuf::internal::MergeFromFail(__FILE__, __LINE__);
+  }
+  const Errno* source = 
       ::google::protobuf::internal::DynamicCastToGenerated<const Errno>(
           &from);
   if (source == NULL) {
@@ -591,8 +609,9 @@ void Errno::MergeFrom(const ::google::protobuf::Message& from) {
 
 void Errno::MergeFrom(const Errno& from) {
 // @@protoc_insertion_point(class_specific_merge_from_start:rpc_agent.Errno)
-  GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  if (GOOGLE_PREDICT_FALSE(&from == this)) {
+    ::google::protobuf::internal::MergeFromFail(__FILE__, __LINE__);
+  }
   if (from.err() != 0) {
     set_err(from.err());
   }
@@ -613,6 +632,7 @@ void Errno::CopyFrom(const Errno& from) {
 }
 
 bool Errno::IsInitialized() const {
+
   return true;
 }
 
@@ -622,26 +642,30 @@ void Errno::Swap(Errno* other) {
 }
 void Errno::InternalSwap(Errno* other) {
   std::swap(err_, other->err_);
+  _internal_metadata_.Swap(&other->_internal_metadata_);
   std::swap(_cached_size_, other->_cached_size_);
 }
 
 ::google::protobuf::Metadata Errno::GetMetadata() const {
-  protobuf_micronf_5fagent_2eproto::protobuf_AssignDescriptorsOnce();
-  return protobuf_micronf_5fagent_2eproto::file_level_metadata[1];
+  protobuf_AssignDescriptorsOnce();
+  ::google::protobuf::Metadata metadata;
+  metadata.descriptor = Errno_descriptor_;
+  metadata.reflection = Errno_reflection_;
+  return metadata;
 }
 
 #if PROTOBUF_INLINE_NOT_IN_HEADERS
 // Errno
 
-// int32 err = 1;
+// optional int32 err = 1;
 void Errno::clear_err() {
   err_ = 0;
 }
-::google::protobuf::int32 Errno::err() const {
+ ::google::protobuf::int32 Errno::err() const {
   // @@protoc_insertion_point(field_get:rpc_agent.Errno.err)
   return err_;
 }
-void Errno::set_err(::google::protobuf::int32 value) {
+ void Errno::set_err(::google::protobuf::int32 value) {
   
   err_ = value;
   // @@protoc_insertion_point(field_set:rpc_agent.Errno.err)
@@ -657,27 +681,27 @@ const int DeployConfig::kConfigFieldNumber;
 
 DeployConfig::DeployConfig()
   : ::google::protobuf::Message(), _internal_metadata_(NULL) {
-  if (GOOGLE_PREDICT_TRUE(this != internal_default_instance())) {
-    protobuf_micronf_5fagent_2eproto::InitDefaults();
-  }
   SharedCtor();
   // @@protoc_insertion_point(constructor:rpc_agent.DeployConfig)
 }
+
+void DeployConfig::InitAsDefaultInstance() {
+  _is_default_instance_ = true;
+}
+
 DeployConfig::DeployConfig(const DeployConfig& from)
   : ::google::protobuf::Message(),
-      _internal_metadata_(NULL),
-      _cached_size_(0) {
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  config_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.config().size() > 0) {
-    config_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.config_);
-  }
+    _internal_metadata_(NULL) {
+  SharedCtor();
+  MergeFrom(from);
   // @@protoc_insertion_point(copy_constructor:rpc_agent.DeployConfig)
 }
 
 void DeployConfig::SharedCtor() {
-  config_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+    _is_default_instance_ = false;
+  ::google::protobuf::internal::GetEmptyString();
   _cached_size_ = 0;
+  config_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 
 DeployConfig::~DeployConfig() {
@@ -687,6 +711,8 @@ DeployConfig::~DeployConfig() {
 
 void DeployConfig::SharedDtor() {
   config_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (this != default_instance_) {
+  }
 }
 
 void DeployConfig::SetCachedSize(int size) const {
@@ -695,14 +721,16 @@ void DeployConfig::SetCachedSize(int size) const {
   GOOGLE_SAFE_CONCURRENT_WRITES_END();
 }
 const ::google::protobuf::Descriptor* DeployConfig::descriptor() {
-  protobuf_micronf_5fagent_2eproto::protobuf_AssignDescriptorsOnce();
-  return protobuf_micronf_5fagent_2eproto::file_level_metadata[2].descriptor;
+  protobuf_AssignDescriptorsOnce();
+  return DeployConfig_descriptor_;
 }
 
 const DeployConfig& DeployConfig::default_instance() {
-  protobuf_micronf_5fagent_2eproto::InitDefaults();
-  return *internal_default_instance();
+  if (default_instance_ == NULL) protobuf_AddDesc_micronf_5fagent_2eproto();
+  return *default_instance_;
 }
+
+DeployConfig* DeployConfig::default_instance_ = NULL;
 
 DeployConfig* DeployConfig::New(::google::protobuf::Arena* arena) const {
   DeployConfig* n = new DeployConfig;
@@ -723,14 +751,13 @@ bool DeployConfig::MergePartialFromCodedStream(
   ::google::protobuf::uint32 tag;
   // @@protoc_insertion_point(parse_start:rpc_agent.DeployConfig)
   for (;;) {
-    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoff(127);
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // string config = 1;
+      // optional string config = 1;
       case 1: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(10u)) {
+        if (tag == 10) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadString(
                 input, this->mutable_config()));
           DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
@@ -740,6 +767,7 @@ bool DeployConfig::MergePartialFromCodedStream(
         } else {
           goto handle_unusual;
         }
+        if (input->ExpectAtEnd()) goto success;
         break;
       }
 
@@ -767,7 +795,7 @@ failure:
 void DeployConfig::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
   // @@protoc_insertion_point(serialize_start:rpc_agent.DeployConfig)
-  // string config = 1;
+  // optional string config = 1;
   if (this->config().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->config().data(), this->config().length(),
@@ -782,9 +810,8 @@ void DeployConfig::SerializeWithCachedSizes(
 
 ::google::protobuf::uint8* DeployConfig::InternalSerializeWithCachedSizesToArray(
     bool deterministic, ::google::protobuf::uint8* target) const {
-  (void)deterministic;  // Unused
   // @@protoc_insertion_point(serialize_to_array_start:rpc_agent.DeployConfig)
-  // string config = 1;
+  // optional string config = 1;
   if (this->config().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->config().data(), this->config().length(),
@@ -799,28 +826,29 @@ void DeployConfig::SerializeWithCachedSizes(
   return target;
 }
 
-size_t DeployConfig::ByteSizeLong() const {
+int DeployConfig::ByteSize() const {
 // @@protoc_insertion_point(message_byte_size_start:rpc_agent.DeployConfig)
-  size_t total_size = 0;
+  int total_size = 0;
 
-  // string config = 1;
+  // optional string config = 1;
   if (this->config().size() > 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::StringSize(
         this->config());
   }
 
-  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
   GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
-  _cached_size_ = cached_size;
+  _cached_size_ = total_size;
   GOOGLE_SAFE_CONCURRENT_WRITES_END();
   return total_size;
 }
 
 void DeployConfig::MergeFrom(const ::google::protobuf::Message& from) {
 // @@protoc_insertion_point(generalized_merge_from_start:rpc_agent.DeployConfig)
-  GOOGLE_DCHECK_NE(&from, this);
-  const DeployConfig* source =
+  if (GOOGLE_PREDICT_FALSE(&from == this)) {
+    ::google::protobuf::internal::MergeFromFail(__FILE__, __LINE__);
+  }
+  const DeployConfig* source = 
       ::google::protobuf::internal::DynamicCastToGenerated<const DeployConfig>(
           &from);
   if (source == NULL) {
@@ -834,8 +862,9 @@ void DeployConfig::MergeFrom(const ::google::protobuf::Message& from) {
 
 void DeployConfig::MergeFrom(const DeployConfig& from) {
 // @@protoc_insertion_point(class_specific_merge_from_start:rpc_agent.DeployConfig)
-  GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  if (GOOGLE_PREDICT_FALSE(&from == this)) {
+    ::google::protobuf::internal::MergeFromFail(__FILE__, __LINE__);
+  }
   if (from.config().size() > 0) {
 
     config_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.config_);
@@ -857,6 +886,7 @@ void DeployConfig::CopyFrom(const DeployConfig& from) {
 }
 
 bool DeployConfig::IsInitialized() const {
+
   return true;
 }
 
@@ -866,60 +896,56 @@ void DeployConfig::Swap(DeployConfig* other) {
 }
 void DeployConfig::InternalSwap(DeployConfig* other) {
   config_.Swap(&other->config_);
+  _internal_metadata_.Swap(&other->_internal_metadata_);
   std::swap(_cached_size_, other->_cached_size_);
 }
 
 ::google::protobuf::Metadata DeployConfig::GetMetadata() const {
-  protobuf_micronf_5fagent_2eproto::protobuf_AssignDescriptorsOnce();
-  return protobuf_micronf_5fagent_2eproto::file_level_metadata[2];
+  protobuf_AssignDescriptorsOnce();
+  ::google::protobuf::Metadata metadata;
+  metadata.descriptor = DeployConfig_descriptor_;
+  metadata.reflection = DeployConfig_reflection_;
+  return metadata;
 }
 
 #if PROTOBUF_INLINE_NOT_IN_HEADERS
 // DeployConfig
 
-// string config = 1;
+// optional string config = 1;
 void DeployConfig::clear_config() {
   config_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-const ::std::string& DeployConfig::config() const {
+ const ::std::string& DeployConfig::config() const {
   // @@protoc_insertion_point(field_get:rpc_agent.DeployConfig.config)
-  return config_.GetNoArena();
+  return config_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-void DeployConfig::set_config(const ::std::string& value) {
+ void DeployConfig::set_config(const ::std::string& value) {
   
   config_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
   // @@protoc_insertion_point(field_set:rpc_agent.DeployConfig.config)
 }
-#if LANG_CXX11
-void DeployConfig::set_config(::std::string&& value) {
-  
-  config_.SetNoArena(
-    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:rpc_agent.DeployConfig.config)
-}
-#endif
-void DeployConfig::set_config(const char* value) {
+ void DeployConfig::set_config(const char* value) {
   
   config_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
   // @@protoc_insertion_point(field_set_char:rpc_agent.DeployConfig.config)
 }
-void DeployConfig::set_config(const char* value, size_t size) {
+ void DeployConfig::set_config(const char* value, size_t size) {
   
   config_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
   // @@protoc_insertion_point(field_set_pointer:rpc_agent.DeployConfig.config)
 }
-::std::string* DeployConfig::mutable_config() {
+ ::std::string* DeployConfig::mutable_config() {
   
   // @@protoc_insertion_point(field_mutable:rpc_agent.DeployConfig.config)
   return config_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-::std::string* DeployConfig::release_config() {
+ ::std::string* DeployConfig::release_config() {
   // @@protoc_insertion_point(field_release:rpc_agent.DeployConfig.config)
   
   return config_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-void DeployConfig::set_allocated_config(::std::string* config) {
+ void DeployConfig::set_allocated_config(::std::string* config) {
   if (config != NULL) {
     
   } else {

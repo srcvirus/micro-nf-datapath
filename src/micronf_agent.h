@@ -50,7 +50,9 @@ class MicronfAgent final : public RPC::Service {
 																const std::string config_path);
 		//setting available coremask
 		void addAvailCore(std::string str){ avail_core.push(str); };
-		std::string getAvailCore(){ 
+		std::string getAvailCore(){
+				  if(avail_core.empty())
+							 return "empty";  
 				std::string cm = avail_core.front(); 
 				avail_core.pop(); 
 				return cm;
