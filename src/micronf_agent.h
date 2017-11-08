@@ -28,52 +28,65 @@ using namespace rpc_agent;
 
 class MicronfAgent final : public RPC::Service {
   public:
-    MicronfAgent();
-    ~MicronfAgent();
-    int Init(int argc, char* argv[]);
-    int CreateRing(std::string ring_name);
-		int DeleteRing(std::string ring_name); 
-    int DeployMicroservices(std::vector<std::string> chain_conf);
-    //int StartMicroService();
-    //int StopMicroService();
-		std::string getScaleRingName();
-		int getNewInstanceId();
-		const struct rte_memzone *stat_mz;
-		MSStats *micronf_stats;
-		const struct rte_memzone *scale_bits_mz;
-		ScaleBitVector *scale_bits;
-		// store the next microservice id of the current uS and port	id
-		std::pair<int,int> neighborGraph [MAX_NUM_MS][MAX_NUM_PORT];			
-		// store the pp_config of microservice by id
-		PacketProcessorConfig ppConfigList[MAX_NUM_MS];
-    int DeployOneMicroService(const PacketProcessorConfig& pp_conf,
-																const std::string config_path);
-		//setting available coremask
-		void addAvailCore(std::string str){ avail_core.push(str); };
-		std::string getAvailCore(){ 
-				std::string cm = avail_core.front(); 
-				avail_core.pop(); 
-				return cm;
-		};
-		std::queue<std::string> avail_core;
+   MicronfAgent();
+   ~MicronfAgent();
+   int Init(int argc, char* argv[]);
+   int CreateRing(std::string ring_name);
+   int DeleteRing(std::string ring_name); 
 
+   int DeployMicroservices(std::vector<std::string> chain_conf);
+
+   //int StartMicroService();
+   //int StopMicroService();
+
+   std::string getScaleRingName();
+
+   int getNewInstanceId();
+
+   int DeployOneMicroService(const PacketProcessorConfig& pp_conf,
+                             const std::string config_path);
+   //setting available coremask
+
+   void addAvailCore(std::string str){ avail_core.push(str); };
+   void addRealCore(std::string str){ real_core.push(str); }
+   std::string getAvailCore(){ 
+      std::string cm = avail_core.front(); 
+      avail_core.pop(); 
+      return cm;
+   };
+   std::string getRealCore(){ 
+      std::string core_num = real_core.front(); 
+      real_core.pop(); 
+      return core_num;
+   };
+
+   const struct rte_memzone *stat_mz;
+   MSStats *micronf_stats;
+   const struct rte_memzone *scale_bits_mz;
+   ScaleBitVector *scale_bits;
+   // store the next microservice id of the current uS and port	id
+   std::pair<int,int> neighborGraph [MAX_NUM_MS][MAX_NUM_PORT];			
+   // store the pp_config of microservice by id
+   PacketProcessorConfig ppConfigList[MAX_NUM_MS];
+   std::queue<std::string> avail_core;
+   std::queue<std::string> real_core;
   private:
-		int InitMbufPool();
-		int InitPort(int);	
-		int InitStatMz(int);
-		int InitScaleBits(int);
+   int InitMbufPool();
+   int InitPort(int);	
+   int InitStatMz(int);
+   int InitScaleBits(int);
 	
-		void UpdateNeighborGraph(PacketProcessorConfig& pp_config, const PortConfig& pconfig);
-		void MaintainLocalDS(PacketProcessorConfig& pp_conf);
-		void MaintainRingCreation(const PortConfig& pconfig);
+   void UpdateNeighborGraph(PacketProcessorConfig& pp_config, const PortConfig& pconfig);
+   void MaintainLocalDS(PacketProcessorConfig& pp_conf);
+   void MaintainRingCreation(const PortConfig& pconfig);
 
-		struct rte_mempool *pktmbuf_pool;
-		int num_ports_;
-		std::string ring_prefix_ = "scale_ring_";
-		unsigned int highest_ring_num_ = MAX_NUM_MS;
-		unsigned int highest_instance_id = MAX_NUM_MS;	
-		// intermediate info for building neighborGraph. Store ring_id
-		std::string pp_ingress_name[MAX_NUM_MS][MAX_NUM_PORT];
-		std::string pp_egress_name[MAX_NUM_MS][MAX_NUM_PORT];
+   struct rte_mempool *pktmbuf_pool;
+   int num_ports_;
+   std::string ring_prefix_ = "scale_ring_";
+   unsigned int highest_ring_num_ = MAX_NUM_MS;
+   unsigned int highest_instance_id = MAX_NUM_MS;	
+   // intermediate info for building neighborGraph. Store ring_id
+   std::string pp_ingress_name[MAX_NUM_MS][MAX_NUM_PORT];
+   std::string pp_egress_name[MAX_NUM_MS][MAX_NUM_PORT];
 };
 #endif

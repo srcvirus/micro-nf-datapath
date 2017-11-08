@@ -25,6 +25,8 @@ message PacketProcessorConfig {
   repeated PortConfig port_configs = 5;
 
   required int32 instance_id = 6;
+  required bool share_core = 7;
+  required int32 semaphore_cpuid = 8; 
 };
 
 message PortConfig {
