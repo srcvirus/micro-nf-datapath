@@ -22,78 +22,80 @@ using namespace std;
 using namespace rpc_agent;
 
 int RunGRPCService(void* arg) {
-  MicronfAgent* agent = reinterpret_cast<MicronfAgent*>(arg);
-	//FIXME specify non-dpdk interface
-	std::string server_address("0.0.0.0:50051");
-  GrpcServiceImpl service;
-	service.set_mAgent(agent);
-  ServerBuilder builder;
-  builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
-  builder.RegisterService(&service);
-  std::unique_ptr<Server> server(builder.BuildAndStart());
-  std::cout << "Agent(Server) listening on " << server_address << std::endl;
+   MicronfAgent* agent = reinterpret_cast<MicronfAgent*>(arg);
+   //FIXME specify non-dpdk interface
+   std::string server_address("0.0.0.0:50051");
+   GrpcServiceImpl service;
+   service.set_mAgent(agent);
+   ServerBuilder builder;
+   builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
+   builder.RegisterService(&service);
+   std::unique_ptr<Server> server(builder.BuildAndStart());
+   std::cout << "Agent(Server) listening on " << server_address << std::endl;
 
-  server->Wait();
-  return 0;
+   server->Wait();
+   return 0;
 }
 
 int RunNICClassifier(void* arg) {
-  MicronfAgent* micronfAgent = reinterpret_cast<MicronfAgent*>(arg);
-  printf("in RunNICClassifier\n");
-	NICClassifier nicClassifier;
-	nicClassifier.Init(micronfAgent);
+   MicronfAgent* micronfAgent = reinterpret_cast<MicronfAgent*>(arg);
+   printf("in RunNICClassifier\n");
+   NICClassifier nicClassifier;
+   nicClassifier.Init(micronfAgent);
 	
-	//create rule and add rule
-	vector<FwdRule> sampleRules;
-	CIDRAddress src_addr_1("10.10.0.7/24");
-	CIDRAddress dst_addr_1("10.10.0.10/24");
-	FwdRule rule_1(src_addr_1, dst_addr_1, 1234, 5678, "rx_ring_0");
- 	nicClassifier.AddRule(rule_1); 
-	nicClassifier.Run();
-  return 0;
+   //create rule and add rule
+   vector<FwdRule> sampleRules;
+   CIDRAddress src_addr_1("10.0.0.7/24");
+   CIDRAddress dst_addr_1("10.0.0.10/24");
+   FwdRule rule_1(src_addr_1, dst_addr_1, 1234, 5678, "rx_ring_0");
+   nicClassifier.AddRule(rule_1); 
+   nicClassifier.Run();
+   return 0;
 }
 
 int RunMonitor(void* arg) {
-	MicronfAgent* micronfAgent = reinterpret_cast<MicronfAgent*>(arg);
-	MicronfMonitor micronfMonitor;
-	micronfMonitor.Init(micronfAgent);
-  printf("in RunMonitor\n");
+   MicronfAgent* micronfAgent = reinterpret_cast<MicronfAgent*>(arg);
+   MicronfMonitor micronfMonitor;
+   micronfMonitor.Init(micronfAgent);
+   printf("in RunMonitor\n");
 
-	micronfMonitor.Run();
-	return 0;
+   micronfMonitor.Run();
+   return 0;
 }
 
 int main(int argc, char* argv[]){
-	cout<<"Agent is running"<<endl;
-	MicronfAgent micronfAgent;
-	micronfAgent.Init(argc, argv);
+   cout<<"Agent is running"<<endl;
+   MicronfAgent micronfAgent;
+   micronfAgent.Init(argc, argv);
 	
-	// std::string conf_folder_path = "/home/nfuser/dpdk_study/micro-nf-datapath/confs/";	
-	std::string conf_folder_path = "../confs/";	
-	std::vector<std::string> chain_conf = {
-		conf_folder_path + "mac_swapper_test.conf"//,
-		//conf_folder_path + "mac_swapper_2.conf",
-		//conf_folder_path + "mac_swapper_3.conf",
-		//conf_folder_path + "mac_swapper_4.conf"
-	};
+   std::string conf_folder_path = "../confs/";	
+   std::vector<std::string> chain_conf = {
+//      conf_folder_path + "mac_swapper_test.conf"
+      conf_folder_path + "ms_1.conf",
+      conf_folder_path + "ms_2.conf",
+      conf_folder_path + "ms_3.conf"
+   };
 	
-	micronfAgent.addAvailCore("0x200");	
-	micronfAgent.addAvailCore("0x400");	
-	micronfAgent.DeployMicroservices(chain_conf);
+   micronfAgent.addAvailCore("0x80");	
+   micronfAgent.addAvailCore("0x08");
+   micronfAgent.addAvailCore("0x04");	
+   micronfAgent.DeployMicroservices(chain_conf);
 
-	int monitor_lcore_id = rte_get_next_lcore(rte_lcore_id(), 1, 1);
-  int nic_classifier_lcore_id = rte_get_next_lcore(monitor_lcore_id, 1, 1);
-	printf("master lcore: %d, monitor lcore: %d, nic_classifier lcore: %d\n", rte_lcore_id(), monitor_lcore_id, nic_classifier_lcore_id);
+//   int monitor_lcore_id = rte_get_next_lcore(rte_lcore_id(), 1, 1);
+   int monitor_lcore_id = 0;
+   int nic_classifier_lcore_id = rte_get_next_lcore(monitor_lcore_id, 1, 1);
+   printf("master lcore: %d, monitor lcore: %d, nic_classifier lcore: %d\n", 
+          rte_lcore_id(), monitor_lcore_id, nic_classifier_lcore_id);
 
-	rte_eal_remote_launch(RunMonitor, reinterpret_cast<void*> (&micronfAgent),
-													monitor_lcore_id);
-	rte_eal_remote_launch(RunNICClassifier, 
-                        reinterpret_cast<void*>(&micronfAgent), 
-                        nic_classifier_lcore_id);
+//   rte_eal_remote_launch(RunMonitor, reinterpret_cast<void*> (&micronfAgent),
+//                         monitor_lcore_id);
+   rte_eal_remote_launch(RunNICClassifier, 
+                         reinterpret_cast<void*>(&micronfAgent), 
+                         nic_classifier_lcore_id);
 
-  RunGRPCService(&micronfAgent);
+   RunGRPCService(&micronfAgent);
 	
-  rte_eal_mp_wait_lcore();
+   rte_eal_mp_wait_lcore();
 
-return 0;
+   return 0;
 }
