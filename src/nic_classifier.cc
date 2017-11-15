@@ -54,7 +54,7 @@ void NICClassifier::Run(){
       for (i = 0; i < rule_buffers_.size(); ++i) {
          tx_count = rte_ring_enqueue_burst(rings_[i],
                                            reinterpret_cast<void**>(rule_buffers_[i].get()),
-                                           rule_buffer_cnt_[i]);
+                                           rule_buffer_cnt_[i], NULL );
          //if (unlikely(tx_count < rule_buffer_cnt_[i])) {
          //printf("Dropping: %u\n", (unsigned) (rule_buffer_cnt_[i] - tx_count));
          this->micronf_stats->packet_drop[INSTANCE_ID_0][i] += 
