@@ -6,7 +6,7 @@ endif
 RTE_TARGET ?= x86_64-native-linuxapp-gcc
 
 INCS = -I$(RTE_SDK)/$(RTE_TARGET)/include
-LDFLAGS = -L$(RTE_SDK)/$(RTE_TARGET)/lib -L/usr/local/lib
+LDFLAGS = -L$(RTE_SDK)/$(RTE_TARGET)/lib
 
 CXX = g++
 #CPPFLAGS += -I/usr/local/include -g -pthread 
