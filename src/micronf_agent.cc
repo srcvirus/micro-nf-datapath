@@ -13,6 +13,7 @@
 #include <rte_ether.h>
 #include <rte_ethdev.h>
 #include <rte_lcore.h>
+#include <rte_cycles.h>
 
 #include <iostream>
 #include <stdio.h>
@@ -33,12 +34,13 @@ using namespace std;
 #define MBUF_CACHE_SIZE 512
 #define PKTMBUF_POOL_NAME "MICRONF_MBUF_POOL"
 
-// Port configuration
-#define RTE_MP_RX_DESC_DEFAULT 2048 // 512
-#define RTE_MP_TX_DESC_DEFAULT 2048 // 512
 #define USERV_QUEUE_RINGSIZE 2048 // 128
+
+// Port configuration
 #define NUM_TX_QUEUE_PERPORT 1
 #define NUM_RX_QUEUE_PERPORT 1
+#define RX_QUEUE_SZ 2048 // 512
+#define TX_QUEUE_SZ 2048 // 512
 
 MicronfAgent::MicronfAgent(){
    num_ports_ = 0;
@@ -51,6 +53,9 @@ MicronfAgent::MicronfAgent(){
 }
 
 MicronfAgent::~MicronfAgent(){}
+
+void
+check_all_ports_link_status(uint8_t port_num, uint32_t port_mask);
 
 int MicronfAgent::Init(int argc, char* argv[]){
    int retval = rte_eal_init(argc, argv);
@@ -70,14 +75,16 @@ int MicronfAgent::Init(int argc, char* argv[]){
    if (retval != 0)
       rte_exit(EXIT_FAILURE, "Cannot create needed mbuf pools\n");
 
-   //FIXME hardcoded number of port to 1
-   // no portmask parsing 
-   int port_id = 0;
-   retval = InitPort(port_id);
-   if(retval < 0){
-      rte_exit(EXIT_FAILURE, "Cannot initialise port %u\n",
-               (unsigned)port_id);
+   for( int port_id = num_ports_-1; port_id >= 0; --port_id ) {
+      retval = InitPort( port_id );
+      if( retval < 0 ){
+         rte_exit( EXIT_FAILURE, "Cannot initialise port %u\n",
+                   (unsigned)port_id );
+      }
    }
+
+   
+   check_all_ports_link_status( 2, 0x03 );
 
    // Create memzone to store statistic
    // FIXME initialize num_nfs from config file
@@ -207,6 +214,7 @@ int MicronfAgent::DeployMicroservices(std::vector<std::string> chain_conf){
 
       MaintainLocalDS(pp_config);
       DeployOneMicroService(pp_config, config_file_path);
+      
    }
 	
    //For debugging purpose only.
@@ -227,15 +235,21 @@ int MicronfAgent::DeployOneMicroService(const PacketProcessorConfig& pp_conf,
    std::string core_mask = getAvailCore();
    std::string config_para = "--config-file="+config_path;
    std::string real_core_id = "--real-core=" + getRealCore();
+   
    int pid = fork();
    if(pid == 0){
       printf("child started. id: %d\n", pid);
-      char * const argv[] = {"../exec/micronf", "-c", strdup(core_mask.c_str()), "-n", "2", 
+      char * const argv[] = {"../exec/micronf", "-n", "2",
+                             "-b", "0000:04:00.0", "-b", "0000:05:00.0", "-b", "0000:05:00.1",  
                              "--proc-type", "secondary", "--", strdup(config_para.c_str()),
                              strdup(real_core_id.c_str()), NULL };
 
+      printf( "execv ../exec/micronf ");
+      for (int i=0; i < 15; i++) { 
+         printf( " %s ", argv[i] );
+      } 
       execv("../exec/micronf", argv);
-      return pid;
+      std::exit(0);
    }
    else {
       printf("parent id: %d\n", pid);
@@ -250,21 +264,6 @@ std::string MicronfAgent::getScaleRingName(){
 int MicronfAgent::getNewInstanceId(){
    return ++highest_instance_id;
 }
-
-/*
-  int  MicronfAgent::StartMicroService(){
-
-  } 
-
-  int  MicronfAgent::StopMicroService(){
-
-  }
-
-  int  MicronfAgent::DestroyMicroService(){
-
-  }
-*/
-
 
 int MicronfAgent::InitMbufPool(){
    const unsigned num_mbufs = (MAX_NUM_USERV * MBUFS_PER_USERV) \
@@ -319,48 +318,128 @@ int MicronfAgent::InitScaleBits(int num_nfs){
    return 0;
 }
 
-int MicronfAgent::InitPort(int port_id)
+
+/* Check the link status of all ports in up to 9s, and print them finally */
+void
+check_all_ports_link_status(uint8_t port_num, uint32_t port_mask)
+{
+#define CHECK_INTERVAL 100 /* 100ms */
+#define MAX_CHECK_TIME 150 /*15s (150 * 100ms) in total */
+   uint8_t portid, count, all_ports_up, print_flag = 0;
+   struct rte_eth_link link;
+
+   rte_delay_ms(CHECK_INTERVAL);
+   printf("\nChecking link status");
+   fflush(stdout);
+   for (count = 0; count <= MAX_CHECK_TIME; count++) {
+      all_ports_up = 1;
+      for (portid = 0; portid < port_num; portid++) {
+         if ((port_mask & (1 << portid)) == 0)
+            continue;
+         memset(&link, 0, sizeof(link));
+         rte_eth_link_get_nowait(portid, &link);
+         /* print link status if flag set */
+         if (print_flag == 1) {
+            if (link.link_status)
+               printf("Port %d Link Up - speed %u "
+                      "Mbps - %s\n", (uint8_t)portid,
+                      (unsigned)link.link_speed,
+                      (link.link_duplex == ETH_LINK_FULL_DUPLEX) ?
+                      ("full-duplex")  : ("half-duplex\n"));
+            else
+               printf("Port %d Link Down\n",
+                      (uint8_t)portid);
+            continue;
+         }
+         /* clear all_ports_up flag if any link down */
+         if (link.link_status == ETH_LINK_DOWN) {
+            all_ports_up = 0;
+            break;
+         }
+      }
+      /* after finally printing all link status, get out */
+      if (print_flag == 1)
+         break;
+
+      if (all_ports_up == 0) {
+         printf(".");
+         fflush(stdout);
+         rte_delay_ms(CHECK_INTERVAL);
+      }
+
+      /* set the print_flag if all ports up or timeout */
+      if (all_ports_up == 1 || count == (MAX_CHECK_TIME - 1)) {
+         print_flag = 1;
+         printf("done\n");
+      }
+   }
+}
+
+
+int MicronfAgent::InitPort( int port_id )
 {
    /* for port configuration all features are off by default
       The rte_eth_conf structure includes:
       the hardware offload features such as IP checksum or VLAN tag stripping.
       the Receive Side Scaling (RSS) configuration when using multiple RX queues per port.
    */
-   printf("InitPort %d\n", port_id);
+   printf("Initializing port %u . . . \n", port_id);
+   fflush(stdout);
+
    struct rte_eth_conf *port_conf;
-   struct rte_eth_rxmode *t_rxmode;
-   t_rxmode = (struct rte_eth_rxmode*) calloc(1, sizeof(*t_rxmode));
-   t_rxmode->mq_mode = ETH_MQ_RX_RSS;
-   //t_rxmode->mq_mode = ETH_MQ_RX_NONE;
+   struct rte_eth_rxmode *rx_mode;
+   struct rte_eth_txmode *tx_mode;
+
+   rx_mode = (struct rte_eth_rxmode*) calloc(1, sizeof(*rx_mode));
+   rx_mode->mq_mode = ETH_MQ_RX_RSS;
+   rx_mode->split_hdr_size = 0;
+   rx_mode->header_split   = 0; // Header Split disabled 
+   rx_mode->hw_ip_checksum = 1; // IP checksum offload enabled 
+   rx_mode->hw_vlan_filter = 0; // VLAN filtering disabled 
+   rx_mode->jumbo_frame    = 0; // Jumbo Frame Support disabled 
+   rx_mode->hw_strip_crc   = 1; // CRC stripped by hardware 
+
+   tx_mode = (struct rte_eth_txmode*) calloc(1, sizeof(*tx_mode));
+   tx_mode->mq_mode = ETH_MQ_TX_NONE;
+
    port_conf = (struct rte_eth_conf*) calloc(1, sizeof(*port_conf));
-   port_conf->rxmode = *t_rxmode;
-	
+   port_conf->rxmode = *rx_mode;   
+   port_conf->txmode = *tx_mode;
 
-   const uint16_t rx_rings = NUM_RX_QUEUE_PERPORT, tx_rings = NUM_TX_QUEUE_PERPORT;
-   const uint16_t rx_ring_size = RTE_MP_RX_DESC_DEFAULT;
-   const uint16_t tx_ring_size = RTE_MP_TX_DESC_DEFAULT;
-	
+   struct rte_eth_dev_info dev_info;
+   rte_eth_dev_info_get( port_id, &dev_info );
+   dev_info.default_rxconf.rx_drop_en = 1;
+
    int retval;
-   if((retval = rte_eth_dev_configure((uint8_t)port_id, rx_rings, tx_rings,
-                                      port_conf)) != 0)
+   uint16_t q;
+   retval = rte_eth_dev_configure( port_id, NUM_RX_QUEUE_PERPORT, 
+                                   NUM_TX_QUEUE_PERPORT, port_conf );
+   printf( "After rte_eth_dev_configure. retval: %d \n", retval );
+   if ( retval< 0 )
       return retval;
-		
-   for(int q=0; q < rx_rings; q++){
-      retval = rte_eth_rx_queue_setup(port_id, q, rx_ring_size,
-                                      rte_eth_dev_socket_id(port_id),	NULL, pktmbuf_pool);
-      if (retval < 0) return retval;
+ 
+   for ( q = 0; q < NUM_RX_QUEUE_PERPORT; q++ ) {
+      retval = rte_eth_rx_queue_setup( port_id, q, RX_QUEUE_SZ,
+                                       rte_eth_dev_socket_id( port_id ), 
+                                       &dev_info.default_rxconf, 
+                                       pktmbuf_pool );
+      if ( retval < 0 )
+         return retval; 
    }
-	
-   for(int q=0; q < tx_rings; q++){
-      retval = rte_eth_tx_queue_setup(port_id, q, tx_ring_size,
-                                      rte_eth_dev_socket_id(port_id), NULL);
-      if (retval < 0) return retval;
-   }
-	
-   //rte_eth_promiscuous_enable(port_id);
 
-   retval = rte_eth_dev_start(port_id);
-   if(retval < 0) return retval;
+   for ( q = 0; q < NUM_TX_QUEUE_PERPORT; q++ ) {
+      retval = rte_eth_tx_queue_setup( port_id, q, TX_QUEUE_SZ,
+                                       rte_eth_dev_socket_id( port_id ), 
+                                       NULL );
+      if ( retval < 0 )
+         return retval; 
+   }
+
+   retval = rte_eth_dev_start( port_id );
+   if ( retval < 0 ) 
+      return retval;
+   
+   printf( "After rte_eth_dev_start. retval:%d \n", retval );
 
    return 0;
 }

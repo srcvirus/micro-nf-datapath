@@ -104,19 +104,19 @@ int main(int argc, char* argv[]){
    // std::string conf_folder_path = "/home/nfuser/dpdk_study/micro-nf-datapath/confs/";    
    std::string conf_folder_path = "../confs/";	
    std::vector<std::string> chain_conf = {
-      conf_folder_path + "MacSwap_ShareCore_1.conf",
-      conf_folder_path + "MacSwap_ShareCore_2.conf",
-      conf_folder_path + "MacSwap_ShareCore_3.conf"
-      //conf_folder_path + "mac_swapper_test.conf",
+      //conf_folder_path + "MacSwap_ShareCore_1.conf",
+      //conf_folder_path + "MacSwap_ShareCore_2.conf",
+      //conf_folder_path + "MacSwap_ShareCore_3.conf"
+      conf_folder_path + "mac_swapper_test.conf"
       //conf_folder_path + "mac_swapper_2.conf",
       //conf_folder_path + "mac_sapper_3.conf",
       //conf_folder_path + "mac_swapper_4.conf"
    };
 
    // Fake cores
-   micronfAgent.addAvailCore("0x04");	   
-   micronfAgent.addAvailCore("0x10");
-   micronfAgent.addAvailCore("0x08");	
+   micronfAgent.addAvailCore( "0x10" );	   
+   micronfAgent.addAvailCore( "0x20" );
+   micronfAgent.addAvailCore( "0x08" );	
 
 
    micronfAgent.addRealCore("2");
