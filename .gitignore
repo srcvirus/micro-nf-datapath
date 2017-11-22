@@ -27,3 +27,7 @@
 *.exe
 *.out
 *.app
+
+# GRPC output. Tend to cause version error
+*.pb.h
+*.pb.cc
