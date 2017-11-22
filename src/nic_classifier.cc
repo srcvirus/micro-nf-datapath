@@ -27,8 +27,7 @@ void NICClassifier::Run(){
          ethernet = rte_pktmbuf_mtod(buf[i], struct ether_hdr*);
          std::swap(ethernet->s_addr.addr_bytes, ethernet->d_addr.addr_bytes);
       }
-      tx_count = rte_eth_tx_burst( 0, 0, buf, rx_count );
-      // printf("     (%u, %u)     \n", rx_count, tx_count);
+      tx_count = rte_eth_tx_burst( 1, 0, buf, rx_count );
       for (i = tx_count; i < rx_count; ++i)
          rte_pktmbuf_free(buf[i]);
    }
