@@ -76,13 +76,15 @@ int main(int argc, char* argv[]){
       conf_folder_path + "ms_3.conf"
    };
 	
-   micronfAgent.addAvailCore("0x80");	
-   micronfAgent.addAvailCore("0x08");
-   micronfAgent.addAvailCore("0x04");	
+   micronfAgent.addAvailCore("0x08");	
+   micronfAgent.addAvailCore("0x10");
+   micronfAgent.addAvailCore("0x20");	
+   micronfAgent.addAvailCore("0x40");
+   micronfAgent.addAvailCore("0x80");
+
    micronfAgent.DeployMicroservices(chain_conf);
 
-//   int monitor_lcore_id = rte_get_next_lcore(rte_lcore_id(), 1, 1);
-   int monitor_lcore_id = 0;
+   int monitor_lcore_id = rte_get_next_lcore(rte_lcore_id(), 1, 1);
    int nic_classifier_lcore_id = rte_get_next_lcore(monitor_lcore_id, 1, 1);
    printf("master lcore: %d, monitor lcore: %d, nic_classifier lcore: %d\n", 
           rte_lcore_id(), monitor_lcore_id, nic_classifier_lcore_id);
