@@ -80,6 +80,9 @@ int MicronfAgent::Init(int argc, char* argv[]){
       }
    }
 
+   // Check and wait for ports to up
+   check_all_ports_link_status( 2, 0x03 );
+
    // Create memzone to store statistic
    // FIXME initialize num_nfs from config file
    int num_nfs = 1;
@@ -424,7 +427,6 @@ int MicronfAgent::InitPort( int port_id )
       return retval;
    
    printf( "After rte_eth_dev_start. retval:%d \n", retval );
-   check_all_ports_link_status( 2, 0x03 );
 
    return 0;
 }
