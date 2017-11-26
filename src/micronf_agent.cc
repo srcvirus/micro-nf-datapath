@@ -35,8 +35,8 @@ using namespace std;
 #define PKTMBUF_POOL_NAME "MICRONF_MBUF_POOL"
 
 // Port configuration
-#define RTE_MP_RX_DESC_DEFAULT 2048 // 512
-#define RTE_MP_TX_DESC_DEFAULT 2048 // 512
+#define NUM_RX_DESC_PER_QUEUE 2048 // 512
+#define NUM_TX_DESC_PER_QUEUE 2048 // 512
 #define USERV_QUEUE_RINGSIZE 2048 // 128
 #define NUM_TX_QUEUE_PERPORT 1
 #define NUM_RX_QUEUE_PERPORT 1
@@ -91,8 +91,9 @@ int MicronfAgent::Init(int argc, char* argv[]){
    // Create memzone to store statistic
    // FIXME initialize num_nfs from config file
    int num_nfs = 1;
-   InitStatMz(num_nfs);
-   InitScaleBits(num_nfs);	
+   InitStatMz( num_nfs );
+   InitScaleBits( num_nfs );	
+
 }
 
 int MicronfAgent::CreateRing(string ring_name){
@@ -148,12 +149,12 @@ void MicronfAgent::UpdateNeighborGraph(PacketProcessorConfig& pp_config,
 
 void MicronfAgent::MaintainRingCreation(const PortConfig& pconfig){
    const auto ring_it = pconfig.port_parameters().find("ring_id");
-   if(ring_it == pconfig.port_parameters().end())
+   if ( ring_it == pconfig.port_parameters().end() )
       return;
    struct rte_ring *ring;
    ring = rte_ring_lookup(ring_it->second.c_str());
-   if(ring == NULL)
-      CreateRing(ring_it->second.c_str());
+   if ( ring == NULL )
+      CreateRing( ring_it->second.c_str() );
 }
 
 void MicronfAgent::MaintainLocalDS(PacketProcessorConfig& pp_conf){
@@ -193,10 +194,9 @@ void MicronfAgent::MaintainLocalDS(PacketProcessorConfig& pp_conf){
 
 int MicronfAgent::DeployMicroservices(std::vector<std::string> chain_conf){
    for(int i=0; i < chain_conf.size(); i++){
-      printf("Chain_conf size: %lu i: %d\n", chain_conf.size(), i);
+      printf("Chain_conf size: %lu i: %d str: %s\n", chain_conf.size(), i, chain_conf[i].c_str() );
       PacketProcessorConfig pp_config;
       std::string config_file_path = chain_conf[i];
-	
       int fd = open(config_file_path.c_str(), O_RDONLY);
       if (fd < 0)
          rte_exit(EXIT_FAILURE, "Cannot open configuration file %s\n",
@@ -211,8 +211,8 @@ int MicronfAgent::DeployMicroservices(std::vector<std::string> chain_conf){
       google::protobuf::TextFormat::PrintToString(pp_config, &str);
       printf("%s\n\n\n", str.c_str());
       */
-
       MaintainLocalDS(pp_config);
+      fprintf( stderr, "Before calling DeployOneMicroService" );
       DeployOneMicroService(pp_config, config_file_path);
    }
 	
@@ -242,6 +242,7 @@ int MicronfAgent::DeployOneMicroService(const PacketProcessorConfig& pp_conf,
                              strdup(config_para.c_str()), NULL};
 
       execv("../exec/micronf", argv);
+      std::exit(0);
       return pid;
    }
    else {
@@ -255,6 +256,7 @@ std::string MicronfAgent::getScaleRingName(){
 }
 
 int MicronfAgent::getNewInstanceId(){
+   printf( "getNewInstanceId: %d\n", highest_instance_id+1 );
    return ++highest_instance_id;
 }
 
@@ -344,8 +346,8 @@ int MicronfAgent::InitPort(int port_id)
 	
 
    const uint16_t rx_rings = NUM_RX_QUEUE_PERPORT, tx_rings = NUM_TX_QUEUE_PERPORT;
-   const uint16_t rx_ring_size = RTE_MP_RX_DESC_DEFAULT;
-   const uint16_t tx_ring_size = RTE_MP_TX_DESC_DEFAULT;
+   const uint16_t rx_ring_size = NUM_RX_DESC_PER_QUEUE;
+   const uint16_t tx_ring_size = NUM_TX_DESC_PER_QUEUE;
 	
    int retval;
    if((retval = rte_eth_dev_configure((uint8_t)port_id, rx_rings, tx_rings,
