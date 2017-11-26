@@ -91,8 +91,12 @@ void MicronfMonitor::Run(){
                         //this->agent_->CreateRing(new_r1);
                         //this->agent_->CreateRing(new_r2);
 
-                        if ( !this->dry_run_ )
+                        if ( !this->dry_run_ ) {
+                           fprintf( stdout, "[Auto-scale] Deploying microservices.\n" );
                            this->agent_->DeployOneMicroService(pp_config_scale, new_conf_path);	
+                        }
+                        else
+                           fprintf( stdout, "[Auto-scale] This is just dry run!\n No microservice will be deployed.\n " );
                      }
                   }
                }
