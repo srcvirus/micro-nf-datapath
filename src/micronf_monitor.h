@@ -4,13 +4,14 @@
 #include "micronf_agent.h"
 
 class MicronfMonitor {
-	public:
-		MicronfMonitor(){}
-		void Init(MicronfAgent* agent);
-		void Run();
+  public:
+   MicronfMonitor(){}
+   void Init( MicronfAgent* agent, bool dry );
+   void Run();
 
-	private:
-    MicronfAgent* agent_;
+  private:
+   MicronfAgent* agent_;
+   bool dry_run_;
 
 };
 
