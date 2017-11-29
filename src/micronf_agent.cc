@@ -159,9 +159,9 @@ void MicronfAgent::MaintainRingCreation(const PortConfig& pconfig){
 void MicronfAgent::MaintainLocalDS(PacketProcessorConfig& pp_conf){
    // retrieve the config form this DS when scale out
    ppConfigList[pp_conf.instance_id()] = pp_conf;
-   printf("\npp_conf instance_id: %d\n", pp_conf.instance_id());
+   printf("pp_conf instance_id: %d\n", pp_conf.instance_id());
    printf("pp_conf class: %s\n", pp_conf.packet_processor_class().c_str());
-   printf("pp_con num_ingress: %d\n\n", pp_conf.num_ingress_ports());
+   printf("pp_con num_ingress: %d\n", pp_conf.num_ingress_ports());
 
 	
    // Check the existing edge and update graph if there is a link
@@ -200,14 +200,10 @@ void set_scheduler( int pid ) {
    rc = sched_setscheduler( pid, SCHED_RR, &my_params ); 
    if (rc == -1) {
       printf( "sched_setscheduler call is failed\n" );
-   } 
-/*   // For debugging purpose
-   else {
-      printf( "Old Scheduler: %d\n", old_sched_policy );
-      printf( "Current Scheduler: %d\n", sched_getscheduler( pid ) );
    }
-   fprintf( stdout, "finish set sched for %d\n", pid );
-*/
+   else {
+      printf( "set_scheduler(). old_sched_policy:  %d. new_sched_policy: %d \n", old_sched_policy, sched_getscheduler( pid ) );
+   }
 }
 
 int MicronfAgent::DeployMicroservices(std::vector<std::string> chain_conf){
@@ -223,16 +219,9 @@ int MicronfAgent::DeployMicroservices(std::vector<std::string> chain_conf){
       google::protobuf::io::FileInputStream config_file_handle(fd);
       config_file_handle.SetCloseOnDelete(true);
       google::protobuf::TextFormat::Parse(&config_file_handle, &pp_config);
-      /*
-      //For debugging purpose only.
-      printf("############################### %d #################################### \n", i);
-      std::string str = "";
-      google::protobuf::TextFormat::PrintToString(pp_config, &str);
-      printf("%s\n\n\n", str.c_str());
-      */
 
       // Goes through the local DS, create ring if needed. 
-      MaintainLocalDS(pp_config);
+      MaintainLocalDS( pp_config );
 
       // Deploy one microservice using fork and execv
       int ms_pid = DeployOneMicroService(pp_config, config_file_path);      
@@ -259,25 +248,24 @@ int MicronfAgent::DeployOneMicroService(const PacketProcessorConfig& pp_conf,
    printf("Deploying One Micro Service . . .\n");
    std::string core_mask = getAvailCore();
    std::string config_para = "--config-file="+config_path;
-   std::string real_core_id = "--real-core=" + getRealCore();
    
    int pid = fork();
    if(pid == 0){
       printf("child started. id: %d\n", pid);
       char * const argv[] = {"../exec/micronf", "-n", "2",
                              "-b", "0000:04:00.0", "-b", "0000:05:00.0", "-b", "0000:05:00.1",  
-                             "--proc-type", "secondary", "--", strdup(config_para.c_str()),
-                             strdup(real_core_id.c_str()), NULL };
+                             "--proc-type", "secondary", "--", strdup(config_para.c_str()), NULL };
 
-      printf( "execv ../exec/micronf ");
-      for (int i=0; i < 15; i++) { 
-         printf( " %s ", argv[i] );
+      /* printf( "execv ../exec/micronf ");
+      for (int i=0; i < 5; i++) { 
+         fprintf( stdout, " %s ", argv[i] );
       } 
-      execv("../exec/micronf", argv);
+      */
+      execv( "../exec/micronf", argv );
       std::exit(0);
    }
    else {
-      printf("In parent, child id: %d\n", pid);
+      printf("In parent, child id: %d\n\n", pid);
       return pid;
    }
 }

@@ -45,21 +45,17 @@ class MicronfAgent final : public RPC::Service {
 
    int DeployOneMicroService(const PacketProcessorConfig& pp_conf,
                              const std::string config_path);
-   //setting available coremask
-
+   
+   // Add available coremask for each ms
    void addAvailCore(std::string str){ avail_core.push(str); };
-   void addRealCore(std::string str){ real_core.push(str); }
+ 
    std::string getAvailCore(){ 
       std::string cm = avail_core.front(); 
       avail_core.pop(); 
       return cm;
    };
-   std::string getRealCore(){ 
-      std::string core_num = real_core.front(); 
-      real_core.pop(); 
-      return core_num;
-   };
 
+   // Public Variables
    const struct rte_memzone *stat_mz;
    MSStats *micronf_stats;
    const struct rte_memzone *scale_bits_mz;
@@ -69,7 +65,8 @@ class MicronfAgent final : public RPC::Service {
    // store the pp_config of microservice by id
    PacketProcessorConfig ppConfigList[MAX_NUM_MS];
    std::queue<std::string> avail_core;
-   std::queue<std::string> real_core;
+   
+   // Private Variables
   private:
    int InitMbufPool();
    int InitPort(int);	

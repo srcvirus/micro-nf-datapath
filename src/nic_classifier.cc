@@ -8,16 +8,16 @@
 #include "common.h"
 
 void NICClassifier::Init(MicronfAgent* agent){
-   int pid = 0;   // self
+/*   int pid = 0;   // self
    int rc, old_sched_policy;
    struct sched_param my_params;
    my_params.sched_priority = 99;
    old_sched_policy = sched_getscheduler( pid );
    rc = sched_setscheduler( pid, SCHED_RR, &my_params ); 
    if (rc == -1) {
-      printf( "sched_setscheduler call is failed\n" );
+      fprintf( stderr, "[nic_classifier.cc] sched_setscheduler call is failed\n" );
    } 
-
+*/
    this->agent_ = agent;
 }
 
@@ -31,8 +31,14 @@ void NICClassifier::Run(){
    register uint16_t j = 0;
    const int16_t kNumPrefetch = 8;
    printf("NicClassifier thread loop has started\n");
+   int n = 0;
+
    for(;;) {
       rx_count = rte_eth_rx_burst(0, 0, buf, PACKET_READ_SIZE);
+      // FIXME delete later
+      if (!(n++ % 10000000)) {
+         //printf( "[nic_class] rx_count: %d\n", rx_count );
+      }
       // if (unlikely(rx_count == 0)) continue;
       for (i = 0; i < rx_count && i < kNumPrefetch; ++i)
          rte_prefetch0(rte_pktmbuf_mtod(buf[i], void*));

@@ -86,7 +86,8 @@ int main(int argc, char* argv[]){
    printf("Current Scheduler: %d\n", sched_getscheduler( 0 ));
 */
    // Setting up semaphores
-   std::string sem_names [] = { "SEM_CORE_2", "SEM_CORE_3", "SEM_CORE_1" };
+   std::string sem_names [] = { "SEM_CORE_0", "SEM_CORE_1", "SEM_CORE_2", "SEM_CORE_3", "SEM_CORE_4", 
+                                "SEM_CORE_5", "SEM_CORE_6", "SEM_CORE_7" };
    std::map <std::string, sem_t*> semaphores;
    for ( std::string & sname : sem_names ) {
       sem_t* sm = sem_open( sname.c_str(), O_CREAT, 0644, 1 );
@@ -94,6 +95,7 @@ int main(int argc, char* argv[]){
          std::cerr << "sem_open failed!\n";
          return -1;
       }
+      int ret = sem_init( sm, 0, 1 );
       int val;
       sem_getvalue(sm, &val);
       std::cout << sname << "Agent Val: " << val <<std::endl;
@@ -122,11 +124,6 @@ int main(int argc, char* argv[]){
    micronfAgent.addAvailCore( "0x04" );	   
    micronfAgent.addAvailCore( "0x08" );
    micronfAgent.addAvailCore( "0x10" );	
-
-
-   micronfAgent.addRealCore("3");
-   micronfAgent.addRealCore("3");
-   micronfAgent.addRealCore("5");
 	
    micronfAgent.DeployMicroservices(chain_conf);
 
@@ -141,6 +138,7 @@ int main(int argc, char* argv[]){
    rte_eal_remote_launch(RunNICClassifier, reinterpret_cast<void*>(&micronfAgent), nic_classifier_lcore_id);
 
    RunGRPCService(&micronfAgent); 
+
    rte_eal_mp_wait_lcore();
 
    for ( auto it = semaphores.begin(); it != semaphores.end(); ++it ) {
