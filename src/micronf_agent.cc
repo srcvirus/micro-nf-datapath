@@ -191,6 +191,25 @@ void MicronfAgent::MaintainLocalDS(PacketProcessorConfig& pp_conf){
 	
 }
 
+void set_scheduler( int pid ) {   
+   // Change scheduler to RT Round Robin
+   int rc, old_sched_policy;
+   struct sched_param my_params;
+   my_params.sched_priority = 99;
+   old_sched_policy = sched_getscheduler( pid );
+   rc = sched_setscheduler( pid, SCHED_RR, &my_params ); 
+   if (rc == -1) {
+      printf( "sched_setscheduler call is failed\n" );
+   } 
+/*   // For debugging purpose
+   else {
+      printf( "Old Scheduler: %d\n", old_sched_policy );
+      printf( "Current Scheduler: %d\n", sched_getscheduler( pid ) );
+   }
+   fprintf( stdout, "finish set sched for %d\n", pid );
+*/
+}
+
 int MicronfAgent::DeployMicroservices(std::vector<std::string> chain_conf){
    for(int i=0; i < chain_conf.size(); i++){
       printf("Chain_conf size: %lu i: %d\n", chain_conf.size(), i);
@@ -212,8 +231,14 @@ int MicronfAgent::DeployMicroservices(std::vector<std::string> chain_conf){
       printf("%s\n\n\n", str.c_str());
       */
 
+      // Goes through the local DS, create ring if needed. 
       MaintainLocalDS(pp_config);
-      DeployOneMicroService(pp_config, config_file_path);
+
+      // Deploy one microservice using fork and execv
+      int ms_pid = DeployOneMicroService(pp_config, config_file_path);      
+      
+      // Set the scheduler to RR
+      set_scheduler( ms_pid );
       
    }
 	
@@ -252,7 +277,7 @@ int MicronfAgent::DeployOneMicroService(const PacketProcessorConfig& pp_conf,
       std::exit(0);
    }
    else {
-      printf("parent id: %d\n", pid);
+      printf("In parent, child id: %d\n", pid);
       return pid;
    }
 }

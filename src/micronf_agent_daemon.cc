@@ -1,6 +1,7 @@
 #include <iostream>
 #include <rte_launch.h>
 #include <rte_lcore.h>
+#include <rte_cycles.h>
 #include <thread>
 #include <unistd.h>
 #include <vector>
@@ -69,8 +70,7 @@ int RunMonitor(void* arg) {
 }
 
 int main(int argc, char* argv[]){
-
-   // Change scheduler to RT Round Robin
+/*   // Change scheduler to RT Round Robin
    int rc, old_sched_policy;
    struct sched_param my_params;
    my_params.sched_priority = MY_RT_PRIORITY;
@@ -79,7 +79,12 @@ int main(int argc, char* argv[]){
    if (rc == -1) {
       printf("Agent sched_setscheduler call is failed\n");
    } 
-
+   printf( "SCHED_RR: %d\n", SCHED_RR );
+   printf( "SCHED_FIFO: %d\n", SCHED_FIFO );
+   printf( "SCHED_OTHER: %d\n", SCHED_OTHER );
+   printf("Old Scheduler: %d\n", old_sched_policy);
+   printf("Current Scheduler: %d\n", sched_getscheduler( 0 ));
+*/
    // Setting up semaphores
    std::string sem_names [] = { "SEM_CORE_2", "SEM_CORE_3", "SEM_CORE_1" };
    std::map <std::string, sem_t*> semaphores;
@@ -104,30 +109,31 @@ int main(int argc, char* argv[]){
    // std::string conf_folder_path = "/home/nfuser/dpdk_study/micro-nf-datapath/confs/";    
    std::string conf_folder_path = "../confs/";	
    std::vector<std::string> chain_conf = {
-      //conf_folder_path + "MacSwap_ShareCore_1.conf",
-      //conf_folder_path + "MacSwap_ShareCore_2.conf",
-      //conf_folder_path + "MacSwap_ShareCore_3.conf"
-      conf_folder_path + "mac_swapper_test.conf"
+      conf_folder_path + "MacSwap_ShareCore_1.conf",
+      conf_folder_path + "MacSwap_ShareCore_2.conf",
+      conf_folder_path + "MacSwap_ShareCore_3.conf"
+      //conf_folder_path + "mac_swapper_test.conf"
       //conf_folder_path + "mac_swapper_2.conf",
       //conf_folder_path + "mac_sapper_3.conf",
       //conf_folder_path + "mac_swapper_4.conf"
    };
 
    // Fake cores
-   micronfAgent.addAvailCore( "0x10" );	   
-   micronfAgent.addAvailCore( "0x20" );
-   micronfAgent.addAvailCore( "0x08" );	
+   micronfAgent.addAvailCore( "0x04" );	   
+   micronfAgent.addAvailCore( "0x08" );
+   micronfAgent.addAvailCore( "0x10" );	
 
 
-   micronfAgent.addRealCore("2");
-   micronfAgent.addRealCore("2");
    micronfAgent.addRealCore("3");
+   micronfAgent.addRealCore("3");
+   micronfAgent.addRealCore("5");
 	
    micronfAgent.DeployMicroservices(chain_conf);
 
    //int monitor_lcore_id = rte_get_next_lcore(rte_lcore_id(), 1, 1);
-   int monitor_lcore_id = 0;
-   int nic_classifier_lcore_id = rte_get_next_lcore(monitor_lcore_id, 1, 1);
+   int monitor_lcore_id = 1;
+   int nic_classifier_lcore_id = 2;
+   //int nic_classifier_lcore_id = rte_get_next_lcore(monitor_lcore_id, 1, 1);
 
    printf("master lcore: %d, monitor lcore: %d, nic_classifier lcore: %d\n", rte_lcore_id(), monitor_lcore_id, nic_classifier_lcore_id);
 
