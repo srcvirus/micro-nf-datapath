@@ -54,6 +54,10 @@ MicronfAgent::MicronfAgent(){
 
 MicronfAgent::~MicronfAgent(){}
 
+/* Check the link status of all ports in up to 9s, and print them finally */
+void
+check_all_ports_link_status(uint8_t port_num, uint32_t port_mask);
+
 int MicronfAgent::Init(int argc, char* argv[]){
    int retval = rte_eal_init(argc, argv);
    if(retval < 0){
