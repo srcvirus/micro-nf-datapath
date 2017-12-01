@@ -54,9 +54,11 @@ MicronfAgent::MicronfAgent(){
 
 MicronfAgent::~MicronfAgent(){}
 
+// Function prototype
 void
 check_all_ports_link_status(uint8_t port_num, uint32_t port_mask);
 
+// Initialize the ports for microservices and check both ports status
 int MicronfAgent::Init(int argc, char* argv[]){
    int retval = rte_eal_init(argc, argv);
    if(retval < 0){
@@ -84,7 +86,7 @@ int MicronfAgent::Init(int argc, char* argv[]){
    }
 
    
-   check_all_ports_link_status( 2, 0x03 );
+   check_all_ports_link_status( num_ports_, 0x03 );
 
    // Create memzone to store statistic
    // FIXME initialize num_nfs from config file
@@ -227,7 +229,7 @@ int MicronfAgent::DeployMicroservices(std::vector<std::string> chain_conf){
       int ms_pid = DeployOneMicroService(pp_config, config_file_path);      
       
       // Set the scheduler to RR
-      set_scheduler( ms_pid );
+      // set_scheduler( ms_pid );
       
    }
 	
@@ -252,7 +254,7 @@ int MicronfAgent::DeployOneMicroService(const PacketProcessorConfig& pp_conf,
    int pid = fork();
    if(pid == 0){
       printf("child started. id: %d\n", pid);
-      char * const argv[] = {"../exec/micronf", "-n", "2",
+      char * const argv[] = {"../exec/micronf", "-n", "2", "-c", strdup( core_mask.c_str() ),
                              "-b", "0000:04:00.0", "-b", "0000:05:00.0", "-b", "0000:05:00.1",  
                              "--proc-type", "secondary", "--", strdup(config_para.c_str()), NULL };
 
