@@ -16,7 +16,12 @@
 #include <sched.h>
 #define MY_RT_PRIORITY 99
 
-#include <semaphore.h>
+// #include <semaphore.h>
+#include <sys/sem.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#define PATH_TO_SEM "/home/h4bian/aqua10/micro-nf-datapath/src/VSEM"
+#define SEM_PROJECT_ID 100
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -69,8 +74,8 @@ int RunMonitor(void* arg) {
    return 0;
 }
 
-int main(int argc, char* argv[]){
-/*   // Change scheduler to RT Round Robin
+void set_scheduler_RR(){
+   // Change scheduler to RT Round Robin
    int rc, old_sched_policy;
    struct sched_param my_params;
    my_params.sched_priority = MY_RT_PRIORITY;
@@ -84,44 +89,57 @@ int main(int argc, char* argv[]){
    printf( "SCHED_OTHER: %d\n", SCHED_OTHER );
    printf("Old Scheduler: %d\n", old_sched_policy);
    printf("Current Scheduler: %d\n", sched_getscheduler( 0 ));
-*/
-   // Setting up semaphores
-   std::string sem_names [] = { "/SEM_CORE_0", "/SEM_CORE_1", "/SEM_CORE_2", "/SEM_CORE_3", "/SEM_CORE_4", 
-                                "/SEM_CORE_5", "/SEM_CORE_6", "/SEM_CORE_7" };
-   std::map <std::string, sem_t*> semaphores;
-   for ( std::string & sname : sem_names ) {
-      sem_t* sm = sem_open( sname.c_str(), O_CREAT, 0644, 1 );
-      if (sm == SEM_FAILED ) { 
-         std::cerr << "sem_open failed!\n";
+
+}
+
+// This function will create a systemV set of 'num_sems' semaphores. 
+// The first semaphore in the set is set to 1 whereas the others are 0.
+// The idea is to have a baton moving in the set of the semaphores.
+int init_systemv_semaphore( int num_sems ){
+   key_t sem_key = ftok( PATH_TO_SEM, SEM_PROJECT_ID );
+   int sem_id = semget( sem_key, num_sems, IPC_CREAT | 0666 );
+   if ( sem_id < 0 ) {
+      perror( "ERROR: semget(). Errno:" );
+      return sem_id;
+   } else {
+      // Set the first sem in the set to 1.
+      int res = semctl( sem_id, 0, SETVAL, 1 );
+      for ( int i=1; i < num_sems; i++ ) {  
+         // set value of other sems to 0
+         res = semctl( sem_id, i, SETVAL, 0 );
+      }
+      if ( res < 0 ) { 
+         perror( "ERROR: semctl SETVAL." );
          return -1;
       }
       
-      // Initialized to 1 at the beginning.
-      sem_init( sm, 0, 1 );
-      
-      int val;
-      sem_getvalue(sm, &val);
-      std::cout << sname << "Agent Val: " << val <<std::endl;
-      
-      semaphores.insert( std::pair< std::string, sem_t* > ( sname, sm ) );
+      return 0;
    }
-   
+}
+
+int main(int argc, char* argv[]){
+
    // Initializing Agent
-   cout<<"Agent is running"<<endl;
-   MicronfAgent micronfAgent;
-   micronfAgent.Init(argc, argv);
-	
-   // std::string conf_folder_path = "/home/nfuser/dpdk_study/micro-nf-datapath/confs/";    
+   cout << "Agent is running" << endl;
+
+   // Configurations
    std::string conf_folder_path = "../confs/";	
    std::vector<std::string> chain_conf = {
       conf_folder_path + "MacSwap_ShareCore_1.conf",
       conf_folder_path + "MacSwap_ShareCore_2.conf",
       conf_folder_path + "MacSwap_ShareCore_3.conf"
-      //conf_folder_path + "mac_swapper_test.conf"
-      //conf_folder_path + "mac_swapper_2.conf",
-      //conf_folder_path + "mac_sapper_3.conf",
-      //conf_folder_path + "mac_swapper_4.conf"
    };
+
+   // Setup scheduler
+   // set_scheduler_RR();
+   
+   // Setup systemV semaphore
+   int n_share_core_x = 2;   // fixme pass it as arg to agent and micronf
+   init_systemv_semaphore( n_share_core_x );
+
+   // DPDK EAL inititaion done in MicronfAgent
+   MicronfAgent micronfAgent;
+   micronfAgent.Init(argc, argv);        
 
    // Fake cores
    micronfAgent.addAvailCore( "0x10" );	   
@@ -143,12 +161,6 @@ int main(int argc, char* argv[]){
    RunGRPCService(&micronfAgent); 
 
    rte_eal_mp_wait_lcore();
-
-   for ( auto it = semaphores.begin(); it != semaphores.end(); ++it ) {
-      int res = sem_close( it->second );
-      if ( res != 0 ) 
-         std::cerr << it->first << " sem_close failed." << std::endl; 
-   }
 
    return 0;
 }

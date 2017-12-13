@@ -8,7 +8,7 @@
 #include "common.h"
 
 void NICClassifier::Init(MicronfAgent* agent){
-   int pid = 0;   // self
+/*   int pid = 0;   // self
    int rc, old_sched_policy;
    struct sched_param my_params;
    my_params.sched_priority = 99;
@@ -17,7 +17,7 @@ void NICClassifier::Init(MicronfAgent* agent){
    if (rc == -1) {
       fprintf( stderr, "[nic_classifier.cc] sched_setscheduler call is failed\n" );
    } 
-
+*/
    this->agent_ = agent;
 }
 

@@ -204,7 +204,7 @@ void set_scheduler( int pid ) {
       printf( "sched_setscheduler call is failed\n" );
    }
    else {
-      printf( "set_scheduler(). old_sched_policy:  %d. new_sched_policy: %d \n", old_sched_policy, sched_getscheduler( pid ) );
+      printf( "set_scheduler(). pid: %d. old_sched_policy:  %d. new_sched_policy: %d \n", pid, old_sched_policy, sched_getscheduler( pid ) );
    }
 }
 
@@ -229,7 +229,7 @@ int MicronfAgent::DeployMicroservices(std::vector<std::string> chain_conf){
       int ms_pid = DeployOneMicroService(pp_config, config_file_path);      
       
       // Set the scheduler to RR
-      // set_scheduler( ms_pid );
+      set_scheduler( ms_pid );
       
    }
 	
