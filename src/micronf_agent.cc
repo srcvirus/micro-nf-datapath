@@ -42,6 +42,11 @@ using namespace std;
 #define RX_QUEUE_SZ 2048 // 512
 #define TX_QUEUE_SZ 2048 // 512
 
+// Function prototype
+void
+check_all_ports_link_status(uint8_t port_num, uint32_t port_mask);
+void inline set_scheduler( int pid );
+
 MicronfAgent::MicronfAgent(){
    num_ports_ = 0;
    for(int i=0; i < MAX_NUM_MS; i++)
@@ -53,10 +58,6 @@ MicronfAgent::MicronfAgent(){
 }
 
 MicronfAgent::~MicronfAgent(){}
-
-// Function prototype
-void
-check_all_ports_link_status(uint8_t port_num, uint32_t port_mask);
 
 // Initialize the ports for microservices and check both ports status
 int MicronfAgent::Init(int argc, char* argv[]){
@@ -93,6 +94,9 @@ int MicronfAgent::Init(int argc, char* argv[]){
    int num_nfs = 1;
    InitStatMz(num_nfs);
    InitScaleBits(num_nfs);	
+   
+   // Setting agent scheduler to SCHED_RR. Thus, children of this process will inherit the same sched. 
+   set_scheduler( 0 );
 }
 
 int MicronfAgent::CreateRing(string ring_name){
@@ -193,27 +197,11 @@ void MicronfAgent::MaintainLocalDS(PacketProcessorConfig& pp_conf){
 	
 }
 
-void set_scheduler( int pid ) {   
-   // Change scheduler to RT Round Robin
-   int rc, old_sched_policy;
-   struct sched_param my_params;
-   my_params.sched_priority = 99;
-   old_sched_policy = sched_getscheduler( pid );
-   rc = sched_setscheduler( pid, SCHED_RR, &my_params ); 
-   if (rc == -1) {
-      printf( "sched_setscheduler call is failed\n" );
-   }
-   else {
-      printf( "set_scheduler(). pid: %d. old_sched_policy:  %d. new_sched_policy: %d \n", pid, old_sched_policy, sched_getscheduler( pid ) );
-   }
-}
-
 int MicronfAgent::DeployMicroservices(std::vector<std::string> chain_conf){
-   for(int i=0; i < chain_conf.size(); i++){
+   for ( int i = 0; i < chain_conf.size(); i++){
       printf("Chain_conf size: %lu i: %d\n", chain_conf.size(), i);
       PacketProcessorConfig pp_config;
       std::string config_file_path = chain_conf[i];
-	
       int fd = open(config_file_path.c_str(), O_RDONLY);
       if (fd < 0)
          rte_exit(EXIT_FAILURE, "Cannot open configuration file %s\n",
@@ -226,18 +214,16 @@ int MicronfAgent::DeployMicroservices(std::vector<std::string> chain_conf){
       MaintainLocalDS( pp_config );
 
       // Deploy one microservice using fork and execv
+      // Child process will inherit micro_agent's sched policy. 
       int ms_pid = DeployOneMicroService(pp_config, config_file_path);      
-      
-      // Set the scheduler to RR
-      set_scheduler( ms_pid );
       
    }
 	
    //For debugging purpose only.
-   for(int t = 0; t < MAX_NUM_MS; t++){
-      for(int u = 0; u < MAX_NUM_PORT; u++){
-         if(std::get<0>(neighborGraph[t][u]) != 0){
-            printf("%d %d -> %d\n", t, u, std::get<0>(neighborGraph[t][u]));
+   for ( int t = 0; t < MAX_NUM_MS; t++){
+      for ( int u = 0; u < MAX_NUM_PORT; u++){
+         if ( std::get<0>(neighborGraph[t][u]) != 0){
+            printf( "%d %d -> %d\n", t, u, std::get<0>(neighborGraph[t][u]) );
          }
       }
    }	
@@ -331,65 +317,7 @@ int MicronfAgent::InitScaleBits(int num_nfs){
    scale_bits->num_nf = num_nfs;
 
    return 0;
-}
-
-
-/* Check the link status of all ports in up to 9s, and print them finally */
-void
-check_all_ports_link_status(uint8_t port_num, uint32_t port_mask)
-{
-#define CHECK_INTERVAL 100 /* 100ms */
-#define MAX_CHECK_TIME 150 /*15s (150 * 100ms) in total */
-   uint8_t portid, count, all_ports_up, print_flag = 0;
-   struct rte_eth_link link;
-
-   rte_delay_ms(CHECK_INTERVAL);
-   printf("\nChecking link status");
-   fflush(stdout);
-   for (count = 0; count <= MAX_CHECK_TIME; count++) {
-      all_ports_up = 1;
-      for (portid = 0; portid < port_num; portid++) {
-         if ((port_mask & (1 << portid)) == 0)
-            continue;
-         memset(&link, 0, sizeof(link));
-         rte_eth_link_get_nowait(portid, &link);
-         /* print link status if flag set */
-         if (print_flag == 1) {
-            if (link.link_status)
-               printf("Port %d Link Up - speed %u "
-                      "Mbps - %s\n", (uint8_t)portid,
-                      (unsigned)link.link_speed,
-                      (link.link_duplex == ETH_LINK_FULL_DUPLEX) ?
-                      ("full-duplex")  : ("half-duplex\n"));
-            else
-               printf("Port %d Link Down\n",
-                      (uint8_t)portid);
-            continue;
-         }
-         /* clear all_ports_up flag if any link down */
-         if (link.link_status == ETH_LINK_DOWN) {
-            all_ports_up = 0;
-            break;
-         }
-      }
-      /* after finally printing all link status, get out */
-      if (print_flag == 1)
-         break;
-
-      if (all_ports_up == 0) {
-         printf(".");
-         fflush(stdout);
-         rte_delay_ms(CHECK_INTERVAL);
-      }
-
-      /* set the print_flag if all ports up or timeout */
-      if (all_ports_up == 1 || count == (MAX_CHECK_TIME - 1)) {
-         print_flag = 1;
-         printf("done\n");
-      }
-   }
-}
-
+}  
 
 int MicronfAgent::InitPort( int port_id )
 {
@@ -457,5 +385,77 @@ int MicronfAgent::InitPort( int port_id )
    printf( "After rte_eth_dev_start. retval:%d \n", retval );
 
    return 0;
+}
+
+void inline set_scheduler( int pid ) {   
+   // Change scheduler to RT Round Robin
+   int rc, old_sched_policy;
+   struct sched_param my_params;
+   my_params.sched_priority = 99;
+   old_sched_policy = sched_getscheduler( pid );
+   rc = sched_setscheduler( pid, SCHED_RR, &my_params ); 
+   if (rc == -1) {
+      printf( "sched_setscheduler call is failed\n" );
+      exit( -1 );
+   }
+   else {
+      printf( "set_scheduler(). pid: %d. old_sched_policy:  %d. new_sched_policy: %d \n", pid, old_sched_policy, sched_getscheduler( pid ) );
+   }
+}
+
+/* Check the link status of all ports in up to 9s, and print them finally */
+void
+check_all_ports_link_status(uint8_t port_num, uint32_t port_mask)
+{
+#define CHECK_INTERVAL 100 /* 100ms */
+#define MAX_CHECK_TIME 150 /*15s (150 * 100ms) in total */
+   uint8_t portid, count, all_ports_up, print_flag = 0;
+   struct rte_eth_link link;
+
+   rte_delay_ms(CHECK_INTERVAL);
+   printf("\nChecking link status");
+   fflush(stdout);
+   for (count = 0; count <= MAX_CHECK_TIME; count++) {
+      all_ports_up = 1;
+      for (portid = 0; portid < port_num; portid++) {
+         if ((port_mask & (1 << portid)) == 0)
+            continue;
+         memset(&link, 0, sizeof(link));
+         rte_eth_link_get_nowait(portid, &link);
+         /* print link status if flag set */
+         if (print_flag == 1) {
+            if (link.link_status)
+               printf("Port %d Link Up - speed %u "
+                      "Mbps - %s\n", (uint8_t)portid,
+                      (unsigned)link.link_speed,
+                      (link.link_duplex == ETH_LINK_FULL_DUPLEX) ?
+                      ("full-duplex")  : ("half-duplex\n"));
+            else
+               printf("Port %d Link Down\n",
+                      (uint8_t)portid);
+            continue;
+         }
+         /* clear all_ports_up flag if any link down */
+         if (link.link_status == ETH_LINK_DOWN) {
+            all_ports_up = 0;
+            break;
+         }
+      }
+      /* after finally printing all link status, get out */
+      if (print_flag == 1)
+         break;
+
+      if (all_ports_up == 0) {
+         printf(".");
+         fflush(stdout);
+         rte_delay_ms(CHECK_INTERVAL);
+      }
+
+      /* set the print_flag if all ports up or timeout */
+      if (all_ports_up == 1 || count == (MAX_CHECK_TIME - 1)) {
+         print_flag = 1;
+         printf("done\n");
+      }
+   }
 }
 
