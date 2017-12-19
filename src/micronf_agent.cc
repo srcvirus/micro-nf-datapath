@@ -234,21 +234,19 @@ int MicronfAgent::DeployMicroservices(std::vector<std::string> chain_conf){
 int MicronfAgent::DeployOneMicroService(const PacketProcessorConfig& pp_conf, 
                                         const std::string config_path){
    printf("Deploying One Micro Service . . .\n");
-   std::string core_mask = getAvailCore();
+   // std::string core_mask = getAvailCore();
    std::string config_para = "--config-file="+config_path;
    
    int pid = fork();
    if(pid == 0){
       printf("child started. id: %d\n", pid);
-      char * const argv[] = {"../exec/micronf", "-n", "2", "-c", strdup( core_mask.c_str() ),
+/*    char * const argv[] = {"../exec/micronf", "-n", "2", "-c", strdup( core_mask.c_str() ),
                              "-b", "0000:04:00.0", "-b", "0000:05:00.0", "-b", "0000:05:00.1",  
                              "--proc-type", "secondary", "--", strdup(config_para.c_str()), NULL };
+*/
+      char * const argv[] = {"../exec/micronf", "-n", "2",
+                             "--proc-type", "secondary", "--", strdup(config_para.c_str()), NULL };
 
-      /* printf( "execv ../exec/micronf ");
-      for (int i=0; i < 5; i++) { 
-         fprintf( stdout, " %s ", argv[i] );
-      } 
-      */
       execv( "../exec/micronf", argv );
       std::exit(0);
    }

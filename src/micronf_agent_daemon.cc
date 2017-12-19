@@ -127,14 +127,14 @@ int main(int argc, char* argv[]){
    std::vector<std::string> chain_conf = {
       conf_folder_path + "MacSwap_ShareCore_1.conf",
       conf_folder_path + "MacSwap_ShareCore_2.conf",
-      conf_folder_path + "MacSwap_ShareCore_3.conf"
+      conf_folder_path + "MacSwap_ShareCore_3.conf",
+      conf_folder_path + "MacSwap_ShareCore_4.conf",
+      conf_folder_path + "MacSwap_ShareCore_5.conf",
+      conf_folder_path + "MacSwap_ShareCore_6.conf"
    };
-
-   // Setup scheduler
-   // set_scheduler_RR();
    
    // Setup systemV semaphore
-   int n_share_core_x = 2;   // fixme pass it as arg to agent and micronf
+   int n_share_core_x = 3;   // fixme pass it as arg to agent and micronf
    init_systemv_semaphore( n_share_core_x );
 
    // DPDK EAL inititaion done in MicronfAgent
@@ -142,11 +142,15 @@ int main(int argc, char* argv[]){
    micronfAgent.Init(argc, argv);        
 
    // Fake cores
+/*   
+   micronfAgent.addAvailCore( "0x10" );	   
    micronfAgent.addAvailCore( "0x10" );	   
    micronfAgent.addAvailCore( "0x10" );
+   micronfAgent.addAvailCore( "0x10" );
+   micronfAgent.addAvailCore( "0x10" );
    micronfAgent.addAvailCore( "0x20" );	
-	
-   micronfAgent.DeployMicroservices(chain_conf);
+*/	
+   micronfAgent.DeployMicroservices( chain_conf );
 
    //int monitor_lcore_id = rte_get_next_lcore(rte_lcore_id(), 1, 1);
    int monitor_lcore_id = 1;
