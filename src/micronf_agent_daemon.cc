@@ -127,10 +127,10 @@ int main(int argc, char* argv[]){
    std::vector<std::string> chain_conf = {
       conf_folder_path + "MacSwap_ShareCore_1.conf",
       conf_folder_path + "MacSwap_ShareCore_2.conf",
-      conf_folder_path + "MacSwap_ShareCore_3.conf",
-      conf_folder_path + "MacSwap_ShareCore_4.conf",
-      conf_folder_path + "MacSwap_ShareCore_5.conf",
-      conf_folder_path + "MacSwap_ShareCore_6.conf"
+//      conf_folder_path + "MacSwap_ShareCore_3.conf"
+//      conf_folder_path + "MacSwap_ShareCore_4.conf",
+//      conf_folder_path + "MacSwap_ShareCore_5.conf",
+       conf_folder_path + "MacSwap_ShareCore_6.conf"
    };
    
    // Setup systemV semaphore
