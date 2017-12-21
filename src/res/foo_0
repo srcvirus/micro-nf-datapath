@@ -1,0 +1,230 @@
+1: yield cycles: 5736
+1: avg_cycles: 2648
+2: yield cycles: 6368
+2: avg_cycles: 1992
+3: yield cycles: 940
+3: avg_cycles: 88
+3: yield cycles: 928
+3: avg_cycles: 96
+3: yield cycles: 1104
+3: avg_cycles: 5112
+1: yield cycles: 5844
+1: avg_cycles: 2744
+2: yield cycles: 6256
+2: avg_cycles: 2300
+3: yield cycles: 1172
+3: avg_cycles: 5848
+3: yield cycles: 972
+3: avg_cycles: 84
+3: yield cycles: 976
+3: avg_cycles: 112
+1: yield cycles: 6144
+1: avg_cycles: 2896
+2: yield cycles: 6468
+2: avg_cycles: 2124
+3: yield cycles: 1012
+3: avg_cycles: 200
+3: yield cycles: 968
+3: avg_cycles: 96
+3: yield cycles: 980
+3: avg_cycles: 136
+1: yield cycles: 5564
+1: avg_cycles: 3092
+2: yield cycles: 6268
+2: avg_cycles: 1856
+3: yield cycles: 976
+3: avg_cycles: 92
+3: yield cycles: 1464
+3: avg_cycles: 5320
+3: yield cycles: 1112
+3: avg_cycles: 4904
+1: yield cycles: 5344
+1: avg_cycles: 3168
+2: yield cycles: 6596
+2: avg_cycles: 1824
+3: yield cycles: 920
+3: avg_cycles: 156
+3: yield cycles: 1112
+3: avg_cycles: 5560
+3: yield cycles: 1128
+3: avg_cycles: 5184
+1: yield cycles: 5456
+1: avg_cycles: 3348
+2: yield cycles: 6472
+2: avg_cycles: 2056
+3: yield cycles: 932
+3: avg_cycles: 88
+3: yield cycles: 924
+3: avg_cycles: 84
+3: yield cycles: 936
+3: avg_cycles: 84
+1: yield cycles: 5472
+1: avg_cycles: 3108
+2: yield cycles: 6892
+2: avg_cycles: 1948
+3: yield cycles: 1248
+3: avg_cycles: 4936
+3: yield cycles: 1140
+3: avg_cycles: 5056
+3: yield cycles: 972
+3: avg_cycles: 108
+1: yield cycles: 5312
+1: avg_cycles: 3264
+2: yield cycles: 6684
+2: avg_cycles: 2036
+3: yield cycles: 1712
+3: avg_cycles: 5140
+3: yield cycles: 956
+3: avg_cycles: 92
+3: yield cycles: 960
+3: avg_cycles: 88
+1: yield cycles: 5476
+1: avg_cycles: 3280
+2: yield cycles: 6780
+2: avg_cycles: 1724
+3: yield cycles: 964
+3: avg_cycles: 112
+3: yield cycles: 932
+3: avg_cycles: 84
+3: yield cycles: 944
+3: avg_cycles: 84
+1: yield cycles: 5060
+1: avg_cycles: 3216
+2: yield cycles: 6812
+2: avg_cycles: 1820
+3: yield cycles: 928
+3: avg_cycles: 224
+3: yield cycles: 924
+3: avg_cycles: 84
+3: yield cycles: 1604
+3: avg_cycles: 5408
+1: yield cycles: 5344
+1: avg_cycles: 3120
+2: yield cycles: 6908
+2: avg_cycles: 1604
+3: yield cycles: 936
+3: avg_cycles: 92
+3: yield cycles: 932
+3: avg_cycles: 188
+3: yield cycles: 1144
+3: avg_cycles: 4988
+3: yield cycles: 1272
+3: avg_cycles: 5480
+1: yield cycles: 5260
+1: avg_cycles: 3352
+2: yield cycles: 6860
+2: avg_cycles: 1800
+3: yield cycles: 1164
+3: avg_cycles: 4880
+3: yield cycles: 1180
+3: avg_cycles: 4860
+3: yield cycles: 956
+3: avg_cycles: 84
+1: yield cycles: 5464
+1: avg_cycles: 3332
+2: yield cycles: 6720
+2: avg_cycles: 1728
+3: yield cycles: 1184
+3: avg_cycles: 5164
+3: yield cycles: 960
+3: avg_cycles: 84
+3: yield cycles: 1020
+3: avg_cycles: 204
+1: yield cycles: 5312
+1: avg_cycles: 3232
+2: yield cycles: 6804
+2: avg_cycles: 1716
+3: yield cycles: 948
+3: avg_cycles: 116
+3: yield cycles: 1200
+3: avg_cycles: 5384
+3: yield cycles: 928
+3: avg_cycles: 84
+1: yield cycles: 5316
+1: avg_cycles: 3152
+2: yield cycles: 6564
+2: avg_cycles: 1696
+3: yield cycles: 1064
+3: avg_cycles: 88
+3: yield cycles: 924
+3: avg_cycles: 108
+3: yield cycles: 944
+3: avg_cycles: 92
+1: yield cycles: 5256
+1: avg_cycles: 3320
+2: yield cycles: 6568
+2: avg_cycles: 1676
+3: yield cycles: 1148
+3: avg_cycles: 5752
+3: yield cycles: 924
+3: avg_cycles: 100
+3: yield cycles: 920
+3: avg_cycles: 152
+1: yield cycles: 5336
+1: avg_cycles: 3136
+2: yield cycles: 6480
+2: avg_cycles: 1944
+3: yield cycles: 976
+3: avg_cycles: 88
+3: yield cycles: 972
+3: avg_cycles: 84
+3: yield cycles: 1268
+3: avg_cycles: 5024
+1: yield cycles: 5224
+1: avg_cycles: 3156
+2: yield cycles: 6740
+2: avg_cycles: 1648
+3: yield cycles: 964
+3: avg_cycles: 84
+3: yield cycles: 1208
+3: avg_cycles: 5236
+3: yield cycles: 972
+3: avg_cycles: 112
+1: yield cycles: 5472
+1: avg_cycles: 3700
+2: yield cycles: 6932
+2: avg_cycles: 1624
+3: yield cycles: 1172
+3: avg_cycles: 4884
+3: yield cycles: 960
+3: avg_cycles: 96
+3: yield cycles: 932
+3: avg_cycles: 84
+1: yield cycles: 5204
+1: avg_cycles: 3300
+2: yield cycles: 6600
+2: avg_cycles: 1884
+3: yield cycles: 924
+3: avg_cycles: 88
+3: yield cycles: 1148
+3: avg_cycles: 5136
+3: yield cycles: 1784
+3: avg_cycles: 5280
+3: yield cycles: 920
+3: avg_cycles: 88
+1: yield cycles: 5176
+1: avg_cycles: 3204
+2: yield cycles: 6760
+2: avg_cycles: 1780
+3: yield cycles: 924
+3: avg_cycles: 88
+3: yield cycles: 1100
+3: avg_cycles: 4828
+3: yield cycles: 924
+3: avg_cycles: 84
+1: yield cycles: 5272
+1: avg_cycles: 3056
+2: yield cycles: 7012
+2: avg_cycles: 1728
+3: yield cycles: 960
+3: avg_cycles: 152
+3: yield cycles: 968
+3: avg_cycles: 84
+3: yield cycles: 952
+3: avg_cycles: 100
+1: yield cycles: 5576
+1: avg_cycles: 3164
+2: yield cycles: 6992
+2: avg_cycles: 1644
+3: yield cycles: 1152
+3: avg_cycles: 5012
