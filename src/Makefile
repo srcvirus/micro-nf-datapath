@@ -10,7 +10,7 @@ LDFLAGS = -L$(RTE_SDK)/$(RTE_TARGET)/lib
 
 CXX = g++
 #CPPFLAGS += -I/usr/local/include -g -pthread 
-CXXFLAGS += -std=c++11 -mssse3 -O3 $(INCS) $(LIBDIR)
+CXXFLAGS += -std=c++11 -mssse3 -O3 $(INCS) -Wno-write-strings
 LDLIBS +=  `pkg-config --libs grpc++ grpc --libs protobuf`\
            -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed \
            -lprotobuf  -Wl,--whole-archive -ldpdk -Wl,--no-whole-archive -libverbs -lpthread -ldl

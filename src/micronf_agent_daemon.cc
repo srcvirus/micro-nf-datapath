@@ -1,9 +1,11 @@
 #include <iostream>
 #include <rte_launch.h>
 #include <rte_lcore.h>
+#include <rte_cycles.h>
 #include <thread>
 #include <unistd.h>
 #include <vector>
+#include <fstream>
 
 #include "micronf_agent.h"
 #include <grpc++/grpc++.h>
@@ -45,8 +47,8 @@ int RunNICClassifier(void* arg) {
 	
    //create rule and add rule
    vector<FwdRule> sampleRules;
-   CIDRAddress src_addr_1("10.0.0.7/24");
-   CIDRAddress dst_addr_1("10.0.0.10/24");
+   CIDRAddress src_addr_1("10.0.0.10/24");
+   CIDRAddress dst_addr_1("10.0.0.7/24");
    FwdRule rule_1(src_addr_1, dst_addr_1, 1234, 5678, "rx_ring_0");
    nicClassifier.AddRule(rule_1); 
    nicClassifier.Run();
@@ -54,10 +56,9 @@ int RunNICClassifier(void* arg) {
 }
 
 int RunMonitor(void* arg) {
-   printf("Monitor thread is running . . . \n");
    MicronfAgent* micronfAgent = reinterpret_cast<MicronfAgent*>(arg);
    MicronfMonitor micronfMonitor;
-   
+
    // if 2nd arg (dry_run) is true, monitor won't deploy scale-out instances
    micronfMonitor.Init( micronfAgent, true );  
 
@@ -65,42 +66,47 @@ int RunMonitor(void* arg) {
    return 0;
 }
 
+std::vector< std::string > parse_chain_conf( std::string file_path ){
+   std::ifstream in_file( file_path.c_str() );
+   std::string line;
+   std::vector< std::string > conf_vector;
+   while ( in_file ) {
+      getline( in_file, line );
+      if( !line.empty() )
+      conf_vector.push_back( line );
+   }
+
+   return conf_vector;
+}
+
 int main(int argc, char* argv[]){
-   cout<<"Agent is running"<<endl;
+
+   cout << "Agent is running" << endl;
+
+   // Parse Chain Configurations
+   // All configurations should be stored in ../confs/Chain.conf
+   std::vector<std::string> chain_conf = parse_chain_conf( "../confs/Chain.conf" );
+   
+   // DPDK EAL inititaion done in MicronfAgent
+   // It also changes the sched policy to SCHED_RR, thus child process inherits.
    MicronfAgent micronfAgent;
-   micronfAgent.Init(argc, argv);
-	
-   std::string conf_folder_path = "../confs/";	
-   std::vector<std::string> chain_conf = {
-//      conf_folder_path + "mac_swapper_test.conf"
-//    conf_folder_path + "ms_1.conf",
-//    conf_folder_path + "ms_2.conf",
-//      conf_folder_path + "ms_3.conf"
-      conf_folder_path + "Sleeper_1.conf",
-      conf_folder_path + "MacSwapper_1.conf"
-   };
-	
-   micronfAgent.addAvailCore("0x08");	
-   micronfAgent.addAvailCore("0x10");
-   micronfAgent.addAvailCore("0x20");	
-   micronfAgent.addAvailCore("0x40");
-   micronfAgent.addAvailCore("0x80");
+   micronfAgent.Init(argc, argv);        
 
-   micronfAgent.DeployMicroservices(chain_conf);
+   micronfAgent.DeployMicroservices( chain_conf );
 
-   int monitor_lcore_id = rte_get_next_lcore(rte_lcore_id(), 1, 1);
-   int nic_classifier_lcore_id = rte_get_next_lcore(monitor_lcore_id, 1, 1);
-   printf("master lcore: %d, monitor lcore: %d, nic_classifier lcore: %d\n", 
-          rte_lcore_id(), monitor_lcore_id, nic_classifier_lcore_id);
+   int monitor_lcore_id = 1;
+   int nic_classifier_lcore_id = 2;
 
-   rte_eal_remote_launch(RunMonitor, reinterpret_cast<void*> (&micronfAgent),
-                         monitor_lcore_id);
-   rte_eal_remote_launch(RunNICClassifier, 
-                         reinterpret_cast<void*>(&micronfAgent), 
-                         nic_classifier_lcore_id);
+   printf("master lcore: %d, monitor lcore: %d, nic_classifier lcore: %d\n", rte_lcore_id(), monitor_lcore_id, nic_classifier_lcore_id);
+   
+   // Fixme: 
+   // Monitor will spawn new process with obolete config.
+   //rte_eal_remote_launch(RunMonitor, reinterpret_cast<void*> (&micronfAgent), monitor_lcore_id);
 
-   RunGRPCService(&micronfAgent);
-	
+   rte_eal_remote_launch(RunNICClassifier, reinterpret_cast<void*>(&micronfAgent), nic_classifier_lcore_id);
+
+   RunGRPCService(&micronfAgent); 
+
    rte_eal_mp_wait_lcore();
 
    return 0;

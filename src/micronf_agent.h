@@ -33,11 +33,29 @@ class MicronfAgent final : public RPC::Service {
    int Init(int argc, char* argv[]);
    int CreateRing(std::string ring_name);
    int DeleteRing(std::string ring_name); 
+
    int DeployMicroservices(std::vector<std::string> chain_conf);
+
    //int StartMicroService();
    //int StopMicroService();
+
    std::string getScaleRingName();
+
    int getNewInstanceId();
+
+   int DeployOneMicroService(const PacketProcessorConfig& pp_conf,
+                             const std::string config_path);
+   
+   // Add available coremask for each ms
+   void addAvailCore(std::string str){ avail_core.push(str); };
+ 
+   std::string getAvailCore(){ 
+      std::string cm = avail_core.front(); 
+      avail_core.pop(); 
+      return cm;
+   };
+
+   // Public Variables
    const struct rte_memzone *stat_mz;
    MSStats *micronf_stats;
    const struct rte_memzone *scale_bits_mz;
@@ -46,17 +64,9 @@ class MicronfAgent final : public RPC::Service {
    std::pair<int,int> neighborGraph [MAX_NUM_MS][MAX_NUM_PORT];			
    // store the pp_config of microservice by id
    PacketProcessorConfig ppConfigList[MAX_NUM_MS];
-   int DeployOneMicroService(const PacketProcessorConfig& pp_conf,
-                             const std::string config_path);
-   //setting available coremask
-   void addAvailCore(std::string str){ avail_core.push(str); };
-   std::string getAvailCore(){ 
-      std::string cm = avail_core.front(); 
-      avail_core.pop(); 
-      return cm;
-   };
    std::queue<std::string> avail_core;
-
+   
+   // Private Variables
   private:
    int InitMbufPool();
    int InitPort(int);	

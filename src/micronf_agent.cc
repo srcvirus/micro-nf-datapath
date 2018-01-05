@@ -34,12 +34,19 @@ using namespace std;
 #define MBUF_CACHE_SIZE 512
 #define PKTMBUF_POOL_NAME "MICRONF_MBUF_POOL"
 
-// Port configuration
-#define NUM_RX_DESC_PER_QUEUE 2048 // 512
-#define NUM_TX_DESC_PER_QUEUE 2048 // 512
 #define USERV_QUEUE_RINGSIZE 2048 // 128
+
+// Port configuration
 #define NUM_TX_QUEUE_PERPORT 1
 #define NUM_RX_QUEUE_PERPORT 1
+#define RX_QUEUE_SZ 2048 // 512
+#define TX_QUEUE_SZ 2048 // 512
+
+// Function prototype
+/* Check the link status of all ports in up to 15s, and print them finally */
+void
+check_all_ports_link_status(uint8_t num_port, uint32_t port_mask, uint16_t wait_time);
+void inline set_scheduler( int pid );
 
 MicronfAgent::MicronfAgent(){
    num_ports_ = 0;
@@ -53,9 +60,12 @@ MicronfAgent::MicronfAgent(){
 
 MicronfAgent::~MicronfAgent(){}
 
-/* Check the link status of all ports in up to 15s, and print them finally */
-void
-check_all_ports_link_status(uint8_t num_port, uint32_t port_mask, uint16_t wait_time);
+// MicronfAgent::Init() does:
+//    1. Initialize DPDK EAL using the cmdline param passed to agent.
+//    2. Allocate mbuf pool
+//    3. Initialize ports and check the status of the ports until UP
+//    4. Create memzone for statistic data and autoscaling bits
+//    5. Set the scheduler to SCHED_RR
 
 int MicronfAgent::Init(int argc, char* argv[]){
    int retval = rte_eal_init(argc, argv);
@@ -76,7 +86,6 @@ int MicronfAgent::Init(int argc, char* argv[]){
       rte_exit(EXIT_FAILURE, "Cannot create needed mbuf pools\n");
 
    for( int port_id = num_ports_-1; port_id >= 0; --port_id ) {
-      printf( "Initializing port: %u\n", port_id );
       retval = InitPort( port_id );
       if( retval < 0 ){
          rte_exit( EXIT_FAILURE, "Cannot initialise port %u\n",
@@ -91,9 +100,11 @@ int MicronfAgent::Init(int argc, char* argv[]){
    // Create memzone to store statistic
    // FIXME initialize num_nfs from config file
    int num_nfs = 1;
-   InitStatMz( num_nfs );
-   InitScaleBits( num_nfs );	
-
+   InitStatMz(num_nfs);
+   InitScaleBits(num_nfs);	
+   
+   // Setting agent scheduler to SCHED_RR. Thus, children of this process will inherit the same sched. 
+   set_scheduler( 0 );
 }
 
 int MicronfAgent::CreateRing(string ring_name){
@@ -149,12 +160,14 @@ void MicronfAgent::UpdateNeighborGraph(PacketProcessorConfig& pp_config,
 
 void MicronfAgent::MaintainRingCreation(const PortConfig& pconfig){
    const auto ring_it = pconfig.port_parameters().find("ring_id");
-   if ( ring_it == pconfig.port_parameters().end() )
+   if(ring_it == pconfig.port_parameters().end())
       return;
    struct rte_ring *ring;
    ring = rte_ring_lookup(ring_it->second.c_str());
-   if ( ring == NULL )
-      CreateRing( ring_it->second.c_str() );
+   if(ring == NULL){
+      printf("Creating Ring: %s\n", ring_it->second.c_str());
+      CreateRing(ring_it->second.c_str());
+   }
 }
 
 void MicronfAgent::MaintainLocalDS(PacketProcessorConfig& pp_conf){
@@ -163,7 +176,6 @@ void MicronfAgent::MaintainLocalDS(PacketProcessorConfig& pp_conf){
    printf("\npp_conf instance_id: %d\n", pp_conf.instance_id());
    printf("pp_conf class: %s\n", pp_conf.packet_processor_class().c_str());
    printf("pp_con num_ingress: %d\n\n", pp_conf.num_ingress_ports());
-
 	
    // Check the existing edge and update graph if there is a link
    for(int pid = 0; pid < pp_conf.port_configs_size(); pid++){
@@ -193,8 +205,8 @@ void MicronfAgent::MaintainLocalDS(PacketProcessorConfig& pp_conf){
 }
 
 int MicronfAgent::DeployMicroservices(std::vector<std::string> chain_conf){
-   for(int i=0; i < chain_conf.size(); i++){
-      printf("Chain_conf size: %lu i: %d str: %s\n", chain_conf.size(), i, chain_conf[i].c_str() );
+   for ( int i = 0; i < chain_conf.size(); i++){
+      printf("Chain_conf size: %lu i: %d\n", chain_conf.size(), i);
       PacketProcessorConfig pp_config;
       std::string config_file_path = chain_conf[i];
       int fd = open(config_file_path.c_str(), O_RDONLY);
@@ -204,23 +216,21 @@ int MicronfAgent::DeployMicroservices(std::vector<std::string> chain_conf){
       google::protobuf::io::FileInputStream config_file_handle(fd);
       config_file_handle.SetCloseOnDelete(true);
       google::protobuf::TextFormat::Parse(&config_file_handle, &pp_config);
-      /*
-      //For debugging purpose only.
-      printf("############################### %d #################################### \n", i);
-      std::string str = "";
-      google::protobuf::TextFormat::PrintToString(pp_config, &str);
-      printf("%s\n\n\n", str.c_str());
-      */
-      MaintainLocalDS(pp_config);
-      fprintf( stderr, "Before calling DeployOneMicroService" );
-      DeployOneMicroService(pp_config, config_file_path);
+
+      // Goes through the local DS, create ring if needed. 
+      MaintainLocalDS( pp_config );
+
+      // Deploy one microservice using fork and execv
+      // Child process will inherit micro_agent's sched policy. 
+      int ms_pid = DeployOneMicroService(pp_config, config_file_path);      
+      
    }
 	
    //For debugging purpose only.
-   for(int t = 0; t < MAX_NUM_MS; t++){
-      for(int u = 0; u < MAX_NUM_PORT; u++){
-         if(std::get<0>(neighborGraph[t][u]) != 0){
-            printf("%d %d -> %d\n", t, u, std::get<0>(neighborGraph[t][u]));
+   for ( int t = 0; t < MAX_NUM_MS; t++){
+      for ( int u = 0; u < MAX_NUM_PORT; u++){
+         if ( std::get<0>(neighborGraph[t][u]) != 0){
+            printf( "%d %d -> %d\n", t, u, std::get<0>(neighborGraph[t][u]) );
          }
       }
    }	
@@ -231,22 +241,20 @@ int MicronfAgent::DeployMicroservices(std::vector<std::string> chain_conf){
 int MicronfAgent::DeployOneMicroService(const PacketProcessorConfig& pp_conf, 
                                         const std::string config_path){
    printf("Deploying One Micro Service . . .\n");
-   std::string core_mask = getAvailCore();
-   std::string config_para = "--config-file="+config_path;
 
+   std::string config_para = "--config-file=" + config_path;
+   
    int pid = fork();
    if(pid == 0){
       printf("child started. id: %d\n", pid);
-      char * const argv[] = {"../exec/micronf", "-c", 
-                             strdup(core_mask.c_str()), "-n", "2", "--proc-type", "secondary", "--",
-                             strdup(config_para.c_str()), NULL};
+      char * const argv[] = {"../exec/micronf", "-n", "2",
+                             "--proc-type", "secondary", "--", strdup(config_para.c_str()), NULL };
 
-      execv("../exec/micronf", argv);
+      execv( "../exec/micronf", argv );
       std::exit(0);
-      return pid;
    }
    else {
-      printf("parent id: %d\n", pid);
+      printf("In parent, child id: %d\n\n", pid);
       return pid;
    }
 }
@@ -256,24 +264,8 @@ std::string MicronfAgent::getScaleRingName(){
 }
 
 int MicronfAgent::getNewInstanceId(){
-   printf( "getNewInstanceId: %d\n", highest_instance_id+1 );
    return ++highest_instance_id;
 }
-
-/*
-  int  MicronfAgent::StartMicroService(){
-
-  } 
-
-  int  MicronfAgent::StopMicroService(){
-
-  }
-
-  int  MicronfAgent::DestroyMicroService(){
-
-  }
-*/
-
 
 int MicronfAgent::InitMbufPool(){
    const unsigned num_mbufs = (MAX_NUM_USERV * MBUFS_PER_USERV) \
@@ -326,54 +318,89 @@ int MicronfAgent::InitScaleBits(int num_nfs){
    scale_bits->num_nf = num_nfs;
 
    return 0;
-}
+}  
 
-int MicronfAgent::InitPort(int port_id)
+int MicronfAgent::InitPort( int port_id )
 {
    /* for port configuration all features are off by default
       The rte_eth_conf structure includes:
       the hardware offload features such as IP checksum or VLAN tag stripping.
       the Receive Side Scaling (RSS) configuration when using multiple RX queues per port.
    */
-   printf("InitPort %d\n", port_id);
+   printf("Initializing port %u . . . \n", port_id);
+   fflush(stdout);
+
    struct rte_eth_conf *port_conf;
-   struct rte_eth_rxmode *t_rxmode;
-   t_rxmode = (struct rte_eth_rxmode*) calloc(1, sizeof(*t_rxmode));
-   t_rxmode->mq_mode = ETH_MQ_RX_RSS;
-   //t_rxmode->mq_mode = ETH_MQ_RX_NONE;
+   struct rte_eth_rxmode *rx_mode;
+   struct rte_eth_txmode *tx_mode;
+
+   rx_mode = (struct rte_eth_rxmode*) calloc(1, sizeof(*rx_mode));
+   rx_mode->mq_mode = ETH_MQ_RX_RSS;
+   rx_mode->split_hdr_size = 0;
+   rx_mode->header_split   = 0; // Header Split disabled 
+   rx_mode->hw_ip_checksum = 1; // IP checksum offload enabled 
+   rx_mode->hw_vlan_filter = 0; // VLAN filtering disabled 
+   rx_mode->jumbo_frame    = 0; // Jumbo Frame Support disabled 
+   rx_mode->hw_strip_crc   = 1; // CRC stripped by hardware 
+
+   tx_mode = (struct rte_eth_txmode*) calloc(1, sizeof(*tx_mode));
+   tx_mode->mq_mode = ETH_MQ_TX_NONE;
+
    port_conf = (struct rte_eth_conf*) calloc(1, sizeof(*port_conf));
-   port_conf->rxmode = *t_rxmode;
-	
+   port_conf->rxmode = *rx_mode;   
+   port_conf->txmode = *tx_mode;
 
-   const uint16_t rx_rings = NUM_RX_QUEUE_PERPORT, tx_rings = NUM_TX_QUEUE_PERPORT;
-   const uint16_t rx_ring_size = NUM_RX_DESC_PER_QUEUE;
-   const uint16_t tx_ring_size = NUM_TX_DESC_PER_QUEUE;
-	
+   struct rte_eth_dev_info dev_info;
+   rte_eth_dev_info_get( port_id, &dev_info );
+   dev_info.default_rxconf.rx_drop_en = 1;
+
    int retval;
-   if((retval = rte_eth_dev_configure((uint8_t)port_id, rx_rings, tx_rings,
-                                      port_conf)) != 0)
+   uint16_t q;
+   retval = rte_eth_dev_configure( port_id, NUM_RX_QUEUE_PERPORT, 
+                                   NUM_TX_QUEUE_PERPORT, port_conf );
+   if ( retval< 0 )
       return retval;
-		
-   for(int q=0; q < rx_rings; q++){
-      retval = rte_eth_rx_queue_setup(port_id, q, rx_ring_size,
-                                      rte_eth_dev_socket_id(port_id),	NULL, pktmbuf_pool);
-      if (retval < 0) return retval;
+ 
+   for ( q = 0; q < NUM_RX_QUEUE_PERPORT; q++ ) {
+      retval = rte_eth_rx_queue_setup( port_id, q, RX_QUEUE_SZ,
+                                       rte_eth_dev_socket_id( port_id ), 
+                                       &dev_info.default_rxconf, 
+                                       pktmbuf_pool );
+      if ( retval < 0 )
+         return retval; 
    }
-	
-   for(int q=0; q < tx_rings; q++){
-      retval = rte_eth_tx_queue_setup(port_id, q, tx_ring_size,
-                                      rte_eth_dev_socket_id(port_id), NULL);
-      if (retval < 0) return retval;
+
+   for ( q = 0; q < NUM_TX_QUEUE_PERPORT; q++ ) {
+      retval = rte_eth_tx_queue_setup( port_id, q, TX_QUEUE_SZ,
+                                       rte_eth_dev_socket_id( port_id ), 
+                                       NULL );
+      if ( retval < 0 )
+         return retval; 
    }
-	
-   //rte_eth_promiscuous_enable(port_id);
 
-   retval = rte_eth_dev_start(port_id);
-   if(retval < 0) return retval;
-
+   retval = rte_eth_dev_start( port_id );
+   if ( retval < 0 ) 
+      return retval;
+   
    return 0;
 }
 
+void inline set_scheduler( int pid ) {   
+   // Change scheduler to RT Round Robin
+   int rc, old_sched_policy;
+   struct sched_param my_params;
+   my_params.sched_priority = 99;
+   old_sched_policy = sched_getscheduler( pid );
+   rc = sched_setscheduler( pid, SCHED_RR, &my_params ); 
+   if (rc == -1) {
+      printf( "sched_setscheduler call is failed\n" );
+      exit( -1 );
+   }
+   else {
+      printf( "set_scheduler(). pid: %d. old_sched_policy:  %d. new_sched_policy: %d \n", 
+              pid, old_sched_policy, sched_getscheduler( pid ) );
+   }
+}
 
 /* Check the link status of all ports in up to 15s, and print them finally */
 void

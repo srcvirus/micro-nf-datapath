@@ -3,6 +3,7 @@
 #include <rte_malloc.h>
 #include <rte_prefetch.h>
 #include <stdio.h>
+#include <sched.h>
 
 #include "common.h"
 
@@ -20,6 +21,7 @@ void NICClassifier::Run(){
    register uint16_t j = 0;
    const int16_t kNumPrefetch = 8;
    printf("NicClassifier thread loop has started\n");
+
    for(;;) {
       rx_count = rte_eth_rx_burst(0, 0, buf, PACKET_READ_SIZE);
       // if (unlikely(rx_count == 0)) continue;
@@ -53,7 +55,7 @@ void NICClassifier::Run(){
       for (i = 0; i < rule_buffers_.size(); ++i) {
          tx_count = rte_ring_enqueue_burst(rings_[i],
                                            reinterpret_cast<void**>(rule_buffers_[i].get()),
-                                           rule_buffer_cnt_[i], NULL);
+                                           rule_buffer_cnt_[i], NULL );
          //if (unlikely(tx_count < rule_buffer_cnt_[i])) {
          //printf("Dropping: %u\n", (unsigned) (rule_buffer_cnt_[i] - tx_count));
          this->micronf_stats->packet_drop[INSTANCE_ID_0][i] += 
@@ -76,7 +78,7 @@ void NICClassifier::AddRule(const FwdRule& fwd_rule){
                rte_zmalloc(NULL, sizeof(FwdRule), RTE_CACHE_LINE_SIZE)));
    *(rule.get()) = fwd_rule;
    fwd_rules_.push_back(std::move(rule));
-   //agent_->CreateRing(fwd_rule.to_ring());
+
    auto ptr = std::unique_ptr<struct rte_mbuf*>(reinterpret_cast<struct rte_mbuf**>(
                                                       rte_zmalloc(
                                                             NULL, sizeof(struct rte_mbuf*) * PACKET_READ_SIZE, RTE_CACHE_LINE_SIZE)));

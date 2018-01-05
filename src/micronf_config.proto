@@ -18,13 +18,14 @@ message PacketProcessorConfig {
   // A set of (key, value) pairs representing packet processor specific
   // configuration. 
   // TODO: Add more documentation on the possible parameters.
-  map<string, string> pp_parameters = 4;
+  map<string, int32> pp_parameters = 4;
 
   // A list of port configurations. Port configurations will contain
   // configurations for both ingress and egress ports.
   repeated PortConfig port_configs = 5;
 
   required int32 instance_id = 6;
+   
 };
 
 message PortConfig {
@@ -50,7 +51,7 @@ message PortConfig {
   // RteIngressPort type of port.
   required string port_class = 3;
 
-	// A map of (key, value) pairs that represent the configurations of a port.
+  // A map of (key, value) pairs that represent the configurations of a port.
   // For more information on what can be configured for ports please look into
   // src/port/*ingress_port.h, src/port/*egress_port.h files and look for kConf*
   // constants in the class definitions.
