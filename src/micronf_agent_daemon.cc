@@ -16,13 +16,6 @@
 #include <sched.h>
 #define MY_RT_PRIORITY 99
 
-// #include <semaphore.h>
-#include <sys/sem.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#define PATH_TO_SEM "/home/h4bian/aqua10/micro-nf-datapath/src/VSEM"
-#define SEM_PROJECT_ID 100
-
 using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
@@ -74,49 +67,6 @@ int RunMonitor(void* arg) {
    return 0;
 }
 
-void set_scheduler_RR(){
-   // Change scheduler to RT Round Robin
-   int rc, old_sched_policy;
-   struct sched_param my_params;
-   my_params.sched_priority = MY_RT_PRIORITY;
-   old_sched_policy = sched_getscheduler(0);
-   rc = sched_setscheduler(0, SCHED_RR, &my_params);
-   if (rc == -1) {
-      printf("Agent sched_setscheduler call is failed\n");
-   } 
-   printf( "SCHED_RR: %d\n", SCHED_RR );
-   printf( "SCHED_FIFO: %d\n", SCHED_FIFO );
-   printf( "SCHED_OTHER: %d\n", SCHED_OTHER );
-   printf("Old Scheduler: %d\n", old_sched_policy);
-   printf("Current Scheduler: %d\n", sched_getscheduler( 0 ));
-
-}
-
-// This function will create a systemV set of 'num_sems' semaphores. 
-// The first semaphore in the set is set to 1 whereas the others are 0.
-// The idea is to have a baton moving in the set of the semaphores.
-int init_systemv_semaphore( int num_sems ){
-   key_t sem_key = ftok( PATH_TO_SEM, SEM_PROJECT_ID );
-   int sem_id = semget( sem_key, num_sems, IPC_CREAT | 0666 );
-   if ( sem_id < 0 ) {
-      perror( "ERROR: semget(). Errno:" );
-      return sem_id;
-   } else {
-      // Set the first sem in the set to 1.
-      int res = semctl( sem_id, 0, SETVAL, 1 );
-      for ( int i=1; i < num_sems; i++ ) {  
-         // set value of other sems to 0
-         res = semctl( sem_id, i, SETVAL, 0 );
-      }
-      if ( res < 0 ) { 
-         perror( "ERROR: semctl SETVAL." );
-         return -1;
-      }
-      
-      return 0;
-   }
-}
-
 int main(int argc, char* argv[]){
 
    // Initializing Agent
@@ -132,24 +82,11 @@ int main(int argc, char* argv[]){
       conf_folder_path + "MacSwap_ShareCore_5.conf",
       conf_folder_path + "MacSwap_ShareCore_6.conf"
    };
-   
-   // Setup systemV semaphore
-   int n_share_core_x = 3;   // fixme pass it as arg to agent and micronf
-   init_systemv_semaphore( n_share_core_x );
 
    // DPDK EAL inititaion done in MicronfAgent
    MicronfAgent micronfAgent;
    micronfAgent.Init(argc, argv);        
 
-   // Fake cores
-/*   
-   micronfAgent.addAvailCore( "0x10" );	   
-   micronfAgent.addAvailCore( "0x10" );	   
-   micronfAgent.addAvailCore( "0x10" );
-   micronfAgent.addAvailCore( "0x10" );
-   micronfAgent.addAvailCore( "0x10" );
-   micronfAgent.addAvailCore( "0x20" );	
-*/	
    micronfAgent.DeployMicroservices( chain_conf );
 
    //int monitor_lcore_id = rte_get_next_lcore(rte_lcore_id(), 1, 1);
@@ -159,7 +96,7 @@ int main(int argc, char* argv[]){
 
    printf("master lcore: %d, monitor lcore: %d, nic_classifier lcore: %d\n", rte_lcore_id(), monitor_lcore_id, nic_classifier_lcore_id);
 
-   //rte_eal_remote_launch(RunMonitor, reinterpret_cast<void*> (&micronfAgent), monitor_lcore_id);
+   // rte_eal_remote_launch(RunMonitor, reinterpret_cast<void*> (&micronfAgent), monitor_lcore_id);
    rte_eal_remote_launch(RunNICClassifier, reinterpret_cast<void*>(&micronfAgent), nic_classifier_lcore_id);
 
    RunGRPCService(&micronfAgent); 
