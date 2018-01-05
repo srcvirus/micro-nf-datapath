@@ -5,6 +5,7 @@
 #include <thread>
 #include <unistd.h>
 #include <vector>
+#include <fstream>
 
 #include "micronf_agent.h"
 #include <grpc++/grpc++.h>
@@ -12,9 +13,6 @@
 #include "grpc_service_impl.h"
 #include "nic_classifier.h"
 #include "micronf_monitor.h"
-
-#include <sched.h>
-#define MY_RT_PRIORITY 99
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -67,36 +65,39 @@ int RunMonitor(void* arg) {
    return 0;
 }
 
+std::vector< std::string > parse_chain_conf( std::string file_path ){
+   std::ifstream in_file( file_path.c_str() );
+   std::string line;
+   std::vector< std::string > conf_vector;
+   while ( in_file ) {
+      getline( in_file, line );
+      if( !line.empty() )
+      conf_vector.push_back( line );
+   }
+
+   return conf_vector;
+}
+
 int main(int argc, char* argv[]){
 
-   // Initializing Agent
    cout << "Agent is running" << endl;
 
-   // Configurations
-   std::string conf_folder_path = "../confs/";	
-   std::vector<std::string> chain_conf = {
-      conf_folder_path + "MacSwap_ShareCore_1.conf",
-      conf_folder_path + "MacSwap_ShareCore_2.conf",
-      conf_folder_path + "MacSwap_ShareCore_3.conf",
-      conf_folder_path + "MacSwap_ShareCore_4.conf",
-      conf_folder_path + "MacSwap_ShareCore_5.conf",
-      conf_folder_path + "MacSwap_ShareCore_6.conf"
-   };
-
+   // Parse Chain Configurations
+   std::vector<std::string> chain_conf = parse_chain_conf( "../confs/Chain.conf" );
+   
    // DPDK EAL inititaion done in MicronfAgent
+   // It also changes the sched policy to SCHED_RR, thus child process inherits.
    MicronfAgent micronfAgent;
    micronfAgent.Init(argc, argv);        
 
    micronfAgent.DeployMicroservices( chain_conf );
 
-   //int monitor_lcore_id = rte_get_next_lcore(rte_lcore_id(), 1, 1);
    int monitor_lcore_id = 1;
    int nic_classifier_lcore_id = 2;
-   //int nic_classifier_lcore_id = rte_get_next_lcore(monitor_lcore_id, 1, 1);
 
    printf("master lcore: %d, monitor lcore: %d, nic_classifier lcore: %d\n", rte_lcore_id(), monitor_lcore_id, nic_classifier_lcore_id);
 
-   // rte_eal_remote_launch(RunMonitor, reinterpret_cast<void*> (&micronfAgent), monitor_lcore_id);
+   //rte_eal_remote_launch(RunMonitor, reinterpret_cast<void*> (&micronfAgent), monitor_lcore_id);
    rte_eal_remote_launch(RunNICClassifier, reinterpret_cast<void*>(&micronfAgent), nic_classifier_lcore_id);
 
    RunGRPCService(&micronfAgent); 
