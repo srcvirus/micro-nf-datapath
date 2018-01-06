@@ -24,7 +24,9 @@ void NICClassifier::Run(){
 
    for(;;) {
       rx_count = rte_eth_rx_burst(0, 0, buf, PACKET_READ_SIZE);
-      // if (unlikely(rx_count == 0)) continue;
+//      if (unlikely(rx_count != 0))
+//	fprintf( stdout, "rx_count: %d\n", rx_count );
+
       for (i = 0; i < rx_count && i < kNumPrefetch; ++i)
          rte_prefetch0(rte_pktmbuf_mtod(buf[i], void*));
       for (i = 0; i < rx_count - kNumPrefetch; ++i) {
