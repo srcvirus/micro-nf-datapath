@@ -172,11 +172,12 @@ void MicronfAgent::MaintainRingCreation(const PortConfig& pconfig){
 
 void MicronfAgent::MaintainLocalDS(PacketProcessorConfig& pp_conf){
    // retrieve the config form this DS when scale out
-   ppConfigList[pp_conf.instance_id()] = pp_conf;
    printf("\npp_conf instance_id: %d\n", pp_conf.instance_id());
    printf("pp_conf class: %s\n", pp_conf.packet_processor_class().c_str());
-   printf("pp_con num_ingress: %d\n\n", pp_conf.num_ingress_ports());
-	
+   printf("pp_conf num_ingress: %d\n", pp_conf.num_ingress_ports());
+   
+   ppConfigList[pp_conf.instance_id()] = pp_conf;
+   
    // Check the existing edge and update graph if there is a link
    for(int pid = 0; pid < pp_conf.port_configs_size(); pid++){
       const PortConfig& pconfig = pp_conf.port_configs(pid);
