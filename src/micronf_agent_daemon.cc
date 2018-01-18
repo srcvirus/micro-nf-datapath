@@ -73,7 +73,7 @@ std::vector< std::string > parse_chain_conf( std::string file_path ){
    while ( in_file ) {
       getline( in_file, line );
       if( !line.empty() )
-      conf_vector.push_back( line );
+         conf_vector.push_back( line );
    }
 
    return conf_vector;
