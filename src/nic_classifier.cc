@@ -24,13 +24,8 @@ void NICClassifier::Run(){
 
    for(;;) {
       rx_count = rte_eth_rx_burst(0, 0, buf, PACKET_READ_SIZE);
-//      if (unlikely(rx_count != 0))
-//	fprintf( stdout, "rx_count: %d\n", rx_count );
 
-      for (i = 0; i < rx_count && i < kNumPrefetch; ++i)
-         rte_prefetch0(rte_pktmbuf_mtod(buf[i], void*));
-      for (i = 0; i < rx_count - kNumPrefetch; ++i) {
-         rte_prefetch0(rte_pktmbuf_mtod(buf[i+kNumPrefetch], void*));
+      for (i = 0; i < rx_count; ++i) {
          ethernet = rte_pktmbuf_mtod(buf[i], struct ether_hdr*);
          ipv4 = reinterpret_cast<struct ipv4_hdr*>(ethernet + 1);
          tcp = reinterpret_cast<struct tcp_hdr*>(ipv4 + 1);
@@ -59,13 +54,10 @@ void NICClassifier::Run(){
          tx_count = rte_ring_enqueue_burst(rings_[i],
                                            reinterpret_cast<void**>(rule_buffers_[i].get()),
                                            rule_buffer_cnt_[i], NULL );
-         //if (unlikely(tx_count < rule_buffer_cnt_[i])) {
-         //printf("Dropping: %u\n", (unsigned) (rule_buffer_cnt_[i] - tx_count));
          this->micronf_stats->packet_drop[INSTANCE_ID_0][i] += 
             (rule_buffer_cnt_[i] - tx_count);
          for(j = tx_count; j < rule_buffer_cnt_[i]; ++j)
             rte_pktmbuf_free(rule_buffers_[i].get()[j]);
-         //}
          rule_buffer_cnt_[i] = 0;
       }
       // TODO read from next port if available
