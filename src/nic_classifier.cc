@@ -55,6 +55,7 @@ void NICClassifier::Run(){
          }
       }
       for (i = 0; i < rule_buffers_.size(); ++i) {
+         assert( rings_[i] != nullptr );
          tx_count = rte_ring_enqueue_burst(rings_[i],
                                            reinterpret_cast<void**>(rule_buffers_[i].get()),
                                            rule_buffer_cnt_[i], NULL );
