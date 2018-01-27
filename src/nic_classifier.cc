@@ -6,8 +6,31 @@
 #include <unistd.h>
 
 #include "common.h"
+#include <rte_log.h>
 
-void NICClassifier::Init(MicronfAgent* agent) { this->agent_ = agent; }
+void inline set_scheduler(int pid) {
+  // Change scheduler to RT Round Robin
+  int rc, old_sched_policy;
+  struct sched_param my_params;
+  my_params.sched_priority = 99;
+  old_sched_policy = sched_getscheduler(pid);
+  rc = sched_setscheduler(pid, SCHED_RR, &my_params);
+  if (rc == -1) {
+    printf("sched_setscheduler call is failed\n");
+    exit(-1);
+  } else {
+    printf(
+        "set_scheduler(). pid: %d. old_sched_policy:  %d. new_sched_policy: %d "
+        "\n",
+        pid, old_sched_policy, sched_getscheduler(pid));
+  }
+}
+
+void NICClassifier::Init(MicronfAgent* agent) {
+   this->agent_ = agent;
+   RTE_LOG(INFO, PMD, "nic class pid: %d \n", getpid());
+   set_scheduler( 0 );
+}
 
 void NICClassifier::Run() {
   struct rte_mbuf* buf[PACKET_READ_SIZE] = {nullptr};
