@@ -16,13 +16,14 @@
 #include <rte_ring.h>
 
 #include <errno.h>
+#include <iostream>
 #include <inttypes.h>
+#include <sstream>
 #include <stdio.h>
+#include <string>
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <iostream>
-#include <string>
 #include <vector>
 
 using namespace std;
@@ -240,17 +241,19 @@ int MicronfAgent::DeployMicroservices(std::vector<std::string> chain_conf) {
 int MicronfAgent::DeployOneMicroService(const PacketProcessorConfig& pp_conf,
                                         const std::string config_path) {
   printf("Deploying One Micro Service . . .\n");
-
   std::string config_para = "--config-file=" + config_path;
-
+  const std::string kCpuIdKey = "cpu_id";
+  int ms_lcore_id = pp_conf.pp_parameters().find(kCpuIdKey)->second;
+  uint32_t core_mask = (1 << ms_lcore_id);
+  std::ostringstream osstream;
+  osstream << "0x" << std::hex << core_mask;
   int pid = fork();
   if (pid == 0) {
     printf("child started. id: %d\n", pid);
     char* const argv[] = {"../exec/micronf",
-                          "-n",
-                          "2",
-                          "--proc-type",
-                          "secondary",
+                          "-n", "8",
+                          "-c", strdup(osstream.str().c_str()),
+                          "--proc-type", "secondary",
                           "--",
                           strdup(config_para.c_str()),
                           NULL};
