@@ -5,67 +5,73 @@
 
 #define DROP_RATE_LIMIT 10  // 4 x 32 (batch)
 
-void MicronfMonitor::Init(MicronfAgent* agent){
+void MicronfMonitor::Init( MicronfAgent* agent, bool dry = false ){
    this->agent_ = agent; 
+   this->dry_run_ = dry;
 }
 
 void MicronfMonitor::Run(){
-   uint64_t cur_tsc = 0, diff_tsc = 0, prev_tsc = rte_rdtsc(), timer_tsc = 0,
-      total_tx = 0, cur_tx = 0;
+   uint64_t cur_tsc = 0, diff_tsc = 0, prev_tsc = rte_rdtsc(), timer_tsc = 0;
+   uint64_t total_tx = 0, cur_tx = 0;
+   unsigned int round = 0;
+
    // gather the statistic per second
    const uint64_t kTimerPeriod = rte_get_timer_hz() * 1;
+
    // wait 5s after the scale-out operation is performed
-   const uint64_t countupTimerPeriod = rte_get_timer_hz() * 5;
-   unsigned int drop_history[MAX_NUM_MS][MAX_NUM_PORT][2] = {};	
-   unsigned int round = 0;
+   const uint64_t countupTimerPeriod = rte_get_timer_hz() * 10;
    uint64_t countup_timer[MAX_NUM_MS][MAX_NUM_PORT] = {};
+   unsigned int drop_history[MAX_NUM_MS][MAX_NUM_PORT][2] = {};	
 
    //initialize timer
-   for(int i=0; i < MAX_NUM_MS; i++)
-      for(int j=0; j < MAX_NUM_PORT; j++){
+   /*for ( int i=0; i < MAX_NUM_MS; i++ ) {
+      for ( int j=0; j < MAX_NUM_PORT; j++ ) {
          countup_timer[i][j] = countupTimerPeriod;
       }
-
-   while(1){
+   }
+   */
+   while ( 1 ) {
       cur_tsc = rte_rdtsc();
       timer_tsc += (cur_tsc - prev_tsc);
-      for(int i=0; i < MAX_NUM_MS; i++)
-         for(int j=0; j < MAX_NUM_PORT; j++)
-            if(countup_timer[i][j] < countupTimerPeriod)
+
+      for ( int i=0; i < MAX_NUM_MS; i++ ) {
+         for ( int j=0; j < MAX_NUM_PORT; j++ ) {
+            if ( countup_timer[i][j] < countupTimerPeriod ) {
                countup_timer[i][j] += (cur_tsc - prev_tsc);
+            }
+         }
+      }
 
       int num_nf = this->agent_->micronf_stats->num_nf;
 
-      if (unlikely(timer_tsc > kTimerPeriod)) {
+      if ( unlikely( timer_tsc > kTimerPeriod ) ) {
          printf("detecting packet drop. . . . num_nf: %d\n", num_nf);
 			
-         for(int i=0; i < num_nf; i++){
-            for(int j=0; j < MAX_NUM_PORT; j++){
-               if(this->agent_->micronf_stats->packet_drop[i][j] != 0){
+         for ( int i=0; i < num_nf; i++ ) {
+            for ( int j=0; j < MAX_NUM_PORT; j++ ) {
+               if ( this->agent_->micronf_stats->packet_drop[i][j] != 0 ) {
                   printf("num_nf: %d\n", num_nf);
                   printf("Drop at [%x][%x] : %u\n", i, j, this->agent_->micronf_stats->packet_drop[i][j]);
-                  drop_history[i][j][round & 1] = this->agent_->micronf_stats->packet_drop[i][j];
-						
+                  drop_history[i][j][round & 1] = this->agent_->micronf_stats->packet_drop[i][j];			
                }
             }
          }
 			
-         if(round & 1){
-            for(int i=0; i < num_nf; i++){
-               for(int j=0; j < MAX_NUM_PORT; j++){
-                  if(drop_history[i][j][1] - drop_history[i][j][0] > DROP_RATE_LIMIT){
-                     if(countup_timer[i][j] >= countupTimerPeriod){
-                        this->agent_->scale_bits->bits[i].set(j, true);
+         if ( round & 1 ) {
+            for ( int i=0; i < num_nf; i++ ) {
+               for ( int j=0; j < MAX_NUM_PORT; j++ ) {
+                  if ( drop_history[i][j][1] - drop_history[i][j][0] > DROP_RATE_LIMIT ) {
+                     if ( countup_timer[i][j] >= countupTimerPeriod && this->agent_->avail_core.size() > 0 ) {
                         countup_timer[i][j] = 0;	
-                        printf("scale out timer is fired up!\n");
-                        int next_pp_id = std::get<0>(this->agent_->neighborGraph[i][j]);
-                        int next_pp_port = std::get<1>(this->agent_->neighborGraph[i][j]);
+                        this->agent_->scale_bits->bits[i].set( j, true );
+                        printf( "scale out timer is fired up! for [%d][%d]\n", i, j );
+                        int next_pp_id = std::get<0>( this->agent_->neighborGraph[i][j] );
                         PacketProcessorConfig pp_config_scale = this->agent_->ppConfigList[next_pp_id];
-                        int int_new_instance_id = this->agent_->getNewInstanceId();
-                        std::string new_instance_id = std::to_string(int_new_instance_id);
-                        std::string new_conf_path = "../confs/mac_swapper_" + new_instance_id+".conf";
+                        std::string new_instance_id = std::to_string( this->agent_->getNewInstanceId() );
+                        std::string pp_class = pp_config_scale.packet_processor_class();
+                        std::string new_conf_path = "../confs/" + pp_class + "_" + new_instance_id + ".conf";
+                        pp_config_scale.set_instance_id( std::stoi( new_instance_id ) );
 
-                        pp_config_scale.set_instance_id(int_new_instance_id);
                         int fd = open(new_conf_path.c_str(), O_RDWR|O_CREAT, 0644);
                         if(fd < 0)
                            rte_exit(EXIT_FAILURE, "Cannot open configuration file %s\n", 
@@ -84,14 +90,20 @@ void MicronfMonitor::Run(){
                         //todo change instance_id ring_id
                         //this->agent_->CreateRing(new_r1);
                         //this->agent_->CreateRing(new_r2);
-                        this->agent_->DeployOneMicroService(pp_config_scale, new_conf_path);	
+
+                        if ( !this->dry_run_ ) {
+                           fprintf( stdout, "[Auto-scale] Deploying microservices.\n" );
+                           this->agent_->DeployOneMicroService(pp_config_scale, new_conf_path);	
+                        }
+                        else
+                           fprintf( stdout, "[Auto-scale] This is just dry run!\n No microservice will be deployed.\n " );
                      }
                   }
                }
             }
          }
 
-         round++;
+         round ^= 1;   // Flip round from 0->1 or 1->0
          timer_tsc = 0;
       }
 

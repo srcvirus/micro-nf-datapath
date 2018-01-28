@@ -25,7 +25,8 @@ message PacketProcessorConfig {
   repeated PortConfig port_configs = 5;
 
   required int32 instance_id = 6;
-   
+
+  optional string dest_mac = 7;   
 };
 
 message PortConfig {
