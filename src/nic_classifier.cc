@@ -26,10 +26,12 @@ void inline set_scheduler(int pid) {
   }
 }
 
-void NICClassifier::Init(MicronfAgent* agent) {
+void NICClassifier::Init(MicronfAgent* agent, int port_id, int n_ports) {
    this->agent_ = agent;
    RTE_LOG(INFO, PMD, "nic class pid: %d \n", getpid());
    set_scheduler( 0 );
+   port_id_ = port_id;
+   n_ports_ = n_ports;
 }
 
 void NICClassifier::Run() {
@@ -41,9 +43,12 @@ void NICClassifier::Run() {
   register int16_t i = 0;
   register uint16_t j = 0;
   const int16_t kNumPrefetch = 8;
+  uint16_t counter = 0;
   printf("NicClassifier thread loop has started\n");
   for (;;) {
-    rx_count = rte_eth_rx_burst(0, 0, buf, PACKET_READ_SIZE);
+     rx_count = rte_eth_rx_burst(port_id_, 0, buf, PACKET_READ_SIZE);
+     //rx_count = rte_eth_rx_burst(counter++ & 1, 0, buf, PACKET_READ_SIZE);
+    
     for (i = 0; i < rx_count; ++i) {
       ethernet = rte_pktmbuf_mtod(buf[i], struct ether_hdr*);
       ipv4 = reinterpret_cast<struct ipv4_hdr*>(ethernet + 1);

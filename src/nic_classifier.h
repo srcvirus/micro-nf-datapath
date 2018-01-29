@@ -28,7 +28,7 @@ class NICClassifier {
 			this->scale_bits_mz = rte_memzone_lookup(MZ_SCALE);
 	    this->scale_bits = (ScaleBitVector*) this->scale_bits_mz->addr;
 		}
-		void Init(MicronfAgent* agent);
+		void Init(MicronfAgent* agent, int port_id, int n_ports);
 		void Run();
 		void AddRule(const FwdRule&);
 
@@ -38,6 +38,8 @@ class NICClassifier {
     std::vector<rte_ring*> rings_;
     std::vector<std::unique_ptr<struct rte_mbuf*>> rule_buffers_;
     std::vector<size_t> rule_buffer_cnt_;
+    int port_id_ = 0;
+    int n_ports_ = 1;
 	
 	protected:
   	const struct rte_memzone *scale_bits_mz;

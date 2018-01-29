@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <vector>
 #include <fstream>
+#include <rte_log.h>
 
 #include "micronf_agent.h"
 #include <grpc++/grpc++.h>
@@ -23,6 +24,11 @@ using grpc::Status;
 using namespace std;
 using namespace rpc_agent;
 
+struct nic_class_args {
+   struct MicronfAgent* ma;
+   int port_id;
+};
+
 int RunGRPCService(void* arg) {
    MicronfAgent* agent = reinterpret_cast<MicronfAgent*>(arg);
    //FIXME specify non-dpdk interface
@@ -39,11 +45,14 @@ int RunGRPCService(void* arg) {
    return 0;
 }
 
-int RunNICClassifier(void* arg) {
-   MicronfAgent* micronfAgent = reinterpret_cast<MicronfAgent*>(arg);
-   printf("in RunNICClassifier\n");
+int RunNICClassifier(void* args_ptr) {
+   struct nic_class_args* args = (struct nic_class_args*) args_ptr;
+   MicronfAgent* micronfAgent = reinterpret_cast<MicronfAgent*>(args->ma);
+   // FIXME
+   int n_ports = 2;
+   RTE_LOG(INFO, USER1, "in RunNICClassifier. port_id: %d num_ports: %d \n", args->port_id, n_ports);
    NICClassifier nicClassifier;
-   nicClassifier.Init(micronfAgent);
+   nicClassifier.Init(micronfAgent, args->port_id, n_ports);
 	
    //create rule and add rule
    vector<FwdRule> sampleRules;
@@ -79,6 +88,8 @@ std::vector< std::string > parse_chain_conf( std::string file_path ){
    return conf_vector;
 }
 
+   
+
 int main(int argc, char* argv[]){
 
    cout << "Agent is running" << endl;
@@ -94,16 +105,24 @@ int main(int argc, char* argv[]){
 
    micronfAgent.DeployMicroservices( chain_conf );
 
-   int monitor_lcore_id = 1;
-   int nic_classifier_lcore_id = 2;
-
-   printf("master lcore: %d, monitor lcore: %d, nic_classifier lcore: %d\n", rte_lcore_id(), monitor_lcore_id, nic_classifier_lcore_id);
+//   int monitor_lcore_id = 1;
+   int nic_classifier_lcore_id_1 = 2;
+   int nic_classifier_lcore_id_2 = 3;
    
    // Fixme: 
    // Monitor will spawn new process with obolete config.
    //rte_eal_remote_launch(RunMonitor, reinterpret_cast<void*> (&micronfAgent), monitor_lcore_id);
 
-   rte_eal_remote_launch(RunNICClassifier, reinterpret_cast<void*>(&micronfAgent), nic_classifier_lcore_id);
+   nic_class_args nicClassArgs1, nicClassArgs2;
+   nicClassArgs1.ma = &micronfAgent;
+   nicClassArgs1.port_id = 0;
+
+   nicClassArgs2.ma = &micronfAgent;
+   nicClassArgs2.port_id = 1;
+      
+   rte_eal_remote_launch(RunNICClassifier, reinterpret_cast<void*>(&nicClassArgs1), nic_classifier_lcore_id_1);
+
+   rte_eal_remote_launch(RunNICClassifier, reinterpret_cast<void*>(&nicClassArgs2), nic_classifier_lcore_id_2);
 
    RunGRPCService(&micronfAgent); 
 
