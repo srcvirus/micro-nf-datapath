@@ -35,8 +35,9 @@ class FwdRule {
     }
   	inline bool Match(uint32_t src_ip, uint32_t dst_ip, uint16_t src_port,
              uint16_t dst_port) {
-    	return src_addr_.Match(src_ip) && dst_addr_.Match(dst_ip) &&
-           src_port == src_port_ && dst_port == dst_port_;
+    	return true;
+    	//return src_addr_.Match(src_ip) && dst_addr_.Match(dst_ip) &&
+        //   src_port == src_port_ && dst_port == dst_port_;
   	}
     inline FwdRule& operator=(const FwdRule& fwd_rule) {
       size_t len = strlen(fwd_rule.to_ring_);
