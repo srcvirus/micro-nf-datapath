@@ -234,7 +234,6 @@ int MicronfAgent::DeployMicroservices(std::vector<std::string> chain_conf) {
       }
     }
   }
-
   return 0;
 }
 
@@ -396,8 +395,8 @@ void inline set_scheduler(int pid) {
   struct sched_param my_params;
   my_params.sched_priority = 99;
   old_sched_policy = sched_getscheduler(pid);
-  rc = sched_setscheduler(pid, SCHED_RR, &my_params);
-  //rc = sched_setscheduler(pid, SCHED_FIFO, &my_params);
+  // rc = sched_setscheduler(pid, SCHED_RR, &my_params);
+  rc = sched_setscheduler(pid, SCHED_FIFO, &my_params);
   if (rc == -1) {
     printf("sched_setscheduler call is failed\n");
     exit(-1);

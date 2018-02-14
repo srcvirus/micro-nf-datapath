@@ -95,7 +95,7 @@ int main(int argc, char* argv[]){
    micronfAgent.DeployMicroservices( chain_conf );
 
    int monitor_lcore_id = 1;
-   int nic_classifier_lcore_id = 2;
+   int nic_classifier_lcore_id = 1;
 
    printf("master lcore: %d, monitor lcore: %d, nic_classifier lcore: %d\n", rte_lcore_id(), monitor_lcore_id, nic_classifier_lcore_id);
    
