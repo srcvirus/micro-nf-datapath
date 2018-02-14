@@ -1,0 +1,21 @@
+Using pktgen without pcap, packet size: 64 Bytes.
+The packets that are supposed to be dropped along the chain will be forwarded to the last mac_swapper.
+( mostly all packets bypass the chain )
+Pktgen pkt is empty -> not match filter -> dropped
+
+firewall:
+   check_header_fw.conf
+   filt_udptcp_fw.conf
+   MacSwap_fw.conf
+   
+monitor:
+   check_header_mn.conf
+   classfy_http_mn.conf
+   MacSwap_1_mn.conf
+
+validator:
+   check_header_vd.conf
+   classfy_http_vd.conf
+   validate_url_vd.conf
+   MacSwap_1_vd.conf
+
