@@ -205,7 +205,23 @@ void MicronfAgent::MaintainLocalDS(PacketProcessorConfig& pp_conf) {
   }
 }
 
+void DumpRingInfo( PacketProcessorConfig& pp_conf, int pid_pull, FILE* ring_fd ) {
+    // write down the ring info to a file
+    string ingress_ring_name = "";
+    for ( int pid = 0; pid < pp_conf.port_configs_size(); pid++ ) {
+       const PortConfig& pconfig = pp_conf.port_configs(pid);
+       if ( pconfig.port_type() == PortConfig::INGRESS_PORT ) {
+          const auto ring_it = pconfig.port_parameters().find("ring_id");
+          if (ring_it == pconfig.port_parameters().end()) 
+             continue;
+          fprintf( ring_fd, "%s,%d\n", ring_it->second.c_str(), pid_pull );
+       }
+    }
+}
+
 int MicronfAgent::DeployMicroservices(std::vector<std::string> chain_conf) {
+  FILE *ring_fd = fopen( "../log/ring_info", "w+" );
+    
   for (int i = 0; i < chain_conf.size(); i++) {
     printf("Chain_conf size: %lu i: %d\n", chain_conf.size(), i);
     PacketProcessorConfig pp_config;
@@ -224,7 +240,11 @@ int MicronfAgent::DeployMicroservices(std::vector<std::string> chain_conf) {
     // Deploy one microservice using fork and execv
     // Child process will inherit micro_agent's sched policy.
     int ms_pid = DeployOneMicroService(pp_config, config_file_path);
+
+    DumpRingInfo( pp_config, ms_pid, ring_fd );
   }
+
+  fclose( ring_fd );
 
   // For debugging purpose only.
   for (int t = 0; t < MAX_NUM_MS; t++) {
