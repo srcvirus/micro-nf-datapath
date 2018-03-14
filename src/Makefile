@@ -27,7 +27,7 @@ STUBDIR = ./
 
 vpath %.proto $(PROTOS_PATH)
 
-all: micronf_config micronf_agent_daemon 
+all: micronf_config micronf_agent_daemon
 
 micronf_agent: 
 	$(CXX) -c $^ $(INCS) -o $@
@@ -47,6 +47,8 @@ micronf_orchest: micronf_agent.pb.o micronf_agent.grpc.pb.o micronf_orchest.o mi
 micronf_agent_daemon: micronf_agent.pb.o micronf_agent.grpc.pb.o micronf_agent_daemon.o  micronf_config.pb.o micronf_agent.o cidr_address.o nic_classifier.o micronf_monitor.o
 	$(CXX) $^ $(INCS) $(LDLIBS) $(LDFLAGS) -o $@
 
+micronf_supervisor: micronf_supervisor.o 
+	$(CXX) $^ $(INCS) $(LDLIBS) $(LDFLAGS) -o $@
 
 micronf_config: micronf_config.proto micronf_config.pb.cc
 	protoc --cpp_out=. micronf_config.proto
