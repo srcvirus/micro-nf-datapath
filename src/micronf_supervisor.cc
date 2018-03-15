@@ -11,8 +11,10 @@
 #include <rte_memory.h>
 #include <rte_eal.h>
 #include <rte_ring.h>
+#include <rte_cycles.h>
 
 struct ring_stat {
+   struct rte_ring* ring;
    std::string name;
    unsigned occupancy;
    unsigned size;
@@ -32,7 +34,7 @@ ParseArgs( int argc, char* argv[] ) {
    return std::move(ret_map);
 }
 
-void populateRingInfo( std::vector< struct ring_stat > & rings_info ) {
+void populateRingInfo( std::vector< struct ring_stat* > & rings_info ) {
   std::ifstream file("../log/ring_info");
   std::string line;
   while( std::getline( file, line ) ) {
@@ -47,24 +49,30 @@ void populateRingInfo( std::vector< struct ring_stat > & rings_info ) {
         rs->pid_pull = atoi( p );
         p = std::strtok( NULL, "," );
      }
-     delete cstr;
+     delete cstr;  
      
      struct rte_ring* r = rte_ring_lookup( rs->name.c_str() );
      if ( r == NULL )
         std::cerr << "Ring not found."; 
-
+     rs->ring = r;
      rs->occupancy = rte_ring_count( r );
      rs->size = rte_ring_get_size( r );
-     
-     rings_info.push_back( *rs );
+     rings_info.push_back( rs );
   }
 
   file.close();
+  
+}
+
+void refreshRingInfo( std::vector< struct ring_stat* > & rings_info ) {
+   for ( int i = 0; i < rings_info.size(); i++ ) {
+      rings_info[i]->occupancy = rte_ring_count( rings_info[i]->ring );
+   }
 }
 
 int 
 main( int argc, char* argv[] ) {
-   std::vector< struct ring_stat > rings_info;
+   std::vector< struct ring_stat* > rings_info;
 
    // Initialize DPDK args
    int args_processed = rte_eal_init( argc, argv );
@@ -77,15 +85,18 @@ main( int argc, char* argv[] ) {
    // Populate the ring info
    populateRingInfo( rings_info );
 
-   for ( int i = 0; i < rings_info.size(); i++ ) {
-      std::cout << rings_info[ i ].name  << std::endl;
-      std::cout << rings_info[ i ].occupancy  << std::endl;
-      std::cout << rings_info[ i ].size  << std::endl;
-      std::cout << rings_info[ i ].pid_pull  << std::endl << std::endl;
+   // Continuously monitor the rings
+   while( 1 ) {
+      refreshRingInfo( rings_info );
+      for ( int i = 0; i < rings_info.size(); i++ ) {
+         std::cout << rings_info[ i ]->name  << " ";
+         std::cout << rings_info[ i ]->occupancy  << " ";
+         std::cout << rings_info[ i ]->size  << " ";
+         std::cout << rings_info[ i ]->pid_pull  << std::endl;
+      }
+      std::cout <<  std::endl;
+      rte_delay_ms( 500 );
    }
 
-   // Continuously monitor the rings
-   
-   
 }
 
