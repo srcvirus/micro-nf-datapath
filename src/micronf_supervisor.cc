@@ -86,7 +86,7 @@ main( int argc, char* argv[] ) {
    populateRingInfo( rings_info );
 
    // Continuously monitor the rings
-   while( 1 ) {
+   while ( 1 ) {
       refreshRingInfo( rings_info );
       for ( int i = 0; i < rings_info.size(); i++ ) {
          std::cout << rings_info[ i ]->name  << " ";

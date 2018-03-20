@@ -10,6 +10,7 @@ LDFLAGS = -L$(RTE_SDK)/$(RTE_TARGET)/lib
 
 CXX = g++
 #CPPFLAGS += -I/usr/local/include -g -pthread 
+
 CXXFLAGS += -std=c++11 -mssse3 -O3 $(INCS) -Wno-write-strings
 LDLIBS +=  `pkg-config --libs grpc++ grpc --libs protobuf`\
            -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed \
@@ -49,6 +50,9 @@ micronf_agent_daemon: micronf_agent.pb.o micronf_agent.grpc.pb.o micronf_agent_d
 
 micronf_supervisor: micronf_supervisor.o 
 	$(CXX) $^ $(INCS) $(LDLIBS) $(LDFLAGS) -o $@
+
+micronf_cycles_estimator: micronf_cycles_estimator.o
+	$(CXX) $^ $(INCS) $(LDLIBS) $(LDFLAGS) -O0 -o $@
 
 micronf_config: micronf_config.proto micronf_config.pb.cc
 	protoc --cpp_out=. micronf_config.proto
