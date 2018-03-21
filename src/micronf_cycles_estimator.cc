@@ -44,9 +44,36 @@ e.g.
 
 // Function Prototypes
 inline uint64_t
-RetrievePackets( struct rte_ring* r, struct timespec &ts )__attribute__((optimize("O0"))); 
+RetrievePackets( struct rte_ring* r, struct timespec &ts, volatile uint64_t& rdtsc )__attribute__((optimize("O0"))); 
 inline uint64_t
-InjectPackets( struct rte_ring* r, struct timespec& ts ) __attribute__((optimize("O0")));
+InjectPackets( struct rte_ring* r, struct timespec& ts, volatile uint64_t& rdtsc ) __attribute__((optimize("O0")));
+void __inline__ 
+imitate_processing( int load ) __attribute__((optimize("O0")));   
+
+__inline__ uint64_t start_rdtsc() {
+   unsigned int lo,hi;
+   //preempt_disable();
+   //raw_local_irq_save(_flags);
+
+   __asm__ __volatile__ ("CPUID\n\t"
+                         "RDTSC\n\t"
+                         "mov %%edx, %0\n\t"
+                         "mov %%eax, %1\n\t": "=r" (hi), "=r" (lo):: "%rax", "%rbx", "%rcx", "%rdx");
+   return ((uint64_t)hi << 32) | lo;
+}
+
+__inline__ uint64_t end_rdtsc() {
+   unsigned int lo, hi;
+
+   __asm__ __volatile__ ("RDTSCP\n\t"
+                         "mov %%edx, %0\n\t"
+                         "mov %%eax, %1\n\t"
+                         "CPUID\n\t": "=r" (hi), "=r" (lo):: "%rax", "%rbx", "%rcx", "%rdx");
+   //raw_local_irq_save(_flags);
+   //preempt_enable();
+   return ((uint64_t)hi << 32) | lo;
+}
+
 
 // Parsing execution arguments after those dpdk args
 std::unique_ptr< std::map < std::string, std::string > > 
@@ -62,51 +89,6 @@ ParseArgs( int argc, char* argv[] ) {
    return std::move(ret_map);
 }
 
-/* 
-Input   : pointer to rte_ring
-Output  : timespec (passed by reference) 
-Note    :
-   The timestamp is taken after packets are crafted but before they are enqueued \
-   to the ring. Our assumption is waiting time in the ring is negligible \
-   since the ring is empty when we run this cycles_estimators program. 
-*/          
-inline uint64_t
-InjectPackets( struct rte_ring* r, struct timespec& ts ) {
-   struct rte_mbuf* buf[ BATCH_SIZE ] = { nullptr };
-   
-   struct rte_mempool* mp = rte_mempool_lookup( PKTMBUF_POOL_NAME );
-   int res = rte_pktmbuf_alloc_bulk( mp, buf, BATCH_SIZE );
-   assert( res == 0 );
-
-//   clock_gettime( CLOCK_MONOTONIC, &ts );
-   clock_gettime( CLOCK_PROCESS_CPUTIME_ID, &ts );
-
-   unsigned tx = rte_ring_enqueue_burst( r, ( void** ) buf, BATCH_SIZE, NULL );
-
-   return tx;
-}
-
-/* 
-Input   : pointer to rte_ring
-Output  : timespec (passed by reference) 
-Note    :
-   The timestamp is taken after a non-empty read from the ring.
-*/          
-inline uint64_t
-RetrievePackets( struct rte_ring* r, struct timespec &ts ) {
-   struct rte_mbuf* buf[ BATCH_SIZE ] = { nullptr };
-   int rx; 
-   while ( ( rx = rte_ring_dequeue_burst( r, ( void** ) buf, BATCH_SIZE, NULL ) ) == 0 ); 
-   
-//   clock_gettime( CLOCK_MONOTONIC, &ts );
-   clock_gettime( CLOCK_PROCESS_CPUTIME_ID, &ts );
-
-   for ( int i = 0; i < BATCH_SIZE; i++ ) {
-      rte_pktmbuf_free( buf[i] );
-   }
-
-   return rx;
-}
 
 double
 GetMean( std::vector<uint64_t>& vec ) {
@@ -129,7 +111,7 @@ GetStdDev( std::vector<uint64_t>& vec ) {
 }
 
 void
-pinThisProcess( int cpuid ){
+PinThisProcess( int cpuid ){
    pthread_t current_thread = pthread_self();
    cpu_set_t cpuset;
    CPU_ZERO( &cpuset );
@@ -138,6 +120,94 @@ pinThisProcess( int cpuid ){
    if ( s != 0 ) { 
       fprintf( stderr, "FAILED: pthread_setaffinity_np\n" );
    } 
+}
+
+// Imitating work load.
+// void imitate_processing( int load ) __attribute__((optimize("O0"))); 
+void __inline__ imitate_processing( int load ) {   
+   // Imitate extra processing
+   int n = 1000 * load;
+   for ( int i = 0; i < n; i++ ) {
+      int volatile r = 0;
+      int volatile s = 999;
+      r =  s * s;
+   }
+}
+
+void inline SetScheduler(int pid) {
+  // Change scheduler to RT Round Robin
+  int rc, old_sched_policy;
+  struct sched_param my_params;
+  my_params.sched_priority = 99;
+  old_sched_policy = sched_getscheduler(pid);
+  rc = sched_setscheduler(pid, SCHED_RR, &my_params);
+  if (rc == -1) {
+    printf("sched_setscheduler call is failed\n");
+    exit(-1);
+  } else {
+    printf(
+        "set_scheduler(). pid: %d. old_sched_policy:  %d. new_sched_policy: %d "
+        "\n",
+        pid, old_sched_policy, sched_getscheduler(pid));
+  }
+}
+
+void DrainPacketsFromRing( rte_ring* r ) {
+   struct rte_mbuf* buf[ BATCH_SIZE ] = { nullptr };
+   int rx = 0;
+   while ( ( rx = rte_ring_dequeue_burst( r, ( void** ) buf, BATCH_SIZE, NULL ) ) > 0 ) {
+      for ( int i = 0; i < rx; i++ ) {
+         rte_pktmbuf_free( buf[ i ] );
+      }  
+   }    
+}
+
+/* 
+Input   : pointer to rte_ring
+Output  : timespec (passed by reference) 
+Note    :
+   The timestamp is taken after packets are crafted but before they are enqueued \
+   to the ring. Our assumption is waiting time in the ring is negligible \
+   since the ring is empty when we run this cycles_estimators program. 
+*/          
+inline uint64_t
+InjectPackets( struct rte_ring* r, struct timespec& ts, volatile uint64_t& rdtsc ) {
+   struct rte_mbuf* buf[ BATCH_SIZE ] = { nullptr };
+   struct rte_mempool* mp = rte_mempool_lookup( PKTMBUF_POOL_NAME );
+   int res = rte_pktmbuf_alloc_bulk( mp, buf, BATCH_SIZE );
+   assert( res == 0 );
+
+   DrainPacketsFromRing( r );
+
+   clock_gettime( CLOCK_MONOTONIC, &ts );
+   rdtsc = start_rdtsc();
+
+   unsigned tx = rte_ring_enqueue_burst( r, ( void** ) buf, BATCH_SIZE, NULL );
+
+   return tx;
+}
+
+/* 
+Input   : pointer to rte_ring
+Output  : timespec (passed by reference) 
+Note    :
+   The timestamp is taken after a non-empty read from the ring.
+*/          
+inline uint64_t
+RetrievePackets( struct rte_ring* r, struct timespec &ts, volatile uint64_t& rdtsc ) {
+   struct rte_mbuf* buf[ BATCH_SIZE ] = { nullptr };
+   int rx = 0; 
+   while ( ( rx = rte_ring_dequeue_burst( r, ( void** ) buf, BATCH_SIZE, NULL ) ) < BATCH_SIZE ); 
+   
+   clock_gettime( CLOCK_MONOTONIC, &ts );
+   rdtsc = end_rdtsc();
+
+   for ( int i = 0; i < rx; i++ ) 
+      rte_pktmbuf_free( buf[i] );
+   
+   DrainPacketsFromRing( r );
+   
+   return rx;
 }
 
 int 
@@ -149,74 +219,52 @@ main( int argc, char* argv[] ) {
    
    // Process our own args ( if any )
    auto arg_map = ParseArgs( argc - 1, argv + 1 );
-   
-   pinThisProcess( atoi( (*arg_map)[ "cpu_id" ].c_str() ) );
-
-   struct rte_ring* in_r = rte_ring_lookup( (*arg_map)["in_ring"].c_str() );
-   struct rte_ring* out_r = rte_ring_lookup( (*arg_map)["out_ring"].c_str() );
-  
-   assert( in_r != NULL && out_r != NULL );
-   
-   std::vector< uint64_t > samples;
-   struct timespec tx_ts, rx_ts;
    int num_sample = SAMPLE_SIZE;
    if ( arg_map->find("sample_size") != arg_map->end() )
       num_sample = atoi( (*arg_map)["sample_size"].c_str() );
 
+   
+   // For precise measurement, I pin this process to a core and use the RT scheduler
+   PinThisProcess( atoi( (*arg_map)[ "cpu_id" ].c_str() ) );
+   SetScheduler( 0 );
+
+   struct rte_ring* in_r = rte_ring_lookup( (*arg_map)["in_ring"].c_str() );
+   struct rte_ring* out_r = rte_ring_lookup( (*arg_map)["out_ring"].c_str() );
+   assert( in_r != NULL && out_r != NULL );
+   
+   std::vector< uint64_t > samples, cycles;
+  
    for ( int i = 0; i < num_sample; i++ ) {
-      memset( &tx_ts, 0, sizeof( struct timespec ) );
-      memset( &rx_ts, 0, sizeof( struct timespec ) );
+      volatile uint64_t st_rdtsc,  en_rdtsc;
+      struct timespec tx_ts, rx_ts;
 
-      int tx = InjectPackets( in_r, tx_ts );
-      int rx = RetrievePackets( out_r, rx_ts );
+      int tx = InjectPackets( in_r, tx_ts, st_rdtsc );
+      int rx = RetrievePackets( out_r, rx_ts, en_rdtsc );
 
-      
-/*      std::cout << "tx: " << tx << " rx: " 
-                << rx ;
-      std::cout << " diff tv_sec: " <<  rx_ts.tv_sec - tx_ts.tv_sec 
-                << " diff tv_nsec: " << rx_ts.tv_nsec - tx_ts.tv_nsec << std::endl;
-*/      
-      if ( i > DISCARD_FIRST_N_SAMPLE )
+      if ( i > DISCARD_FIRST_N_SAMPLE ) {
          samples.push_back( 1000000000 * ( rx_ts.tv_sec - tx_ts.tv_sec ) 
                             + rx_ts.tv_nsec - tx_ts.tv_nsec );
-    
-      rte_delay_ms( 150 );
+         cycles.push_back( en_rdtsc - st_rdtsc );
+      }
    }
 
-   std::cout << "StdDev: " << GetStdDev( samples ) << " Mean: " << GetMean( samples ) << std::endl;
+   std::cout << "Nanoseconds StdDev \t: " << GetStdDev( samples ) << " \tMean: " << GetMean( samples ) << std::endl;
+   std::cout << "RDTSC cycles StdDev \t: " << GetStdDev( cycles ) << " \tMean: " << GetMean( cycles ) << std::endl;
 
 }
 
 
 // DEBUG CODE SNIPPETS
 
-/* // Checking the sizes
+/* // METADATA & HEADROOM
    uint16_t headroom = rte_pktmbuf_headroom( buf[ 0 ] );
    uint16_t dataroom = rte_pktmbuf_data_room_size( mp );
    std::cout << "Dataroom: " << dataroom << std::endl;   
    std::cout << "Headroom: " << headroom << std::endl;
-*/
-/*
-   std::cout << "tx tv_sec: " << tx_ts.tv_sec 
-             << " tx tv_nsec: " << tx_ts.tv_nsec << std::endl;
-   std::cout << "rx tv_sec: " << rx_ts.tv_sec 
-             << " rx tv_nsec: " << rx_ts.tv_nsec << std::endl;
 
-*/
-   //std::cout << (*arg_map)["in_ring"] << std::endl;
-   //std::cout << (*arg_map)["out_ring"] << std::endl;
-
-/*
    for ( int i = 0; i < BATCH_SIZE; i++ ) {
       char* meta_data = MDATA_PTR( buf[i] );
       memset( meta_data, 0, sizeof( long ) );
    }
 
 */
-
-/*std::cout << "tx: " << tx << " rx: " 
-                << rx ;
-      std::cout << " diff tv_sec: " <<  rx_ts.tv_sec - tx_ts.tv_sec 
-                << " diff tv_nsec: " << rx_ts.tv_nsec - tx_ts.tv_nsec << std::endl;
-*/
-      
