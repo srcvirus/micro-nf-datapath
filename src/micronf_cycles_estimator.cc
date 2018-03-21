@@ -22,6 +22,7 @@ e.g.
 #include <time.h>
 #include <cmath>
 #include <pthread.h>
+#include <iomanip>
 
 #include <rte_common.h>
 #include <rte_memory.h>
@@ -31,8 +32,8 @@ e.g.
 #include <rte_mbuf.h>
 #include <rte_mempool.h>
 
-#define SAMPLE_SIZE 50 
-#define DISCARD_FIRST_N_SAMPLE 10
+#define SAMPLE_SIZE 200 
+#define DISCARD_FIRST_N_SAMPLE SAMPLE_SIZE * 0.2
 
 #define BATCH_SIZE 32
 #define PKTMBUF_POOL_NAME "MICRONF_MBUF_POOL"
@@ -74,7 +75,6 @@ __inline__ uint64_t end_rdtsc() {
    return ((uint64_t)hi << 32) | lo;
 }
 
-
 // Parsing execution arguments after those dpdk args
 std::unique_ptr< std::map < std::string, std::string > > 
 ParseArgs( int argc, char* argv[] ) {
@@ -88,7 +88,6 @@ ParseArgs( int argc, char* argv[] ) {
    }
    return std::move(ret_map);
 }
-
 
 double
 GetMean( std::vector<uint64_t>& vec ) {
@@ -247,9 +246,15 @@ main( int argc, char* argv[] ) {
          cycles.push_back( en_rdtsc - st_rdtsc );
       }
    }
-
+   std::cout << std::fixed;
+   std::cout << std::setprecision(2);
+   std::cout << "################## RESULT ##############\n";
+   std::cout << "###\t Per Batch\t ###\n";
    std::cout << "Nanoseconds StdDev \t: " << GetStdDev( samples ) << " \tMean: " << GetMean( samples ) << std::endl;
    std::cout << "RDTSC cycles StdDev \t: " << GetStdDev( cycles ) << " \tMean: " << GetMean( cycles ) << std::endl;
+   std::cout << "\n###\t Average Per Packet\t ###\n";
+   std::cout << "Nanoseconds StdDev \t: " << GetStdDev( samples ) / BATCH_SIZE << " \tMean: " << GetMean( samples ) / BATCH_SIZE << std::endl;
+   std::cout << "RDTSC cycles StdDev \t: " << GetStdDev( cycles ) / BATCH_SIZE << " \tMean: " << GetMean( cycles ) / BATCH_SIZE << std::endl;
 
 }
 

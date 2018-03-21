@@ -28,7 +28,7 @@ STUBDIR = ./
 
 vpath %.proto $(PROTOS_PATH)
 
-all: micronf_config micronf_agent_daemon
+all: micronf_config micronf_agent_daemon micronf_cycles_estimator micronf_supervisor
 
 micronf_agent: 
 	$(CXX) -c $^ $(INCS) -o $@
