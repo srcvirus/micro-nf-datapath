@@ -29,7 +29,7 @@ void inline set_scheduler(int pid) {
 void NICClassifier::Init(MicronfAgent* agent) {
    this->agent_ = agent;
    RTE_LOG(INFO, PMD, "nic class pid: %d \n", getpid());
-   set_scheduler( 0 );
+//   set_scheduler( 0 );
 }
 
 void NICClassifier::Run() {

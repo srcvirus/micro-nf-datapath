@@ -103,7 +103,7 @@ int MicronfAgent::Init(int argc, char* argv[]) {
 
   // Setting agent scheduler to SCHED_RR. Thus, children of this process will
   // inherit the same sched.
-  set_scheduler(0);
+  // set_scheduler(0);
 }
 
 int MicronfAgent::CreateRing(string ring_name) {
