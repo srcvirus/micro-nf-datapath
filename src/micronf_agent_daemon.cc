@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <vector>
 #include <fstream>
+#include <map>
 
 #include "micronf_agent.h"
 #include <grpc++/grpc++.h>
@@ -22,6 +23,21 @@ using grpc::Status;
 
 using namespace std;
 using namespace rpc_agent;
+
+
+// Parsing execution arguments after those dpdk args
+std::unique_ptr< std::map < std::string, std::string > > 
+ParseArgs( int argc, char* argv[] ) {
+   auto ret_map = std::unique_ptr< std::map < std::string, std::string > > (
+         new std::map< std::string, std::string >() );
+   const std::string kDel = "=";
+   for (int i = 0; i < argc; ++i) {
+      char *key = strtok(argv[i] + 2, kDel.c_str());
+      char *val = strtok(NULL, kDel.c_str());
+      ret_map->insert(std::make_pair(key, val));
+   }
+   return std::move(ret_map);
+}
 
 int RunGRPCService(void* arg) {
    MicronfAgent* agent = reinterpret_cast<MicronfAgent*>(arg);
@@ -90,20 +106,36 @@ int main(int argc, char* argv[]){
    // DPDK EAL inititaion done in MicronfAgent
    // It also changes the sched policy to SCHED_RR, thus child process inherits.
    MicronfAgent micronfAgent;
-   micronfAgent.Init(argc, argv);        
-
-   micronfAgent.DeployMicroservices( chain_conf );
+   int args_processed = micronfAgent.Init(argc, argv);        
+   argc -= args_processed;
+   argv += args_processed;
+   auto arg_map = ParseArgs( argc, argv );
 
    int monitor_lcore_id = 1;
    int nic_classifier_lcore_id = 2;
+   int enable_monitor = 0;
+   int enable_nicclass = 0;
 
+   if ( arg_map->find("monitor") != arg_map->end() ) {
+      enable_monitor = 1;
+      monitor_lcore_id = atoi( (*arg_map)["monitor"].c_str() );
+   }
+   if ( arg_map->find("nic_classifier") != arg_map->end() ) {
+      enable_nicclass = 1;
+      nic_classifier_lcore_id = atoi( (*arg_map)["nic_classifier"].c_str() );
+   }
+   
    printf("master lcore: %d, monitor lcore: %d, nic_classifier lcore: %d\n", rte_lcore_id(), monitor_lcore_id, nic_classifier_lcore_id);
    
-   // Fixme: 
-   // Monitor will spawn new process with obolete config.
-   //rte_eal_remote_launch(RunMonitor, reinterpret_cast<void*> (&micronfAgent), monitor_lcore_id);
-
-   rte_eal_remote_launch(RunNICClassifier, reinterpret_cast<void*>(&micronfAgent), nic_classifier_lcore_id);
+   micronfAgent.DeployMicroservices( chain_conf );
+   
+   if ( enable_monitor ) {
+      // Fixme: 
+      // Monitor will spawn new process with obolete config.
+      rte_eal_remote_launch(RunMonitor, reinterpret_cast<void*> (&micronfAgent), monitor_lcore_id);
+   }
+   if ( enable_nicclass ) 
+      rte_eal_remote_launch(RunNICClassifier, reinterpret_cast<void*>(&micronfAgent), nic_classifier_lcore_id);
 
    RunGRPCService(&micronfAgent); 
 

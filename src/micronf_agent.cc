@@ -69,14 +69,14 @@ MicronfAgent::~MicronfAgent() {}
 //    5. Set the scheduler to SCHED_RR
 
 int MicronfAgent::Init(int argc, char* argv[]) {
-  int retval = rte_eal_init(argc, argv);
-  if (retval < 0) {
-    cerr << "rte_eal_init() fails " << strerror(errno) << endl;
-    return -1;
-  }
+   int retval = -1;
+   int num_dpdk_args = rte_eal_init(argc, argv);
 
-  argc -= retval;
-  argv += retval;
+   retval = num_dpdk_args;
+   if (retval < 0) {
+      cerr << "rte_eal_init() fails " << strerror(errno) << endl;
+      return -1;
+   }
 
   num_ports_ = rte_eth_dev_count();
   if (num_ports_ == 0) rte_exit(EXIT_FAILURE, "No Ethernet ports - bye\n");
@@ -104,6 +104,8 @@ int MicronfAgent::Init(int argc, char* argv[]) {
   // Setting agent scheduler to SCHED_RR. Thus, children of this process will
   // inherit the same sched.
   // set_scheduler(0);
+
+  return num_dpdk_args + 1;
 }
 
 int MicronfAgent::CreateRing(string ring_name) {
