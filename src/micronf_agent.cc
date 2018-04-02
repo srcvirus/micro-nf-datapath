@@ -30,12 +30,13 @@ using namespace std;
 
 // mbuf pools configuration
 #define MAX_NUM_USERV 150
-#define MBUFS_PER_USERV 1536
-#define MBUFS_PER_PORT 8192  // 1536
+#define MBUFS_PER_USERV 2048
+#define MBUFS_PER_PORT 8192 
 #define MBUF_CACHE_SIZE 512
 #define PKTMBUF_POOL_NAME "MICRONF_MBUF_POOL"
 
-#define USERV_QUEUE_RINGSIZE 2048  // 128
+// FIXME FINDING GOOD RING SIZE
+#define USERV_RINGSIZE 2048 
 
 // Port configuration
 #define NUM_TX_QUEUE_PERPORT 1
@@ -103,14 +104,14 @@ int MicronfAgent::Init(int argc, char* argv[]) {
 
   // Setting agent scheduler to SCHED_RR. Thus, children of this process will
   // inherit the same sched.
-  // set_scheduler(0);
+  set_scheduler(0);
 
   return num_dpdk_args + 1;
 }
 
 int MicronfAgent::CreateRing(string ring_name) {
   unsigned socket_id = rte_socket_id();
-  const unsigned ring_size = USERV_QUEUE_RINGSIZE;
+  const unsigned ring_size = USERV_RINGSIZE;
 
   // Create multi prod cons ring.
   struct rte_ring* rx_q =
