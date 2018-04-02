@@ -49,7 +49,7 @@ micronf_agent_daemon: micronf_agent.pb.o micronf_agent.grpc.pb.o micronf_agent_d
 	$(CXX) $^ $(INCS) $(LDLIBS) $(LDFLAGS) -o $@
 
 micronf_supervisor: micronf_supervisor.o 
-	$(CXX) $^ $(INCS) $(LDLIBS) $(LDFLAGS) -o $@
+	$(CXX) $^ $(INCS) $(LDLIBS) $(LDFLAGS) -levent -o $@
 
 micronf_cycles_estimator: micronf_cycles_estimator.o
 	$(CXX) $^ $(INCS) $(LDLIBS) $(LDFLAGS) -O0 -o $@
@@ -71,4 +71,6 @@ clean:
 	rm -f ./*.pb.h
 	rm -f micronf_agent_daemon
 	rm -f micronf_orchest
+	rm -f micronf_supervisor
+	rm -f micronf_cycles_estimator
 

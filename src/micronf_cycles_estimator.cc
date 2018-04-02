@@ -249,6 +249,7 @@ main( int argc, char* argv[] ) {
    std::cout << std::fixed;
    std::cout << std::setprecision(2);
    std::cout << "################## RESULT ##############\n";
+   std::cout << "###\t SAMPLE SIZE " << num_sample << "\t ###\n";
    std::cout << "###\t Per Batch\t ###\n";
    std::cout << "Nanoseconds StdDev \t: " << GetStdDev( samples ) << " \tMean: " << GetMean( samples ) << std::endl;
    std::cout << "RDTSC cycles StdDev \t: " << GetStdDev( cycles ) << " \tMean: " << GetMean( cycles ) << std::endl;

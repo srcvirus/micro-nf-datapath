@@ -20,7 +20,7 @@ int main( int argc, char* argv[] ) {
 
 
   // Register signals 
-  signal(SIGINT, handler); 
+  signal( SIGINT, handler ); 
   
   printf( "pid_1: %d, pid_2: %d\n", pid_1, pid_2 );
   	
@@ -32,9 +32,8 @@ int main( int argc, char* argv[] ) {
      //kill(pid_1,SIGTSTP);
      kill(pid_2,SIGSTOP);
      kill(pid_1,SIGCONT);
-     usleep(5);
+     usleep(10);
   }
 
   return 0;
-  
 }
