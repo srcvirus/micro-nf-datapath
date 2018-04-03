@@ -48,7 +48,7 @@ micronf_orchest: micronf_agent.pb.o micronf_agent.grpc.pb.o micronf_orchest.o mi
 micronf_agent_daemon: micronf_agent.pb.o micronf_agent.grpc.pb.o micronf_agent_daemon.o  micronf_config.pb.o micronf_agent.o cidr_address.o nic_classifier.o micronf_monitor.o
 	$(CXX) $^ $(INCS) $(LDLIBS) $(LDFLAGS) -o $@
 
-micronf_supervisor: micronf_supervisor.o 
+micronf_supervisor: micronf_supervisor.o micronf_config.pb.o
 	$(CXX) $^ $(INCS) $(LDLIBS) $(LDFLAGS) -levent -o $@
 
 micronf_cycles_estimator: micronf_cycles_estimator.o

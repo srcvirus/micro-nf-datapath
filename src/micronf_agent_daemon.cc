@@ -82,7 +82,7 @@ int RunMonitor(void* arg) {
    return 0;
 }
 
-std::vector< std::string > parse_chain_conf( std::string file_path ){
+std::vector< std::string > ParseChainConf( std::string file_path ){
    std::ifstream in_file( file_path.c_str() );
    std::string line;
    std::vector< std::string > conf_vector;
@@ -101,7 +101,7 @@ int main(int argc, char* argv[]){
 
    // Parse Chain Configurations
    // All configurations should be stored in ../confs/Chain.conf
-   std::vector<std::string> chain_conf = parse_chain_conf( "../confs/Chain.conf" );
+   std::vector<std::string> chain_conf = ParseChainConf( "../confs/Chain.conf" );
    
    // DPDK EAL inititaion done in MicronfAgent
    // It also changes the sched policy to SCHED_RR, thus child process inherits.

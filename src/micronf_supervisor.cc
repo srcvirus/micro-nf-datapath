@@ -6,10 +6,10 @@
 #include <memory>
 #include <string>
 #include <fstream>
+#include <fcntl.h>
 
 #include <sched.h>
 #include <assert.h>
-#include <event.h>
 #include <unistd.h>
 #include <rte_timer.h>
 #include <time.h>
@@ -24,6 +24,10 @@
 #include <rte_ring.h>
 #include <rte_cycles.h>
 #include <rte_launch.h>
+
+#include "micronf_config.pb.h"
+#include <google/protobuf/io/zero_copy_stream_impl.h>
+#include <google/protobuf/text_format.h>
 
 #define TIMER_RESOLUTION_CYCLES 3000ULL /* around 10ms at 3 Ghz */ // 1s = 3x10^9;  1 ms = 3x10^6; 1 us = 3x10^3
 
@@ -42,7 +46,10 @@ struct ring_stat {
    std::string name;
    unsigned occupancy;
    unsigned size;
-   int pid_pull;
+   // FIXME 
+   // Do we need to handle branch-in and out?
+   int pid_pull = 0; 
+   int pid_push = 0;
 }; 
 
 std::unique_ptr< std::map < std::string, std::string > > 
@@ -56,6 +63,67 @@ ParseArgs( int argc, char* argv[] ) {
       ret_map->insert(std::make_pair(key, val));
    }
    return std::move(ret_map);
+}
+
+std::vector< std::string > 
+ParseChainConf( std::string file_path ){
+   std::ifstream in_file( file_path.c_str() );
+   std::string line;
+   std::vector< std::string > conf_vector;
+   while ( in_file ) {
+      getline( in_file, line );
+      if( !line.empty() )
+         conf_vector.push_back( line );
+   }
+
+   return conf_vector;
+}
+
+void 
+DeduceOutRing( std::vector< std::string > chain_conf ) {
+   for ( int i = 0; i < chain_conf.size(); i++ ) {
+      printf( "Chain_conf size: %lu i: %d. name: %s\n", chain_conf.size(), i, chain_conf[ i ].c_str() );
+      PacketProcessorConfig pp_config;
+      std::string config_file_path = chain_conf[ i ];
+      int fd = open(config_file_path.c_str(), O_RDONLY);
+      if (fd < 0)
+         rte_exit(EXIT_FAILURE, "Cannot open configuration file %s\n",
+                  config_file_path.c_str());
+      google::protobuf::io::FileInputStream config_file_handle(fd);
+      config_file_handle.SetCloseOnDelete(true);
+      google::protobuf::TextFormat::Parse(&config_file_handle, &pp_config);
+      
+      unsigned pid = 0;
+      // Iterating over the available ports
+      for ( int port_id = 0; port_id < pp_config.port_configs_size(); port_id++ ) {
+         const PortConfig& p_config = pp_config.port_configs( port_id );
+         if ( p_config.port_type() == PortConfig::INGRESS_PORT ) {
+            const auto conf_ring_it = p_config.port_parameters().find( "ring_id" );
+            if ( conf_ring_it == p_config.port_parameters().end() ) 
+               continue;
+            // Find the pull_pid for this ingress ring name.
+            // Keep the pid; This pid is the pid_push for the egress ring in the conf file.
+            for ( auto it = rings_info.begin(); it != rings_info.end(); it++ ) {
+               if ( (*it)->name == conf_ring_it->second ) {
+                  pid = (*it)->pid_pull;
+               }
+            }
+         }
+         if ( p_config.port_type() == PortConfig::EGRESS_PORT ) {
+            const auto conf_ring_it = p_config.port_parameters().find( "ring_id" );
+            if ( conf_ring_it == p_config.port_parameters().end() )
+               continue;
+            // Find the entry in rings_info data structure
+            // update the pid_push to the pid we get from the ingress ring (above code). 
+            for ( auto it = rings_info.begin(); it != rings_info.end(); it++ ) {
+               if ( (*it)->name == conf_ring_it->second ) {
+                  (*it)->pid_push = pid;
+               }
+            }
+         }
+      }
+
+   }
 }
 
 void
@@ -103,6 +171,20 @@ RefreshRingInfo( std::vector< struct ring_stat* > & rings_info ) {
    for ( int i = 0; i < rings_info.size(); i++ ) {
       rings_info[i]->occupancy = rte_ring_count( rings_info[i]->ring );
    }
+}
+
+void
+PrintRingInfo() {
+   std::cout << "####### Ring Information #######" <<  std::endl;
+   std::cout << "<name>\t\t<occupancy>\t<ring-size>\t<pid_pull>\t<pid_push>" <<  std::endl;
+   for ( int i = 0; i < rings_info.size(); i++ ) {
+      std::cout << rings_info[ i ]->name  << "\t";
+      std::cout << rings_info[ i ]->occupancy  << "\t\t";
+      std::cout << rings_info[ i ]->size  << "\t\t";
+      std::cout << rings_info[ i ]->pid_pull << "\t\t";
+      std::cout << rings_info[ i ]->pid_push  << std::endl;
+   }
+   std::cout <<  std::endl;
 }
 
 void inline 
@@ -208,6 +290,13 @@ main( int argc, char* argv[] ) {
       share_map[ pids[ i ] ] = shares[ i ];
       StopPid( pids[ i ] );
    }
+
+   // Parsing config file to deduce out_ring occupancy of a given pid.
+   std::vector<std::string> chain_conf = ParseChainConf( "../confs/Chain.conf" );
+   DeduceOutRing( chain_conf );
+   PrintRingInfo();
+   exit( 0 );
+
 
    // call lcore_mainloop() on every slave lcore 
    RTE_LCORE_FOREACH_SLAVE(lcore_id) {
