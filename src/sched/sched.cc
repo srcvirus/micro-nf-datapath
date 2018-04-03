@@ -13,7 +13,7 @@ int Init_Sched(unsigned int *pid_array) {
 	retval = 0;
 	i = 1;
 	while (pid_array[i]) {
-		retval = retval & kill(pid_array[i], SIGSTOP);
+		retval = retval | kill(pid_array[i], SIGSTOP);
 		i++;
 	}
 	return retval;
@@ -22,7 +22,7 @@ int Init_Sched(unsigned int *pid_array) {
 int Switch(unsigned int old_pid, unsigned int new_pid) {
 	int retval;
 	retval = kill(old_pid, SIGSTOP);
-	retval = retval & kill(new_pid, SIGCONT);
+	retval = retval | kill(new_pid, SIGCONT);
 	return retval;
 }
 
@@ -44,7 +44,7 @@ int Init_Sched(unsigned int *pid_array) {
 	i = 1;
 	retval = retval & sched_setscheduler(pid_array[0], SCHED_RR, &sp1);
 	while (pid_array[i]) {
-		retval = retval & sched_setscheduler(pid_array[i], SCHED_RR, &sp2);
+		retval = retval | sched_setscheduler(pid_array[i], SCHED_RR, &sp2);
 		i++;
 	}
 	return retval;
@@ -53,7 +53,7 @@ int Init_Sched(unsigned int *pid_array) {
 int Switch(unsigned int old_pid, unsigned int new_pid) {
 	int retval;
 	retval = sched_setscheduler(old_pid, SCHED_RR, &sp2);
-	retval = retval & sched_setscheduler(new_pid, SCHED_RR, &sp1);
+	retval = retval | sched_setscheduler(new_pid, SCHED_RR, &sp1);
 	return retval;
 }
 
