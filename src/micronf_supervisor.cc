@@ -31,15 +31,20 @@
 
 #define TIMER_RESOLUTION_CYCLES 3000ULL /* around 10ms at 3 Ghz */ // 1s = 3x10^9;  1 ms = 3x10^6; 1 us = 3x10^3
 
+// Contains info for all rte_rings
 std::vector< struct ring_stat* > rings_info;
-
-unsigned hz = 0;
-uint64_t timeout = 0;
-bool expired = false;
 // FIFO queue for wait PIDs
 std::queue< unsigned > wait_queue;
 // Mapping between pid and its share (usec)
 std::map< unsigned, unsigned > share_map;
+// Mapping between pid->next_ring_stat*
+std::map< unsigned, struct ring_stat* > next_ring_map;
+// Mapping between pid->prev_ring_stat*
+std::map< unsigned, struct ring_stat* > prev_ring_map;
+
+unsigned hz = 0;
+uint64_t timeout = 0;
+bool expired = false;
 
 struct ring_stat {
    struct rte_ring* ring;
@@ -82,7 +87,7 @@ ParseChainConf( std::string file_path ){
 void 
 DeduceOutRing( std::vector< std::string > chain_conf ) {
    for ( int i = 0; i < chain_conf.size(); i++ ) {
-      printf( "Chain_conf size: %lu i: %d. name: %s\n", chain_conf.size(), i, chain_conf[ i ].c_str() );
+      //printf( "Chain_conf size: %lu i: %d. name: %s\n", chain_conf.size(), i, chain_conf[ i ].c_str() );
       PacketProcessorConfig pp_config;
       std::string config_file_path = chain_conf[ i ];
       int fd = open(config_file_path.c_str(), O_RDONLY);
@@ -174,6 +179,20 @@ RefreshRingInfo( std::vector< struct ring_stat* > & rings_info ) {
 }
 
 void
+PopulateNextRingMap() {
+   for ( int i = 0; i < rings_info.size(); i++ ) {
+      next_ring_map[ rings_info[ i ]->pid_push ] = rings_info[ i ];
+   }
+}
+
+void
+PopulatePrevRingMap() {
+   for ( int i = 0; i < rings_info.size(); i++ ) {
+      prev_ring_map[ rings_info[ i ]->pid_pull ] = rings_info[ i ];
+   }
+}
+
+void
 PrintRingInfo() {
    std::cout << "####### Ring Information #######" <<  std::endl;
    std::cout << "<name>\t\t<occupancy>\t<ring-size>\t<pid_pull>\t<pid_push>" <<  std::endl;
@@ -244,7 +263,12 @@ lcore_mainloop(__attribute__((unused)) void *arg)
          prev_tsc = cur_tsc;
          RefreshRingInfo( rings_info );
 
-         if ( expired ) {   // TODO or in_ring.empty() or out_ring.full()
+
+         // TODO:
+         //    - Carefully handle those at the core boundary. 
+         //      If next process on diff core is slow, the processes in the current core will busy switching.
+         //if ( expired ) {  
+         if ( expired || prev_ring_map[ pid ]->occupancy == 0 || next_ring_map[ pid ]->occupancy == 2048 ) {
             StopPid( pid );
             wait_queue.pop();
             wait_queue.push( pid );
@@ -282,7 +306,7 @@ main( int argc, char* argv[] ) {
    hz = rte_get_timer_hz();
    
    //FIXME hardcode
-   std::vector< unsigned > pids = { 433, 434 };
+   std::vector< unsigned > pids = { 3637, 3638 };
    std::vector< unsigned > shares = { 2, 2 }; //usec
 
    for ( int i = 0; i < pids.size(); i++ ) {
@@ -295,9 +319,13 @@ main( int argc, char* argv[] ) {
    std::vector<std::string> chain_conf = ParseChainConf( "../confs/Chain.conf" );
    DeduceOutRing( chain_conf );
    PrintRingInfo();
-   exit( 0 );
+   
+   // For quick access of next_ring_map[pid] prev_ring_map[pid] occupancy.
+   // Used in addition to time quantum.
+   PopulateNextRingMap();
+   PopulatePrevRingMap();
 
-
+      
    // call lcore_mainloop() on every slave lcore 
    RTE_LCORE_FOREACH_SLAVE(lcore_id) {
       rte_eal_remote_launch(lcore_mainloop, &rings_info, lcore_id);
