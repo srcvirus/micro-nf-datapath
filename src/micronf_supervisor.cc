@@ -28,23 +28,39 @@
 #include "micronf_config.pb.h"
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <google/protobuf/text_format.h>
+#include "sched.h"
 
 #define TIMER_RESOLUTION_CYCLES 3000ULL /* around 10ms at 3 Ghz */ // 1s = 3x10^9;  1 ms = 3x10^6; 1 us = 3x10^3
+#define NUM_CORES 4 
+// FIFO queue for wait PIDs
+// std::queue< unsigned > wait_queue;
 
 // Contains info for all rte_rings
 std::vector< struct ring_stat* > rings_info;
-// FIFO queue for wait PIDs
-std::queue< unsigned > wait_queue;
-// Mapping between pid and its share (usec)
-std::map< unsigned, unsigned > share_map;
+// Mapping between coreid and list of processes' share (usec)
+std::map< unsigned, std::vector< unsigned > > share_map;
+// list of per core data structure
+std::vector< struct sched_core* > core_sched;
+
 // Mapping between pid->next_ring_stat*
 std::map< unsigned, struct ring_stat* > next_ring_map;
 // Mapping between pid->prev_ring_stat*
 std::map< unsigned, struct ring_stat* > prev_ring_map;
+// Given a pid, what is the idx among pids in the core
+std::map< unsigned, unsigned > pid_to_idx;
+// core_id -> list of pids
+std::map< unsigned, std::vector< unsigned > > core_pids;
+
 
 unsigned hz = 0;
-uint64_t timeout = 0;
-bool expired = false;
+
+struct sched_core {
+   unsigned core_id;
+   struct rte_timer timer;
+   bool expired = false;
+   std::queue< unsigned > wait_queue;
+};
+
 
 struct ring_stat {
    struct rte_ring* ring;
@@ -143,8 +159,10 @@ PinThisProcess( int cpuid ){
    } 
 }
 
+
 void 
 PopulateRingInfo( std::vector< struct ring_stat* > & rings_info ) {
+  
   std::ifstream file("../log/ring_info");
   std::string line;
   while( std::getline( file, line ) ) {
@@ -157,12 +175,15 @@ PopulateRingInfo( std::vector< struct ring_stat* > & rings_info ) {
         p = std::strtok( NULL, "," );
         rs->pid_pull = atoi( p );
         p = std::strtok( NULL, "," );
+        core_pids[ atoi( p ) ].push_back( rs->pid_pull );
+        p = std::strtok( NULL, "," );
      }
      delete cstr;  
      
      struct rte_ring* r = rte_ring_lookup( rs->name.c_str() );
      if ( r == NULL )
         std::cerr << "Ring not found."; 
+
      rs->ring = r;
      rs->occupancy = rte_ring_count( r );
      rs->size = rte_ring_get_size( r );
@@ -224,11 +245,53 @@ StopPid( unsigned  pid ) {
    assert( rc != -1 );
 }
 
+// arg is the expire flag in a sched_core 
 static void
 ExpiredCallback(__attribute__((unused)) struct rte_timer *tim,
-          __attribute__((unused)) void *arg)
+                void *arg)
 {
-   expired = true;
+   bool* core_exp = (bool*) arg;
+   *core_exp = true;
+}
+
+// Initialize per core data structure 'sched_core'
+static void
+InitCoreSched() {
+   for ( auto it = core_pids.begin(); it != core_pids.end(); it++ ) {
+      struct sched_core *sc = new struct sched_core;
+      sc->core_id = it->first;
+      for ( int i = 0; i < it->second.size(); i++ ) {
+         sc->wait_queue.push( it->second[ i ] );
+         pid_to_idx[ it->second[ i ] ] = i;
+      } 
+      core_sched.push_back( sc );
+   }
+   for ( int i = 0; i < core_sched.size() - 1; i++ ) {
+      int pid  = core_sched[ i ]->wait_queue.front();
+      //printf( "InitCoreSched: i:%d, pid:%d, coreid:%d\n", i, pid, core_sched[ i ]->core_id );
+      //printf( "prev_ring_map occ: %d\n", prev_ring_map[ pid ]->occupancy );
+      //printf( "next_ring_map occ: %d\n", next_ring_map[ pid ]->occupancy );
+   }
+}
+
+// Run(kick) a process in each core to run
+static void
+KickScheduler() {
+   unsigned lcore_id;
+   lcore_id = rte_lcore_id();
+   printf( "Initializing scheduler on core %u\n", lcore_id );
+   rte_timer_subsystem_init();
+   uint64_t timeout = 0;
+
+   for ( volatile int i = 0; i < core_sched.size() - 1; i++ ) {
+      unsigned pid = core_sched[ i ]->wait_queue.front();
+      unsigned coreid = core_sched[ i ]->core_id; 
+      rte_timer_init( &core_sched[ i ]->timer  );
+      timeout = ( uint64_t ) ( hz *  (float) share_map[ coreid ][ pid_to_idx[ pid ] ] / 1000000 );
+      RunPid( pid );
+      // std::cout << " i: " << i << " pid: " << pid << " timeout: " << timeout << std::endl;
+      rte_timer_reset( &core_sched[ i ]->timer, timeout, SINGLE, lcore_id, ExpiredCallback, &core_sched[ i ]->expired );
+   }
 }
 
 static __attribute__((noreturn)) int
@@ -237,51 +300,42 @@ lcore_mainloop(__attribute__((unused)) void *arg)
    uint64_t prev_tsc = 0, cur_tsc, diff_tsc;
    unsigned lcore_id;
    lcore_id = rte_lcore_id();
-   printf("Starting mainloop on core %u\n", lcore_id);
-
-   unsigned pid = wait_queue.front();
-   static struct rte_timer timer0;
-   rte_timer_subsystem_init();
-   rte_timer_init( &timer0 );
-   timeout = ( uint64_t ) ( hz *  (float) share_map[ pid ] / 1000000 );
-
-   RunPid( pid );
-   rte_timer_reset( &timer0, timeout, SINGLE, lcore_id, ExpiredCallback, NULL );
+   uint64_t timeout = 0;
    
+   // run process on each core.
+   KickScheduler();
+
    while (1) {
-      /*
-       * Call the timer handler on each core: as we don't
-       * need a very precise timer, so only call
-       * rte_timer_manage() every ~10ms (at 2Ghz). In a real
-       * application, this will enhance performances as
-       * reading the HPET timer is not efficient.
-       */
+      // Manage timer
       cur_tsc = rte_rdtsc();
       diff_tsc = cur_tsc - prev_tsc;
       if ( diff_tsc > TIMER_RESOLUTION_CYCLES ) {
          rte_timer_manage();
          prev_tsc = cur_tsc;
+         
          RefreshRingInfo( rings_info );
 
+         // Check and manage expiry in each core
+         for ( int i = 0; i < core_sched.size() - 1; i++ ) {
+            unsigned pid = core_sched[ i ]->wait_queue.front();
+            unsigned coreid = core_sched[ i ]->core_id;
 
-         // TODO:
-         //    - Carefully handle those at the core boundary. 
-         //      If next process on diff core is slow, the processes in the current core will busy switching.
-         //if ( expired ) {  
-         if ( expired || prev_ring_map[ pid ]->occupancy == 0 || next_ring_map[ pid ]->occupancy == 2048 ) {
-            StopPid( pid );
-            wait_queue.pop();
-            wait_queue.push( pid );
-            // In case timer hasn't expired but ring is empty/full
-            rte_timer_stop_sync( &timer0 );
-            expired = false;
-            pid = wait_queue.front();
-            RunPid( pid );
-            timeout = ( uint64_t ) ( hz *  (float) share_map[ pid ] / 1000000 );
-            rte_timer_reset( &timer0, timeout, SINGLE, lcore_id, ExpiredCallback, NULL );
+            // Reschedule a core if a running process is expired, has empty input ring, has full output ring.
+            if ( core_sched[ i ]->expired ||        \
+                 prev_ring_map[ pid ]->occupancy == 0 || \
+                 next_ring_map[ pid ]->occupancy == 2048 ) {
+               StopPid( pid );
+               core_sched[ i ]->wait_queue.pop();
+               core_sched[ i ]->wait_queue.push( pid );
+               rte_timer_stop_sync( &core_sched[ i ]->timer );
+               core_sched[ i ]->expired = false;
+               pid =  core_sched[ i ]->wait_queue.front();
+               RunPid( pid );
+               timeout = ( uint64_t ) ( hz *  (float) share_map[ coreid ][ pid_to_idx[ pid ] ] / 1000000 );
+               rte_timer_reset( &core_sched[ i ]->timer, timeout, SINGLE, lcore_id, ExpiredCallback, &core_sched[ i ]->expired );
+            }
          }
-
-      }      
+      }
    }
    
 }
@@ -303,17 +357,7 @@ main( int argc, char* argv[] ) {
    PinThisProcess( 3 );      
 
    unsigned lcore_id = rte_lcore_id();
-   hz = rte_get_timer_hz();
-   
-   //FIXME hardcode
-   std::vector< unsigned > pids = { 3637, 3638 };
-   std::vector< unsigned > shares = { 2, 2 }; //usec
-
-   for ( int i = 0; i < pids.size(); i++ ) {
-      wait_queue.push( pids[ i ] );
-      share_map[ pids[ i ] ] = shares[ i ];
-      StopPid( pids[ i ] );
-   }
+   hz = rte_get_timer_hz();   
 
    // Parsing config file to deduce out_ring occupancy of a given pid.
    std::vector<std::string> chain_conf = ParseChainConf( "../confs/Chain.conf" );
@@ -325,7 +369,16 @@ main( int argc, char* argv[] ) {
    PopulateNextRingMap();
    PopulatePrevRingMap();
 
-      
+   // FIXME
+   // Manually assigned shares
+   share_map[ 1 ].push_back( 2 ); // 1st process in core 1 gets 2 usec share
+   share_map[ 1 ].push_back( 2 ); // 2nd process in core 1 gets 2 usec share
+   share_map[ 2 ].push_back( 2 );
+   share_map[ 2 ].push_back( 2 );
+
+
+   InitCoreSched();
+
    // call lcore_mainloop() on every slave lcore 
    RTE_LCORE_FOREACH_SLAVE(lcore_id) {
       rte_eal_remote_launch(lcore_mainloop, &rings_info, lcore_id);

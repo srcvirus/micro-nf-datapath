@@ -1,1 +1,1 @@
-sudo ./micronf_agent_daemon -n 4 --proc-type primary -c 0xfe -- --nic_classifier=2
+sudo ./micronf_agent_daemon -n 4 --proc-type primary -c 0xfe -- --nic_classifier=4
