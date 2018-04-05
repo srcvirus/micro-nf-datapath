@@ -217,7 +217,10 @@ void DumpRingInfo( PacketProcessorConfig& pp_conf, int pid_pull, FILE* ring_fd )
           const auto ring_it = pconfig.port_parameters().find("ring_id");
           if (ring_it == pconfig.port_parameters().end()) 
              continue;
-          fprintf( ring_fd, "%s,%d\n", ring_it->second.c_str(), pid_pull );
+          // fprintf( ring_fd, "%s,%d\n", ring_it->second.c_str(), pid_pull );
+          fprintf( ring_fd, "%s,%d,%d\n", ring_it->second.c_str(), pid_pull,
+                   pp_conf.pp_parameters().find("cpu_id")->second );
+
        }
     }
 }
