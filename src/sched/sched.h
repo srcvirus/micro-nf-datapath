@@ -9,4 +9,7 @@ int Init_Sched(unsigned int *pid_array);
 /* Suspend the old_pid and resume the new_pid */
 int Switch(unsigned int old_pid, unsigned int new_pid);
 
+
+void Handler();
+
 #endif

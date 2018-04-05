@@ -28,12 +28,10 @@
 #include "micronf_config.pb.h"
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <google/protobuf/text_format.h>
-#include "sched.h"
+#include "./sched/sched.h"
 
 #define TIMER_RESOLUTION_CYCLES 3000ULL /* around 10ms at 3 Ghz */ // 1s = 3x10^9;  1 ms = 3x10^6; 1 us = 3x10^3
 #define NUM_CORES 4 
-// FIFO queue for wait PIDs
-// std::queue< unsigned > wait_queue;
 
 // Contains info for all rte_rings
 std::vector< struct ring_stat* > rings_info;
@@ -227,24 +225,6 @@ PrintRingInfo() {
    std::cout <<  std::endl;
 }
 
-void inline 
-RunPid( unsigned  pid ) {
-   int rc;
-   struct sched_param sp;
-   sp.sched_priority = 2;
-   rc = sched_setscheduler(pid, SCHED_RR, &sp);
-   assert( rc != -1 );
-}
-
-void inline 
-StopPid( unsigned  pid ) {
-   int rc;
-   struct sched_param sp;
-   sp.sched_priority = 1;
-   rc = sched_setscheduler(pid, SCHED_RR, &sp);
-   assert( rc != -1 );
-}
-
 // arg is the expire flag in a sched_core 
 static void
 ExpiredCallback(__attribute__((unused)) struct rte_timer *tim,
@@ -266,12 +246,6 @@ InitCoreSched() {
       } 
       core_sched.push_back( sc );
    }
-   for ( int i = 0; i < core_sched.size() - 1; i++ ) {
-      int pid  = core_sched[ i ]->wait_queue.front();
-      //printf( "InitCoreSched: i:%d, pid:%d, coreid:%d\n", i, pid, core_sched[ i ]->core_id );
-      //printf( "prev_ring_map occ: %d\n", prev_ring_map[ pid ]->occupancy );
-      //printf( "next_ring_map occ: %d\n", next_ring_map[ pid ]->occupancy );
-   }
 }
 
 // Run(kick) a process in each core to run
@@ -288,7 +262,8 @@ KickScheduler() {
       unsigned coreid = core_sched[ i ]->core_id; 
       rte_timer_init( &core_sched[ i ]->timer  );
       timeout = ( uint64_t ) ( hz *  (float) share_map[ coreid ][ pid_to_idx[ pid ] ] / 1000000 );
-      RunPid( pid );
+      //RunPid( pid );
+      Switch( 0, pid );
       // std::cout << " i: " << i << " pid: " << pid << " timeout: " << timeout << std::endl;
       rte_timer_reset( &core_sched[ i ]->timer, timeout, SINGLE, lcore_id, ExpiredCallback, &core_sched[ i ]->expired );
    }
@@ -319,18 +294,19 @@ lcore_mainloop(__attribute__((unused)) void *arg)
          for ( int i = 0; i < core_sched.size() - 1; i++ ) {
             unsigned pid = core_sched[ i ]->wait_queue.front();
             unsigned coreid = core_sched[ i ]->core_id;
-
+            unsigned npid;
             // Reschedule a core if a running process is expired, has empty input ring, has full output ring.
             if ( core_sched[ i ]->expired ||        \
                  prev_ring_map[ pid ]->occupancy == 0 || \
                  next_ring_map[ pid ]->occupancy == 2048 ) {
-               StopPid( pid );
+               //StopPid( pid );
                core_sched[ i ]->wait_queue.pop();
                core_sched[ i ]->wait_queue.push( pid );
                rte_timer_stop_sync( &core_sched[ i ]->timer );
                core_sched[ i ]->expired = false;
-               pid =  core_sched[ i ]->wait_queue.front();
-               RunPid( pid );
+               npid =  core_sched[ i ]->wait_queue.front();
+               //RunPid( pid );
+               Switch( pid, npid );
                timeout = ( uint64_t ) ( hz *  (float) share_map[ coreid ][ pid_to_idx[ pid ] ] / 1000000 );
                rte_timer_reset( &core_sched[ i ]->timer, timeout, SINGLE, lcore_id, ExpiredCallback, &core_sched[ i ]->expired );
             }
@@ -340,12 +316,20 @@ lcore_mainloop(__attribute__((unused)) void *arg)
    
 }
 
+void handler( int sig ){
+   Handler();
+   exit( 1 );
+}
+
 int 
 main( int argc, char* argv[] ) {
    // Initialize DPDK args
    int args_processed = rte_eal_init( argc, argv );
    argc -= args_processed;
    argv  += args_processed;
+
+   // Register signals 
+   signal(SIGINT, handler);   
 
    // Process our own args ( if any )
    auto arg_map = ParseArgs( argc - 1, argv + 1 );
@@ -376,9 +360,18 @@ main( int argc, char* argv[] ) {
    share_map[ 2 ].push_back( 2 );
    share_map[ 2 ].push_back( 2 );
 
-
+   // Initialize per core data structure 'sched_core'
    InitCoreSched();
 
+   // Populate pid array
+   unsigned int pid_array[ 100 ];
+   int i = 0;
+   for ( auto it = pid_to_idx.begin(); it != pid_to_idx.end(); it++ ) {
+      pid_array[ i++ ] = it->first;
+   }
+   // Stop all
+   Init_Sched( pid_array );
+   
    // call lcore_mainloop() on every slave lcore 
    RTE_LCORE_FOREACH_SLAVE(lcore_id) {
       rte_eal_remote_launch(lcore_mainloop, &rings_info, lcore_id);
