@@ -269,8 +269,8 @@ KickScheduler() {
    }
 }
 
-static __attribute__((noreturn)) int
-lcore_mainloop(__attribute__((unused)) void *arg)
+static int  __attribute__((noreturn)) 
+lcore_mainloop(__attribute__((unused)) void *arg) 
 {
    uint64_t prev_tsc = 0, cur_tsc, diff_tsc;
    unsigned lcore_id;
@@ -295,20 +295,32 @@ lcore_mainloop(__attribute__((unused)) void *arg)
             unsigned pid = core_sched[ i ]->wait_queue.front();
             unsigned coreid = core_sched[ i ]->core_id;
             unsigned npid;
+
             // Reschedule a core if a running process is expired, has empty input ring, has full output ring.
             if ( core_sched[ i ]->expired ||        \
-                 prev_ring_map[ pid ]->occupancy == 0 || \
-                 next_ring_map[ pid ]->occupancy == 2048 ) {
-               //StopPid( pid );
+                 prev_ring_map[ pid ]->occupancy < 32 || \
+                 next_ring_map[ pid ]->occupancy > 2016 ) {
+
                core_sched[ i ]->wait_queue.pop();
                core_sched[ i ]->wait_queue.push( pid );
-               rte_timer_stop_sync( &core_sched[ i ]->timer );
-               core_sched[ i ]->expired = false;
+       
                npid =  core_sched[ i ]->wait_queue.front();
-               //RunPid( pid );
-               Switch( pid, npid );
-               timeout = ( uint64_t ) ( hz *  (float) share_map[ coreid ][ pid_to_idx[ pid ] ] / 1000000 );
-               rte_timer_reset( &core_sched[ i ]->timer, timeout, SINGLE, lcore_id, ExpiredCallback, &core_sched[ i ]->expired );
+               // Make sure the next one has work to do
+               while( npid != pid && ( prev_ring_map[ npid ]->occupancy < 32 || \
+                                       next_ring_map[ npid ]->occupancy > 2016 ) ) {
+                  core_sched[ i ]->wait_queue.pop();
+                  core_sched[ i ]->wait_queue.push( npid );
+                  npid =  core_sched[ i ]->wait_queue.front();
+               }
+
+               if ( npid != pid ) {
+                  rte_timer_stop_sync( &core_sched[ i ]->timer );
+                  core_sched[ i ]->expired = false;
+
+                  Switch( pid, npid );
+                  timeout = ( uint64_t ) ( hz *  (float) share_map[ coreid ][ pid_to_idx[ npid ] ] / 1000000 );
+                  rte_timer_reset( &core_sched[ i ]->timer, timeout, SINGLE, lcore_id, ExpiredCallback, &core_sched[ i ]->expired );
+               }
             }
          }
       }
@@ -355,10 +367,10 @@ main( int argc, char* argv[] ) {
 
    // FIXME
    // Manually assigned shares
-   share_map[ 1 ].push_back( 2 ); // 1st process in core 1 gets 2 usec share
-   share_map[ 1 ].push_back( 2 ); // 2nd process in core 1 gets 2 usec share
-   share_map[ 2 ].push_back( 2 );
-   share_map[ 2 ].push_back( 2 );
+   share_map[ 1 ].push_back( 32 ); // 1st process in core 1 gets 2 usec share
+   share_map[ 1 ].push_back( 32 ); // 2nd process in core 1 gets 2 usec share
+   share_map[ 2 ].push_back( 32 );
+   share_map[ 2 ].push_back( 32 );
 
    // Initialize per core data structure 'sched_core'
    InitCoreSched();
