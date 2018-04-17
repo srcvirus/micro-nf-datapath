@@ -270,7 +270,7 @@ KickScheduler() {
 }
 
 static int  __attribute__((noreturn)) 
-lcore_mainloop(__attribute__((unused)) void *arg) 
+unis_mainloop(__attribute__((unused)) void *arg) 
 {
    uint64_t prev_tsc = 0, cur_tsc, diff_tsc;
    unsigned lcore_id;
@@ -296,16 +296,18 @@ lcore_mainloop(__attribute__((unused)) void *arg)
             unsigned coreid = core_sched[ i ]->core_id;
             unsigned npid;
 
-            // Reschedule a core if a running process is expired, has empty input ring, has full output ring.
+            // Reschedule a core if a running process is expired, or 
+            // the input ring is almost empty, or the output ring almost full.
             if ( core_sched[ i ]->expired ||        \
                  prev_ring_map[ pid ]->occupancy < 32 || \
                  next_ring_map[ pid ]->occupancy > 2016 ) {
 
                core_sched[ i ]->wait_queue.pop();
-               core_sched[ i ]->wait_queue.push( pid );
-       
+               core_sched[ i ]->wait_queue.push( pid );       
                npid =  core_sched[ i ]->wait_queue.front();
-               // Make sure the next one has work to do
+
+               // Make sure the next one has meaningful work to do before being scheduled.
+               // If not, check the next one in the queue repeatedly until all are checked.
                while( npid != pid && ( prev_ring_map[ npid ]->occupancy < 32 || \
                                        next_ring_map[ npid ]->occupancy > 2016 ) ) {
                   core_sched[ i ]->wait_queue.pop();
@@ -313,13 +315,19 @@ lcore_mainloop(__attribute__((unused)) void *arg)
                   npid =  core_sched[ i ]->wait_queue.front();
                }
 
+               // New pid ready to be run.
                if ( npid != pid ) {
                   rte_timer_stop_sync( &core_sched[ i ]->timer );
                   core_sched[ i ]->expired = false;
 
+                  // Put pid to waiting state and npid to runing state
                   Switch( pid, npid );
-                  timeout = ( uint64_t ) ( hz *  (float) share_map[ coreid ][ pid_to_idx[ npid ] ] / 1000000 );
-                  rte_timer_reset( &core_sched[ i ]->timer, timeout, SINGLE, lcore_id, ExpiredCallback, &core_sched[ i ]->expired );
+
+                  // Timer responsible for the new running npid is started.
+                  timeout = ( uint64_t ) ( hz *  (float) \
+                                           share_map[ coreid ][ pid_to_idx[ npid ] ] / 1000000 );
+                  rte_timer_reset( &core_sched[ i ]->timer, timeout, SINGLE, lcore_id, \
+                                   ExpiredCallback, &core_sched[ i ]->expired );
                }
             }
          }
@@ -367,10 +375,18 @@ main( int argc, char* argv[] ) {
 
    // FIXME
    // Manually assigned shares
-   share_map[ 1 ].push_back( 32 ); // 1st process in core 1 gets 2 usec share
-   share_map[ 1 ].push_back( 32 ); // 2nd process in core 1 gets 2 usec share
-   share_map[ 2 ].push_back( 32 );
-   share_map[ 2 ].push_back( 32 );
+   unsigned share = 2;
+   // 1st process in core 1 gets 2 usec share
+   share_map[ 1 ].push_back( share );
+   share_map[ 1 ].push_back( share );
+   share_map[ 1 ].push_back( share );
+   share_map[ 1 ].push_back( share );
+   share_map[ 1 ].push_back( share );
+   share_map[ 1 ].push_back( share );
+   share_map[ 1 ].push_back( share );
+   share_map[ 1 ].push_back( share );
+   share_map[ 2 ].push_back( 3 );
+   share_map[ 2 ].push_back( 6 );
 
    // Initialize per core data structure 'sched_core'
    InitCoreSched();
@@ -384,12 +400,12 @@ main( int argc, char* argv[] ) {
    // Stop all
    Init_Sched( pid_array );
    
-   // call lcore_mainloop() on every slave lcore 
+   // call unis_mainloop() on every slave lcore 
    RTE_LCORE_FOREACH_SLAVE(lcore_id) {
-      rte_eal_remote_launch(lcore_mainloop, &rings_info, lcore_id);
+      rte_eal_remote_launch(unis_mainloop, &rings_info, lcore_id);
    }
    // call it on master lcore too
-   (void) lcore_mainloop(NULL);
+   (void) unis_mainloop(NULL);
 }
 
 
