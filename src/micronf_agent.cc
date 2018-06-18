@@ -31,12 +31,12 @@ using namespace std;
 // mbuf pools configuration
 #define MAX_NUM_USERV 150
 #define MBUFS_PER_USERV 2048
-#define MBUFS_PER_PORT 8192 
+#define MBUFS_PER_PORT 8192
 #define MBUF_CACHE_SIZE 512
 #define PKTMBUF_POOL_NAME "MICRONF_MBUF_POOL"
 
 // FIXME FINDING GOOD RING SIZE
-#define USERV_RINGSIZE 2048 
+#define USERV_RINGSIZE 2048
 
 // Port configuration
 #define NUM_TX_QUEUE_PERPORT 1

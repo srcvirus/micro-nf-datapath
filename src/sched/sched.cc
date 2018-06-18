@@ -56,7 +56,6 @@ int Init_Sched(unsigned int *pid_array) {
 	int retval, i;
 	retval = 0;
 	i = 0;
-	retval = retval & sched_setscheduler(pid_array[0], SCHED_RR, &sp1);
 	while (pid_array[i]) {
 		retval = retval | sched_setscheduler(pid_array[i], SCHED_RR, &sp1);
                 pids[ i ] = pid_array[ i ];
