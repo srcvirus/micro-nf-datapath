@@ -49,7 +49,7 @@ micronf_agent_daemon: micronf_agent.pb.o micronf_agent.grpc.pb.o micronf_agent_d
 	$(CXX) $^ $(INCS) $(LDLIBS) $(LDFLAGS) -o $@
 
 micronf_supervisor: micronf_supervisor.o micronf_config.pb.o sched.o
-	$(CXX) $^ $(INCS) $(LDLIBS) $(LDFLAGS) -levent -o $@
+	$(CXX) $^ $(INCS) $(LDLIBS) $(LDFLAGS) -o $@
 
 micronf_cycles_estimator: micronf_cycles_estimator.o
 	$(CXX) $^ $(INCS) $(LDLIBS) $(LDFLAGS) -O0 -o $@

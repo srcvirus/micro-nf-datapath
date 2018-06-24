@@ -43,7 +43,7 @@ read cont
 
 echo "sudo ./micronf_cycles_estimator -n 2 --proc-type secondary -- --in_ring=$IN_RING --out_ring=$OUT_RING --sample_size=$SAMPLE_SIZE --cpu_id=$CPU_ID"
 
-sudo ./micronf_cycles_estimator -n 2 --proc-type secondary -- --in_ring=$IN_RING --out_ring=$OUT_RING --sample_size=$SAMPLE_SIZE --cpu_id=$CPU_ID
+sudo ./micronf_cycles_estimator -n 2 --proc-type secondary -- --in_ring=$IN_RING --out_ring=$OUT_RING --sample_size=$SAMPLE_SIZE --cpu_id=$CPU_ID --pkt_len=$5
 
 sudo pkill -P $$
 sudo pkill micronf
