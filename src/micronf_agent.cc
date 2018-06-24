@@ -378,7 +378,8 @@ int MicronfAgent::InitPort(int port_id) {
   rx_mode->hw_ip_checksum = 1;  // IP checksum offload enabled
   rx_mode->hw_vlan_filter = 0;  // VLAN filtering disabled
   rx_mode->jumbo_frame = 0;     // Jumbo Frame Support disabled
-  rx_mode->hw_strip_crc = 1;    // CRC stripped by hardware
+  rx_mode->hw_strip_crc = 1;    // CRC stripped by hardware 
+  rx_mode->hw_vlan_strip = 1;   // < VLAN strip enabled. */
 
   tx_mode = (struct rte_eth_txmode*)calloc(1, sizeof(*tx_mode));
   tx_mode->mq_mode = ETH_MQ_TX_NONE;
