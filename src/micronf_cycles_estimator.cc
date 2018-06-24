@@ -35,7 +35,7 @@ e.g.
 #define SAMPLE_SIZE 200 
 #define DISCARD_FIRST_N_SAMPLE SAMPLE_SIZE * 0.2
 
-#define BATCH_SIZE 32
+#define BATCH_SIZE 64
 #define PKTMBUF_POOL_NAME "MICRONF_MBUF_POOL"
 
 // Finding the start of metadata field
@@ -170,12 +170,7 @@ Note    :
    since the ring is empty when we run this cycles_estimators program. 
 */          
 inline uint64_t
-InjectPackets( struct rte_ring* r, struct timespec& ts, volatile uint64_t& rdtsc ) {
-   struct rte_mbuf* buf[ BATCH_SIZE ] = { nullptr };
-   struct rte_mempool* mp = rte_mempool_lookup( PKTMBUF_POOL_NAME );
-   int res = rte_pktmbuf_alloc_bulk( mp, buf, BATCH_SIZE );
-   assert( res == 0 );
-
+   InjectPackets( struct rte_ring* r, struct timespec& ts, volatile uint64_t& rdtsc, struct rte_mbuf** buf ) {
    DrainPacketsFromRing( r );
 
    clock_gettime( CLOCK_MONOTONIC, &ts );
@@ -222,7 +217,11 @@ main( int argc, char* argv[] ) {
    if ( arg_map->find("sample_size") != arg_map->end() )
       num_sample = atoi( (*arg_map)["sample_size"].c_str() );
 
-   
+   int PKT_LEN = 0;
+   if ( arg_map->find( "pkt_len" ) != arg_map->end() ) 
+      PKT_LEN = atoi( (*arg_map)["pkt_len"].c_str() );
+
+   std::cout << "################## START ##############\n";
    // For precise measurement, I pin this process to a core and use the RT scheduler
    PinThisProcess( atoi( (*arg_map)[ "cpu_id" ].c_str() ) );
    SetScheduler( 0 );
@@ -232,30 +231,44 @@ main( int argc, char* argv[] ) {
    assert( in_r != NULL && out_r != NULL );
    
    std::vector< uint64_t > samples, cycles;
+
+   struct rte_mbuf* buf[ BATCH_SIZE ] = { nullptr };
+   struct rte_mempool* mp = rte_mempool_lookup( PKTMBUF_POOL_NAME );
+   int res = rte_pktmbuf_alloc_bulk( mp, buf, BATCH_SIZE );
+   assert( res == 0 );
+
+   // faking the packet length
+   if ( PKT_LEN != 0 ) {
+      for ( int i = 0; i < BATCH_SIZE; i++ )
+         buf[ i ]->pkt_len = PKT_LEN;
+   }
   
+   // Start measurement
    for ( int i = 0; i < num_sample; i++ ) {
       volatile uint64_t st_rdtsc,  en_rdtsc;
       struct timespec tx_ts, rx_ts;
 
-      int tx = InjectPackets( in_r, tx_ts, st_rdtsc );
+      int tx = InjectPackets( in_r, tx_ts, st_rdtsc, buf );
       int rx = RetrievePackets( out_r, rx_ts, en_rdtsc );
-
+      
       if ( i > DISCARD_FIRST_N_SAMPLE ) {
          samples.push_back( 1000000000 * ( rx_ts.tv_sec - tx_ts.tv_sec ) 
                             + rx_ts.tv_nsec - tx_ts.tv_nsec );
          cycles.push_back( en_rdtsc - st_rdtsc );
       }
    }
+
    std::cout << std::fixed;
    std::cout << std::setprecision(2);
-   std::cout << "################## RESULT ##############\n";
+   std::cout << "################## RESULT ##############\n\n";
    std::cout << "###\t SAMPLE SIZE " << num_sample << "\t ###\n";
-   std::cout << "###\t Per Batch\t ###\n";
-   std::cout << "Nanoseconds StdDev \t: " << GetStdDev( samples ) << " \tMean: " << GetMean( samples ) << std::endl;
+/*   std::cout << "###\t Per Batch \t ###\n";
+   std::cout << "SD \t: " << GetStdDev( samples ) << " \tMean: " << GetMean( samples ) << std::endl;
    std::cout << "RDTSC cycles StdDev \t: " << GetStdDev( cycles ) << " \tMean: " << GetMean( cycles ) << std::endl;
+*/
    std::cout << "\n###\t Average Per Packet\t ###\n";
-   std::cout << "Nanoseconds StdDev \t: " << GetStdDev( samples ) / BATCH_SIZE << " \tMean: " << GetMean( samples ) / BATCH_SIZE << std::endl;
-   std::cout << "RDTSC cycles StdDev \t: " << GetStdDev( cycles ) / BATCH_SIZE << " \tMean: " << GetMean( cycles ) / BATCH_SIZE << std::endl;
+   std::cout << "SD: " << GetStdDev( samples ) / BATCH_SIZE << "  Mean: " << GetMean( samples ) / BATCH_SIZE << std::endl;
+//   std::cout << "RDTSC cycles StdDev : " << GetStdDev( cycles ) / BATCH_SIZE << " \tMean: " << GetMean( cycles ) / BATCH_SIZE << std::endl;
 
 }
 
