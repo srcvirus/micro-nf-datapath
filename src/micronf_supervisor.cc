@@ -30,9 +30,16 @@
 #include <google/protobuf/text_format.h>
 #include "./sched/sched.h"
 
+#define RTE_LOGTYPE_UNIS RTE_LOGTYPE_USER1
+
 #define TIMER_RESOLUTION_CYCLES 3000ULL /* around 1us at 3 Ghz */ // 1s -> 3x10^9;  1 ms -> 3x10^6; 1 us -> 3x10^3
-#define RING_SIZE 2048
+
+#define RING_SIZE 2048 * 4
 #define BATCH_SIZE 64
+#define CORE_ID 3
+#define UPPERBOUND RING_SIZE * 5 / 10
+#define LOWERBOUND BATCH_SIZE * 1
+#define SHARE 16
 
 // Contains info for all rte_rings
 std::vector< struct ring_stat* > rings_info;
@@ -52,6 +59,8 @@ std::map< unsigned, std::vector< unsigned > > core_pids;
 
 
 unsigned hz = 0;
+unsigned lcore_id = CORE_ID;
+unsigned print_lcore_id = 0;
 
 struct sched_core {
    unsigned core_id;
@@ -86,7 +95,7 @@ ParseArgs( int argc, char* argv[] ) {
 }
 
 std::vector< std::string > 
-ParseChainConf( std::string file_path ){
+ParseChainConf( std::string file_path ) {
    std::ifstream in_file( file_path.c_str() );
    std::string line;
    std::vector< std::string > conf_vector;
@@ -232,7 +241,7 @@ static void
 ExpiredCallback(__attribute__((unused)) struct rte_timer *tim,
                 void *arg)
 {
-   RTE_LOG( INFO, PMD, "Expired Callback Fired");
+//   RTE_LOG( INFO, UNIS, "Expired Callback Fired");
    bool* core_exp = (bool*) arg;
    *core_exp = true;
 }
@@ -246,12 +255,10 @@ print_ring_cb( __attribute__((unused)) struct rte_timer *tim, void *arg ) {
 
 void PrintRingInfoPeriodically( int ms ) {
    static struct rte_timer timer0;
-   unsigned lcore_id;
-   lcore_id = rte_lcore_id();
    rte_timer_init(&timer0);
    uint64_t hz = rte_get_timer_hz();
    uint64_t timeout = hz / 1000 * ms;
-   rte_timer_reset( &timer0, timeout, PERIODICAL, lcore_id, print_ring_cb, &rings_info );
+   rte_timer_reset( &timer0, timeout, PERIODICAL, print_lcore_id, print_ring_cb, &rings_info );
 }
 
 // Initialize per core data structure 'sched_core'
@@ -271,9 +278,8 @@ InitCoreSched() {
 // Run(kick) a process in each core to run
 static void
 KickScheduler() {
-   unsigned lcore_id;
-   lcore_id = rte_lcore_id();
-   printf( "Initializing scheduler on core %u\n", lcore_id );
+   unsigned lcore_id = CORE_ID;
+   printf( "Kicking scheduler on core %u\n", lcore_id );
    rte_timer_subsystem_init();
    uint64_t timeout = 0;
 
@@ -293,8 +299,6 @@ static int  __attribute__((noreturn))
 empty_mainloop(__attribute__((unused)) void *arg) 
 {
    uint64_t prev_tsc = 0, cur_tsc, diff_tsc;
-   unsigned lcore_id;
-   lcore_id = rte_lcore_id();
    uint64_t timeout = 0;
   
    while (1) {
@@ -312,12 +316,14 @@ static int  __attribute__((noreturn))
 unis_mainloop(__attribute__((unused)) void *arg) 
 {
    uint64_t prev_tsc = 0, cur_tsc, diff_tsc;
-   unsigned lcore_id;
-   lcore_id = rte_lcore_id();
    uint64_t timeout = 0;
-   
+   unsigned pid, coreid, npid;
+
    // run process on each core.
    KickScheduler();
+
+   unsigned lcore_id = CORE_ID;
+   printf( "Unis mainloop on core %u\n", lcore_id );
 
    while (1) {
       // Manage timer
@@ -332,32 +338,38 @@ unis_mainloop(__attribute__((unused)) void *arg)
 
          // Check and manage expiry in each core
          for ( int i = 0; i < core_sched.size() - 1; i++ ) {
-            unsigned pid = core_sched[ i ]->wait_queue.front();
-            unsigned coreid = core_sched[ i ]->core_id;
-            unsigned npid;
+            pid = core_sched[ i ]->wait_queue.front();
+            coreid = core_sched[ i ]->core_id;
+            npid;
 
             // Reschedule a core if a running process is expired, or 
             // the input ring is almost empty, or the output ring almost full.
-            if ( core_sched[ i ]->expired ||        \
-                 prev_ring_map[ pid ]->occupancy <= BATCH_SIZE - 16 || \
-                 next_ring_map[ pid ]->occupancy >= RING_SIZE - 16 ) {
+            if ( core_sched[ i ]->expired        \
+                 || prev_ring_map[ pid ]->occupancy <= LOWERBOUND  \
+                 || next_ring_map[ pid ]->occupancy >= UPPERBOUND  ) {
+               //) {
                core_sched[ i ]->wait_queue.pop();
                core_sched[ i ]->wait_queue.push( pid );       
                npid =  core_sched[ i ]->wait_queue.front();
 
+
+
+/*               
                // Make sure the next one has meaningful work to do before being scheduled.
                // If not, check the next one in the queue repeatedly until all are checked.
-               while( npid != pid && ( prev_ring_map[ npid ]->occupancy =< BATCH_SIZE - 16 || \
-                                    next_ring_map[ npid ]->occupancy >= RING_SIZE - 16 ) ) {
+               while( npid != pid && ( prev_ring_map[ npid ]->occupancy <= LOWERBOUND || \
+                                    next_ring_map[ npid ]->occupancy >= UPPERBOUND ) ) {
                   core_sched[ i ]->wait_queue.pop();
                   core_sched[ i ]->wait_queue.push( pid );
                   npid =  core_sched[ i ]->wait_queue.front();
                }
-               
+*/               
                // New pid ready to be run.
                if ( npid != pid ) {
                   rte_timer_stop_sync( &core_sched[ i ]->timer );
                   core_sched[ i ]->expired = false;
+
+                  // RTE_LOG( INFO, UNIS, "Switching\n");
 
                   // Put pid to waiting state and npid to runing state
                   Switch( pid, npid );
@@ -397,9 +409,8 @@ main( int argc, char* argv[] ) {
    PopulateRingInfo( rings_info );
    
    // Pin to CPU core
-   PinThisProcess( 3 );      
+   PinThisProcess( lcore_id );      
 
-   unsigned lcore_id = rte_lcore_id();
    hz = rte_get_timer_hz();   
 
    // Parsing config file to deduce out_ring occupancy of a given pid.
@@ -414,7 +425,7 @@ main( int argc, char* argv[] ) {
 
    // FIXME
    // Manually assigned shares
-   unsigned share = 2000;  // in microsec
+   unsigned share = SHARE;  // in microsec
    // 1st process in core 1 gets usec share
    share_map[ 1 ].push_back( share );
    share_map[ 1 ].push_back( share );
@@ -437,7 +448,8 @@ main( int argc, char* argv[] ) {
    for ( auto it = pid_to_idx.begin(); it != pid_to_idx.end(); it++ ) {
       pid_array[ i++ ] = it->first;
    }
-
+   pid_array[ i - 1 ] = 0;
+   
    // Stop all
    Init_Sched( pid_array );
    
