@@ -34,12 +34,17 @@
 
 #define TIMER_RESOLUTION_CYCLES 3000ULL /* around 1us at 3 Ghz */ // 1s -> 3x10^9;  1 ms -> 3x10^6; 1 us -> 3x10^3
 
-#define RING_SIZE 2048 * 4
+#define RING_SIZE 2048 
 #define BATCH_SIZE 64
 #define CORE_ID 3
-#define UPPERBOUND RING_SIZE * 5 / 10
+#define UPPERBOUND RING_SIZE * 8 / 10
 #define LOWERBOUND BATCH_SIZE * 1
-#define SHARE 16
+
+float complx_1 = 49.6;   // per packet processing cost in nsec 
+float complx_2 = 79.3;   // per packet processing cost in nsec 
+float ideal_occ = 0.75;
+int SHARE_1 = ideal_occ * RING_SIZE * complx_1 / 1000;   // share is in usec
+int SHARE_2 = ideal_occ * RING_SIZE * complx_2 / 1000;   // share is in usec
 
 // Contains info for all rte_rings
 std::vector< struct ring_stat* > rings_info;
@@ -347,29 +352,23 @@ unis_mainloop(__attribute__((unused)) void *arg)
             if ( core_sched[ i ]->expired        \
                  || prev_ring_map[ pid ]->occupancy <= LOWERBOUND  \
                  || next_ring_map[ pid ]->occupancy >= UPPERBOUND  ) {
-               //) {
                core_sched[ i ]->wait_queue.pop();
                core_sched[ i ]->wait_queue.push( pid );       
                npid =  core_sched[ i ]->wait_queue.front();
 
-
-
-/*               
                // Make sure the next one has meaningful work to do before being scheduled.
                // If not, check the next one in the queue repeatedly until all are checked.
                while( npid != pid && ( prev_ring_map[ npid ]->occupancy <= LOWERBOUND || \
                                     next_ring_map[ npid ]->occupancy >= UPPERBOUND ) ) {
                   core_sched[ i ]->wait_queue.pop();
-                  core_sched[ i ]->wait_queue.push( pid );
+                  core_sched[ i ]->wait_queue.push( npid );
                   npid =  core_sched[ i ]->wait_queue.front();
                }
-*/               
+               
                // New pid ready to be run.
                if ( npid != pid ) {
                   rte_timer_stop_sync( &core_sched[ i ]->timer );
                   core_sched[ i ]->expired = false;
-
-                  // RTE_LOG( INFO, UNIS, "Switching\n");
 
                   // Put pid to waiting state and npid to runing state
                   Switch( pid, npid );
@@ -423,21 +422,23 @@ main( int argc, char* argv[] ) {
    PopulateNextRingMap();
    PopulatePrevRingMap();
 
-   // FIXME
    // Manually assigned shares
-   unsigned share = SHARE;  // in microsec
+   unsigned share = SHARE_1;  // in microsec
+   unsigned share_2 = SHARE_2;  // in microsec
+   RTE_LOG( INFO, UNIS, "Share: %u %u\n", share, share_2 );
    // 1st process in core 1 gets usec share
    share_map[ 1 ].push_back( share );
+   share_map[ 1 ].push_back( share_2 );
    share_map[ 1 ].push_back( share );
+   share_map[ 1 ].push_back( share_2 );
    share_map[ 1 ].push_back( share );
+   share_map[ 1 ].push_back( share_2 );
    share_map[ 1 ].push_back( share );
-   share_map[ 1 ].push_back( share );
-   share_map[ 1 ].push_back( share );
-   share_map[ 1 ].push_back( share );
-   share_map[ 1 ].push_back( share );
-   share_map[ 1 ].push_back( share );
-   share_map[ 2 ].push_back( 3 );
-   share_map[ 2 ].push_back( 6 );
+   share_map[ 1 ].push_back( share_2 );
+
+   // share_map[ 1 ].push_back( share );
+   // share_map[ 2 ].push_back( 3 );
+   // share_map[ 2 ].push_back( 6 );
 
    // Initialize per core data structure 'sched_core'
    InitCoreSched();
