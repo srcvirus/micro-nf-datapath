@@ -36,11 +36,12 @@
 
 #define RING_SIZE 2048 
 #define BATCH_SIZE 64
-#define CORE_ID 3
+#define CORE_ID 0
+#define PIN_CORE_ID 3
 #define UPPERBOUND RING_SIZE * 8 / 10
-#define LOWERBOUND BATCH_SIZE * 1
+#define LOWERBOUND BATCH_SIZE 
 
-float complx_1 = 49.6;   // per packet processing cost in nsec 
+float complx_1 = 39.2;   // per packet processing cost in nsec 
 float complx_2 = 79.3;   // per packet processing cost in nsec 
 float ideal_occ = 0.75;
 int SHARE_1 = ideal_occ * RING_SIZE * complx_1 / 1000;   // share is in usec
@@ -65,7 +66,6 @@ std::map< unsigned, std::vector< unsigned > > core_pids;
 
 unsigned hz = 0;
 unsigned lcore_id = CORE_ID;
-unsigned print_lcore_id = 0;
 
 struct sched_core {
    unsigned core_id;
@@ -263,7 +263,7 @@ void PrintRingInfoPeriodically( int ms ) {
    rte_timer_init(&timer0);
    uint64_t hz = rte_get_timer_hz();
    uint64_t timeout = hz / 1000 * ms;
-   rte_timer_reset( &timer0, timeout, PERIODICAL, print_lcore_id, print_ring_cb, &rings_info );
+   rte_timer_reset( &timer0, timeout, PERIODICAL, lcore_id, print_ring_cb, &rings_info );
 }
 
 // Initialize per core data structure 'sched_core'
@@ -295,7 +295,7 @@ KickScheduler() {
       timeout = ( uint64_t ) ( hz *  (float) share_map[ coreid ][ pid_to_idx[ pid ] ] / 1000000 );
 
       Switch( 0, pid );
-
+     
       rte_timer_reset( &core_sched[ i ]->timer, timeout, SINGLE, lcore_id, ExpiredCallback, &core_sched[ i ]->expired );
    }
 }
@@ -350,12 +350,13 @@ unis_mainloop(__attribute__((unused)) void *arg)
             // Reschedule a core if a running process is expired, or 
             // the input ring is almost empty, or the output ring almost full.
             if ( core_sched[ i ]->expired        \
-                 || prev_ring_map[ pid ]->occupancy <= LOWERBOUND  \
-                 || next_ring_map[ pid ]->occupancy >= UPPERBOUND  ) {
+//                 || prev_ring_map[ pid ]->occupancy <= LOWERBOUND     \
+//                 || next_ring_map[ pid ]->occupancy >= UPPERBOUND  ) {
+               ) {
                core_sched[ i ]->wait_queue.pop();
                core_sched[ i ]->wait_queue.push( pid );       
                npid =  core_sched[ i ]->wait_queue.front();
-
+/*
                // Make sure the next one has meaningful work to do before being scheduled.
                // If not, check the next one in the queue repeatedly until all are checked.
                while( npid != pid && ( prev_ring_map[ npid ]->occupancy <= LOWERBOUND || \
@@ -364,9 +365,9 @@ unis_mainloop(__attribute__((unused)) void *arg)
                   core_sched[ i ]->wait_queue.push( npid );
                   npid =  core_sched[ i ]->wait_queue.front();
                }
-               
+*/               
                // New pid ready to be run.
-               if ( npid != pid ) {
+//               if ( npid != pid ) {
                   rte_timer_stop_sync( &core_sched[ i ]->timer );
                   core_sched[ i ]->expired = false;
 
@@ -378,7 +379,7 @@ unis_mainloop(__attribute__((unused)) void *arg)
                                            share_map[ coreid ][ pid_to_idx[ npid ] ] / 1000000 );
                   rte_timer_reset( &core_sched[ i ]->timer, timeout, SINGLE, lcore_id, \
                                    ExpiredCallback, &core_sched[ i ]->expired );
-               }
+//               }
             }
          }
       }
@@ -408,7 +409,7 @@ main( int argc, char* argv[] ) {
    PopulateRingInfo( rings_info );
    
    // Pin to CPU core
-   PinThisProcess( lcore_id );      
+   PinThisProcess( PIN_CORE_ID );      
 
    hz = rte_get_timer_hz();   
 
@@ -423,19 +424,41 @@ main( int argc, char* argv[] ) {
    PopulatePrevRingMap();
 
    // Manually assigned shares
-   unsigned share = SHARE_1;  // in microsec
-   unsigned share_2 = SHARE_2;  // in microsec
+   unsigned share = SHARE_1; 
+   unsigned share_2 = SHARE_2;
    RTE_LOG( INFO, UNIS, "Share: %u %u\n", share, share_2 );
    // 1st process in core 1 gets usec share
    share_map[ 1 ].push_back( share );
-   share_map[ 1 ].push_back( share_2 );
    share_map[ 1 ].push_back( share );
-   share_map[ 1 ].push_back( share_2 );
    share_map[ 1 ].push_back( share );
-   share_map[ 1 ].push_back( share_2 );
    share_map[ 1 ].push_back( share );
-   share_map[ 1 ].push_back( share_2 );
-
+   share_map[ 1 ].push_back( share );
+   share_map[ 1 ].push_back( share );
+   share_map[ 1 ].push_back( share );
+   share_map[ 1 ].push_back( share );
+   share_map[ 1 ].push_back( share );
+   share_map[ 1 ].push_back( share );
+   share_map[ 1 ].push_back( share );
+   share_map[ 1 ].push_back( share );
+   share_map[ 1 ].push_back( share );
+   share_map[ 1 ].push_back( share );
+   share_map[ 1 ].push_back( share );
+   share_map[ 1 ].push_back( share );
+   share_map[ 1 ].push_back( share );
+   share_map[ 1 ].push_back( share );
+   share_map[ 1 ].push_back( share );
+   share_map[ 1 ].push_back( share );
+   share_map[ 1 ].push_back( share );
+   share_map[ 1 ].push_back( share );
+   share_map[ 1 ].push_back( share );
+   share_map[ 1 ].push_back( share );
+   share_map[ 1 ].push_back( share );
+   share_map[ 1 ].push_back( share );
+   share_map[ 1 ].push_back( share );
+   share_map[ 1 ].push_back( share );
+   share_map[ 1 ].push_back( share );
+   share_map[ 1 ].push_back( share );
+   
    // share_map[ 1 ].push_back( share );
    // share_map[ 2 ].push_back( 3 );
    // share_map[ 2 ].push_back( 6 );
