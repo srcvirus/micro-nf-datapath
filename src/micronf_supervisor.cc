@@ -37,11 +37,14 @@
 #define RING_SIZE 2048 
 #define BATCH_SIZE 64
 #define CORE_ID 0
-#define PIN_CORE_ID 3
+#define PIN_CORE_ID 0
 #define UPPERBOUND RING_SIZE * 8 / 10
 #define LOWERBOUND BATCH_SIZE 
+#define EXCLUDE_LAST_NFS 1
+//#define TIMER_ONLY    // uncomment this to run UNIS in TIMER_ONLY mode
 
-float complx_1 = 39.2;   // per packet processing cost in nsec 
+//float complx_wisc = 39.2;
+float complx_1 = 49.6;   // per packet processing cost in nsec 
 float complx_2 = 79.3;   // per packet processing cost in nsec 
 float ideal_occ = 0.75;
 int SHARE_1 = ideal_occ * RING_SIZE * complx_1 / 1000;   // share is in usec
@@ -62,7 +65,6 @@ std::map< unsigned, struct ring_stat* > prev_ring_map;
 std::map< unsigned, unsigned > pid_to_idx;
 // core_id -> list of pids
 std::map< unsigned, std::vector< unsigned > > core_pids;
-
 
 unsigned hz = 0;
 unsigned lcore_id = CORE_ID;
@@ -288,7 +290,7 @@ KickScheduler() {
    rte_timer_subsystem_init();
    uint64_t timeout = 0;
 
-   for ( volatile int i = 0; i < core_sched.size() - 1; i++ ) {
+   for ( volatile int i = 0; i < core_sched.size() - EXCLUDE_LAST_NFS; i++ ) {
       unsigned pid = core_sched[ i ]->wait_queue.front();
       unsigned coreid = core_sched[ i ]->core_id; 
       rte_timer_init( &core_sched[ i ]->timer  );
@@ -297,6 +299,7 @@ KickScheduler() {
       Switch( 0, pid );
      
       rte_timer_reset( &core_sched[ i ]->timer, timeout, SINGLE, lcore_id, ExpiredCallback, &core_sched[ i ]->expired );
+      
    }
 }
 
@@ -317,6 +320,8 @@ empty_mainloop(__attribute__((unused)) void *arg)
       }
    }
 }
+
+#ifdef TIMER_ONLY
 static int  __attribute__((noreturn)) 
 unis_mainloop(__attribute__((unused)) void *arg) 
 {
@@ -328,7 +333,7 @@ unis_mainloop(__attribute__((unused)) void *arg)
    KickScheduler();
 
    unsigned lcore_id = CORE_ID;
-   printf( "Unis mainloop on core %u\n", lcore_id );
+   RTE_LOG( INFO, UNIS, " [TIMER ONLY] Unis mainloop on core %u\n", lcore_id );
 
    while (1) {
       // Manage timer
@@ -342,7 +347,7 @@ unis_mainloop(__attribute__((unused)) void *arg)
          RefreshRingInfo( rings_info );
 
          // Check and manage expiry in each core
-         for ( int i = 0; i < core_sched.size() - 1; i++ ) {
+         for ( int i = 0; i < core_sched.size() - EXCLUDE_LAST_NFS; i++ ) {
             pid = core_sched[ i ]->wait_queue.front();
             coreid = core_sched[ i ]->core_id;
             npid;
@@ -356,10 +361,10 @@ unis_mainloop(__attribute__((unused)) void *arg)
                core_sched[ i ]->wait_queue.pop();
                core_sched[ i ]->wait_queue.push( pid );       
                npid =  core_sched[ i ]->wait_queue.front();
-/*
+
                // Make sure the next one has meaningful work to do before being scheduled.
                // If not, check the next one in the queue repeatedly until all are checked.
-               while( npid != pid && ( prev_ring_map[ npid ]->occupancy <= LOWERBOUND || \
+/*               while( npid != pid && ( prev_ring_map[ npid ]->occupancy <= LOWERBOUND || \
                                     next_ring_map[ npid ]->occupancy >= UPPERBOUND ) ) {
                   core_sched[ i ]->wait_queue.pop();
                   core_sched[ i ]->wait_queue.push( npid );
@@ -383,9 +388,79 @@ unis_mainloop(__attribute__((unused)) void *arg)
             }
          }
       }
+   }  
+}
+#else 
+// FULL FEATURE
+static int  __attribute__((noreturn)) 
+unis_mainloop(__attribute__((unused)) void *arg) 
+{
+   uint64_t prev_tsc = 0, cur_tsc, diff_tsc;
+   uint64_t timeout = 0;
+   unsigned pid, coreid, npid;
+
+   // run process on each core.
+   KickScheduler();
+
+   unsigned lcore_id = CORE_ID;
+   printf( "[ TIMER + OPT1 + OPT2 ] Unis mainloop on core %u\n", lcore_id );
+
+   while (1) {
+      // Manage timer
+      cur_tsc = rte_rdtsc();
+      diff_tsc = cur_tsc - prev_tsc;
+      
+      if ( diff_tsc > TIMER_RESOLUTION_CYCLES ) {
+         rte_timer_manage();
+         prev_tsc = cur_tsc;
+         
+         RefreshRingInfo( rings_info );
+
+         // Check and manage expiry in each core
+         for ( int i = 0; i < core_sched.size() - EXCLUDE_LAST_NFS; i++ ) {
+            pid = core_sched[ i ]->wait_queue.front();
+            coreid = core_sched[ i ]->core_id;
+            npid;
+
+            // Reschedule a core if a running process is expired, or 
+            // the input ring is almost empty, or the output ring almost full.
+            if ( core_sched[ i ]->expired        \
+                 || prev_ring_map[ pid ]->occupancy <= LOWERBOUND     \
+                 || next_ring_map[ pid ]->occupancy >= UPPERBOUND  ) {
+               core_sched[ i ]->wait_queue.pop();
+               core_sched[ i ]->wait_queue.push( pid );       
+               npid =  core_sched[ i ]->wait_queue.front();
+
+               // Make sure the next one has meaningful work to do before being scheduled.
+               // If not, check the next one in the queue repeatedly until all are checked.
+               while( npid != pid && ( prev_ring_map[ npid ]->occupancy <= LOWERBOUND || \
+                                    next_ring_map[ npid ]->occupancy >= UPPERBOUND ) ) {
+                  core_sched[ i ]->wait_queue.pop();
+                  core_sched[ i ]->wait_queue.push( npid );
+                  npid =  core_sched[ i ]->wait_queue.front();
+               }
+               
+               // New pid ready to be run.
+               if ( npid != pid ) {
+                  rte_timer_stop_sync( &core_sched[ i ]->timer );
+                  core_sched[ i ]->expired = false;
+
+                  // Put pid to waiting state and npid to runing state
+                  Switch( pid, npid );
+
+                  // Timer responsible for the new running npid is started.
+                  timeout = ( uint64_t ) ( hz *  (float) \
+                                           share_map[ coreid ][ pid_to_idx[ npid ] ] / 1000000 );
+                  rte_timer_reset( &core_sched[ i ]->timer, timeout, SINGLE, lcore_id, \
+                                   ExpiredCallback, &core_sched[ i ]->expired );
+               }
+            }
+         }
+      }
    }
    
 }
+#endif
 
 void handler( int sig ){
    Handler();
@@ -426,7 +501,7 @@ main( int argc, char* argv[] ) {
    // Manually assigned shares
    unsigned share = SHARE_1; 
    unsigned share_2 = SHARE_2;
-   RTE_LOG( INFO, UNIS, "Share: %u %u\n", share, share_2 );
+   RTE_LOG( INFO, UNIS, "Share1: %u. Share2: %u\n", share, share_2 );
    // 1st process in core 1 gets usec share
    share_map[ 1 ].push_back( share );
    share_map[ 1 ].push_back( share );
@@ -443,25 +518,16 @@ main( int argc, char* argv[] ) {
    share_map[ 1 ].push_back( share );
    share_map[ 1 ].push_back( share );
    share_map[ 1 ].push_back( share );
-   share_map[ 1 ].push_back( share );
-   share_map[ 1 ].push_back( share );
-   share_map[ 1 ].push_back( share );
-   share_map[ 1 ].push_back( share );
-   share_map[ 1 ].push_back( share );
-   share_map[ 1 ].push_back( share );
-   share_map[ 1 ].push_back( share );
-   share_map[ 1 ].push_back( share );
-   share_map[ 1 ].push_back( share );
-   share_map[ 1 ].push_back( share );
-   share_map[ 1 ].push_back( share );
-   share_map[ 1 ].push_back( share );
-   share_map[ 1 ].push_back( share );
-   share_map[ 1 ].push_back( share );
-   share_map[ 1 ].push_back( share );
-   
-   // share_map[ 1 ].push_back( share );
-   // share_map[ 2 ].push_back( 3 );
-   // share_map[ 2 ].push_back( 6 );
+
+   share_map[ 2 ].push_back( share );
+   share_map[ 2 ].push_back( share );
+   share_map[ 2 ].push_back( share );
+   share_map[ 2 ].push_back( share );
+   share_map[ 2 ].push_back( share );
+   share_map[ 2 ].push_back( share );
+   share_map[ 2 ].push_back( share );
+   share_map[ 2 ].push_back( share );
+   share_map[ 2 ].push_back( share );
 
    // Initialize per core data structure 'sched_core'
    InitCoreSched();

@@ -65,7 +65,9 @@ int RunNICClassifier(void* arg) {
    CIDRAddress src_addr_1("10.0.0.10/24");
    CIDRAddress dst_addr_1("10.0.0.7/24");
    FwdRule rule_1(src_addr_1, dst_addr_1, 1234, 5678, "rx_ring_0");
-   nicClassifier.AddRule(rule_1); 
+   nicClassifier.AddRule(rule_1);
+   FwdRule rule_2(src_addr_1, dst_addr_1, 1234, 5678, "rx_ring_00");
+   nicClassifier.AddRule(rule_2); 
    nicClassifier.Run();
    return 0;
 }

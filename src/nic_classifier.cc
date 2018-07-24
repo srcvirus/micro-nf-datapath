@@ -41,32 +41,21 @@ void NICClassifier::Run() {
   register int16_t i = 0;
   register uint16_t j = 0;
   const int16_t kNumPrefetch = 8;
+  int p = 0;
+  int rx_ports = 1;
   printf("NicClassifier thread loop has started\n");
   for (;;) {
-    rx_count = rte_eth_rx_burst(0, 0, buf, PACKET_READ_SIZE);
-    for (i = 0; i < rx_count; ++i) {
-      ethernet = rte_pktmbuf_mtod(buf[i], struct ether_hdr*);
-      ipv4 = reinterpret_cast<struct ipv4_hdr*>(ethernet + 1);
-      tcp = reinterpret_cast<struct tcp_hdr*>(ipv4 + 1);
-      for (j = 0; j < fwd_rules_.size(); ++j) {
-        if (fwd_rules_[j]->Match(ipv4->src_addr, ipv4->dst_addr, tcp->src_port,
-                                 tcp->dst_port)) {
-          rule_buffers_[j].get()[rule_buffer_cnt_[j]++] = buf[i];
-          break;
-        }
-      }
-    }
-    for (i = 0; i < rule_buffers_.size(); ++i) {
-      assert(rings_[i] != nullptr);
-      tx_count = rte_ring_enqueue_burst(
-          rings_[i], reinterpret_cast<void**>(rule_buffers_[i].get()),
-          rule_buffer_cnt_[i], NULL);
-      this->micronf_stats->packet_drop[INSTANCE_ID_0][i] +=
-          (rule_buffer_cnt_[i] - tx_count);
-      for (j = tx_count; j < rule_buffer_cnt_[i]; ++j)
-        rte_pktmbuf_free(rule_buffers_[i].get()[j]);
-      rule_buffer_cnt_[i] = 0;
-    }
+     p = 0;
+     while ( p < rx_ports ) {
+        rx_count = rte_eth_rx_burst( p, 0, buf, PACKET_READ_SIZE);
+           assert(rings_[ p ] != nullptr);
+           tx_count = rte_ring_enqueue_burst(
+                 rings_[ p ], reinterpret_cast<void**>( buf ),
+                 rx_count, NULL);
+           for (j = tx_count; j < rx_count; ++j)
+              rte_pktmbuf_free( buf[j] );      
+        p++;
+     }
   }
   // TODO read from next port if available
   if (this->scale_bits->bits[INSTANCE_ID_0].test(i)) {
